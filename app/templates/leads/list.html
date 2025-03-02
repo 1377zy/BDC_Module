@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}All Leads - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-users"></i> All Leads</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ url_for('leads.create_lead') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Lead
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form action="{{ url_for('leads.list_leads') }}" method="get" class="mb-0">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            {{ search_form.name(class="form-control", placeholder="Name") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ search_form.email(class="form-control", placeholder="Email") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ search_form.phone(class="form-control", placeholder="Phone") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            {{ search_form.status(class="form-select") }}
+                        </div>
+                        <div class="col-md-12 mt-2 text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <a href="{{ url_for('leads.list_leads') }}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="quick-search" class="form-control" placeholder="Quick search...">
+                </div>
+                
+                {% if leads %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contact Info</th>
+                                <th>Vehicle Interests</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in leads %}
+                            <tr class="lead-item" 
+                                data-name="{{ lead.first_name }} {{ lead.last_name }}"
+                                data-email="{{ lead.email or '' }}"
+                                data-phone="{{ lead.phone or '' }}">
+                                <td>
+                                    <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="fw-bold text-decoration-none">{{ lead.first_name }} {{ lead.last_name }}</a>
+                                </td>
+                                <td>
+                                    {% if lead.email %}
+                                    <div><i class="fas fa-envelope me-1 text-muted"></i> {{ lead.email }}</div>
+                                    {% endif %}
+                                    {% if lead.phone %}
+                                    <div><i class="fas fa-phone me-1 text-muted"></i> {{ lead.phone }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lead.vehicle_interests %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for interest in lead.vehicle_interests[:2] %}
+                                        <li><i class="fas fa-car me-1 text-muted"></i> {{ interest.year }} {{ interest.make }} {{ interest.model }}</li>
+                                        {% endfor %}
+                                        {% if lead.vehicle_interests|length > 2 %}
+                                        <li class="text-muted small">+ {{ lead.vehicle_interests|length - 2 }} more</li>
+                                        {% endif %}
+                                    </ul>
+                                    {% else %}
+                                    <span class="text-muted">No vehicles specified</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="lead-status status-{{ lead.status|lower }}">{{ lead.status }}</span>
+                                </td>
+                                <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View Lead"><i class="fas fa-eye"></i></a>
+                                        <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit Lead"><i class="fas fa-edit"></i></a>
+                                        <a href="{{ url_for('communications.send_email', lead_id=lead.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Send Email"><i class="fas fa-envelope"></i></a>
+                                        <a href="{{ url_for('communications.send_sms', lead_id=lead.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Send SMS"><i class="fas fa-sms"></i></a>
+                                        <a href="{{ url_for('appointments.schedule_appointment', lead_id=lead.id) }}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Schedule Appointment"><i class="fas fa-calendar-plus"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Lead pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('leads.list_leads', page=pagination.prev_num, **request.args) }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&laquo;</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page in pagination.iter_pages() %}
+                            {% if page %}
+                                {% if page != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('leads.list_leads', page=page, **request.args) }}">{{ page }}</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('leads.list_leads', page=pagination.next_num, **request.args) }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-hidden="true">&raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No leads found. {% if search_applied %}Try adjusting your search criteria.{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

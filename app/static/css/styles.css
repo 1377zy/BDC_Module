@@ -1,0 +1,228 @@
+/* Custom styles for the Auto Dealership BDC Application */
+
+/* Dashboard Cards */
+.dashboard-card {
+    transition: transform 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-card .card-header {
+    font-weight: bold;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.dashboard-card .card-body {
+    padding: 20px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.03);
+}
+
+.stat-card .stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.stat-card .stat-label {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Leads styles */
+.lead-card {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.lead-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.lead-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.status-new {
+    background-color: #cff4fc;
+    color: #055160;
+}
+
+.status-contacted {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.status-qualified {
+    background-color: #d1e7dd;
+    color: #0a3622;
+}
+
+.status-appointment {
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+.status-sold {
+    background-color: #c3e6cb;
+    color: #155724;
+}
+
+.status-lost {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+/* Appointments styles */
+.appointment-card {
+    margin-bottom: 15px;
+    border-left: 5px solid;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.appointment-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-scheduled {
+    border-left-color: #0d6efd;
+}
+
+.appointment-confirmed {
+    border-left-color: #20c997;
+}
+
+.appointment-completed {
+    border-left-color: #198754;
+}
+
+.appointment-noshow {
+    border-left-color: #dc3545;
+}
+
+.appointment-cancelled {
+    border-left-color: #6c757d;
+}
+
+.appointment-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Forms */
+.form-container {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.form-container .form-label {
+    font-weight: 500;
+}
+
+.form-container .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Communications */
+.communication-item {
+    border-left: 5px solid;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+}
+
+.communication-email {
+    border-left-color: #0d6efd;
+}
+
+.communication-sms {
+    border-left-color: #6610f2;
+}
+
+.communication-inbound {
+    background-color: #e7f5ff;
+}
+
+.communication-outbound {
+    background-color: #f8f9fa;
+}
+
+/* Template styles */
+.template-card {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.template-card .card-header {
+    font-weight: bold;
+}
+
+/* Login form */
+.login-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .stat-card .stat-number {
+        font-size: 2rem;
+    }
+    
+    .form-container {
+        padding: 20px;
+    }
+}
+
+/* Animation for dashboard elements */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

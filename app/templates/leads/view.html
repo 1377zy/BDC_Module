@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lead.first_name }} {{ lead.last_name }} - Lead Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-user"></i> {{ lead.first_name }} {{ lead.last_name }}
+            <span class="lead-status status-{{ lead.status|lower }} ms-2">{{ lead.status }}</span>
+        </h1>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit Lead
+            </a>
+            <a href="{{ url_for('communications.send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
+                <i class="fas fa-envelope"></i> Send Email
+            </a>
+            <a href="{{ url_for('communications.send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
+                <i class="fas fa-sms"></i> Send SMS
+            </a>
+            <a href="{{ url_for('appointments.schedule_appointment', lead_id=lead.id) }}" class="btn btn-outline-success">
+                <i class="fas fa-calendar-plus"></i> Schedule Appointment
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Lead Information Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-envelope me-2"></i> Email:</strong> 
+                            {% if lead.email %}
+                            <a href="mailto:{{ lead.email }}">{{ lead.email }}</a>
+                            {% else %}
+                            <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </p>
+                        <p><strong><i class="fas fa-phone me-2"></i> Phone:</strong> 
+                            {% if lead.phone %}
+                            <a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>
+                            {% else %}
+                            <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </p>
+                        <p><strong><i class="fas fa-tag me-2"></i> Source:</strong> {{ lead.source }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-calendar me-2"></i> Created:</strong> {{ lead.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p><strong><i class="fas fa-clock me-2"></i> Last Updated:</strong> {{ lead.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p><strong><i class="fas fa-user me-2"></i> Assigned To:</strong> 
+                            {% if lead.assigned_to %}
+                            {{ lead.assigned_to.username }}
+                            {% else %}
+                            <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if lead.notes %}
+                <div class="mt-3">
+                    <h5 class="card-title"><i class="fas fa-sticky-note me-2"></i> Notes</h5>
+                    <div class="p-3 bg-light rounded">{{ lead.notes|nl2br }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Vehicle Interests Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-car me-1"></i> Vehicle Interests
+            </div>
+            <div class="card-body">
+                {% if lead.vehicle_interests %}
+                <div class="row">
+                    {% for interest in lead.vehicle_interests %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ interest.year }} {{ interest.make }} {{ interest.model }}</h5>
+                                {% if interest.trim %}
+                                <h6 class="card-subtitle mb-2 text-muted">{{ interest.trim }}</h6>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Added on {{ interest.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No vehicle interests recorded for this lead.
+                </div>
+                {% endif %}
+                <div class="text-end mt-3">
+                    <a href="{{ url_for('leads.add_vehicle_interest', lead_id=lead.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus"></i> Add Vehicle Interest
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Communications History Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-comments me-1"></i> Communication History
+            </div>
+            <div class="card-body">
+                {% if communications %}
+                <div class="timeline">
+                    {% for communication in communications %}
+                    <div class="communication-item communication-{{ communication.type|lower }} {% if communication.direction == 'Inbound' %}communication-inbound{% else %}communication-outbound{% endif %}">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">
+                                {% if communication.type == 'Email' %}
+                                <i class="fas fa-envelope me-2"></i>
+                                {% elif communication.type == 'SMS' %}
+                                <i class="fas fa-sms me-2"></i>
+                                {% elif communication.type == 'Call' %}
+                                <i class="fas fa-phone me-2"></i>
+                                {% else %}
+                                <i class="fas fa-comment me-2"></i>
+                                {% endif %}
+                                {{ communication.type }} - {{ communication.direction }}
+                            </h5>
+                            <small>{{ communication.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        {% if communication.type == 'Email' and communication.subject %}
+                        <p class="mb-1"><strong>Subject:</strong> {{ communication.subject }}</p>
+                        {% endif %}
+                        <p class="mb-3">{{ communication.content|nl2br }}</p>
+                        <div class="text-muted small">
+                            <i class="fas fa-user me-1"></i> By: {{ communication.user.username if communication.user else 'System' }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No communications recorded for this lead.
+                </div>
+                {% endif %}
+                <div class="text-end mt-3">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('communications.send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope"></i> Send Email
+                        </a>
+                        <a href="{{ url_for('communications.send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
+                            <i class="fas fa-sms"></i> Send SMS
+                        </a>
+                        <a href="{{ url_for('communications.add_communication', lead_id=lead.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-plus"></i> Log Communication
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Appointments Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-calendar-alt me-1"></i> Appointments
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                <div class="list-group mb-3">
+                    {% for appointment in appointments %}
+                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action appointment-card appointment-{{ appointment.status|lower }}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ appointment.date.strftime('%Y-%m-%d') }} at {{ appointment.time.strftime('%I:%M %p') }}</h5>
+                            <span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span>
+                        </div>
+                        {% if appointment.vehicle_interest %}
+                        <p class="mb-1"><i class="fas fa-car me-1"></i> {{ appointment.vehicle_interest }}</p>
+                        {% endif %}
+                        {% if appointment.notes %}
+                        <p class="mb-0 small text-muted">{{ appointment.notes|truncate(100) }}</p>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-1"></i> No appointments scheduled for this lead.
+                </div>
+                {% endif %}
+                <div class="d-grid">
+                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=lead.id) }}" class="btn btn-success">
+                        <i class="fas fa-calendar-plus"></i> Schedule New Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Follow-up Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-clock me-1"></i> Follow-up
+            </div>
+            <div class="card-body">
+                {% if follow_up %}
+                <div class="mb-3">
+                    <h5 class="card-title">Next Follow-up</h5>
+                    <p><strong>Date:</strong> {{ follow_up.follow_up_date.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Notes:</strong> {{ follow_up.notes }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('leads.edit_follow_up', lead_id=lead.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit Follow-up
+                        </a>
+                        <a href="{{ url_for('leads.complete_follow_up', lead_id=lead.id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-check"></i> Mark as Completed
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-1"></i> No follow-up scheduled for this lead.
+                </div>
+                <div class="d-grid">
+                    <a href="{{ url_for('leads.set_follow_up', lead_id=lead.id) }}" class="btn btn-warning">
+                        <i class="fas fa-plus"></i> Set Follow-up Reminder
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-bolt me-1"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Lead Information
+                    </a>
+                    <a href="{{ url_for('leads.update_status', lead_id=lead.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tag"></i> Update Status
+                    </a>
+                    <a href="{{ url_for('leads.assign_lead', lead_id=lead.id) }}" class="btn btn-outline-dark">
+                        <i class="fas fa-user-tag"></i> Assign Lead
+                    </a>
+                    <a href="{{ url_for('leads.delete_lead', lead_id=lead.id) }}" class="btn btn-outline-danger confirm-delete">
+                        <i class="fas fa-trash"></i> Delete Lead
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

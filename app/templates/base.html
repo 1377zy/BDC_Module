@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Auto Dealership BDC{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    {{ bootstrap.load_css() }}
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Auto Dealership BDC</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="leadsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-users"></i> Leads
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="leadsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('leads.list_leads') }}">All Leads</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('leads.create_lead') }}">Add New Lead</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="appointmentsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-calendar-alt"></i> Appointments
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="appointmentsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.list_appointments') }}">All Appointments</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.today_appointments') }}">Today's Appointments</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.week_appointments') }}">This Week's Appointments</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="communicationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-comments"></i> Communications
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="communicationsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('communications.list_communications') }}">All Communications</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('communications.list_email_templates') }}">Email Templates</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('communications.list_sms_templates') }}">SMS Templates</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-light text-center text-lg-start mt-5">
+        <div class="container p-4">
+            <div class="row">
+                <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Auto Dealership BDC</h5>
+                    <p>Business Development Center (BDC) system for managing customer communications and appointments.</p>
+                </div>
+                <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
+                    <h5 class="text-uppercase">Quick Links</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><a href="{{ url_for('main.index') }}" class="text-dark">Dashboard</a></li>
+                        <li><a href="{{ url_for('leads.list_leads') }}" class="text-dark">Leads</a></li>
+                        <li><a href="{{ url_for('appointments.list_appointments') }}" class="text-dark">Appointments</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
+            © {% now year %} Auto Dealership BDC
+        </div>
+    </footer>
+
+    <!-- Bootstrap JavaScript -->
+    {{ bootstrap.load_js() }}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

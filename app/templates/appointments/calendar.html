@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+
+{% block title %}Appointment Calendar - Auto Dealership BDC{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event-title {
+        font-weight: bold;
+    }
+    .appointment-confirmed {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .appointment-pending {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+    }
+    .appointment-cancelled {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    .appointment-completed {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+    .appointment-no-show {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .appointment-rescheduled {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+    }
+    .fc-day-today {
+        background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+    }
+    .calendar-container {
+        height: 800px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-calendar"></i> Appointment Calendar</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <div class="btn-group">
+            <a href="{{ url_for('appointments.schedule_appointment') }}" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> Schedule Appointment
+            </a>
+            <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> List View
+            </a>
+            <button id="print-calendar" class="btn btn-outline-info">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-9 mb-3">
+                        <div class="btn-group">
+                            <button id="today-button" class="btn btn-outline-primary">Today</button>
+                            <button id="prev-button" class="btn btn-outline-secondary">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button id="next-button" class="btn btn-outline-secondary">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="btn-group ms-3">
+                            <button id="month-view" class="btn btn-outline-secondary active">Month</button>
+                            <button id="week-view" class="btn btn-outline-secondary">Week</button>
+                            <button id="day-view" class="btn btn-outline-secondary">Day</button>
+                            <button id="list-view" class="btn btn-outline-secondary">List</button>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input filter-status" type="checkbox" id="filter-confirmed" value="Confirmed" checked>
+                            <label class="form-check-label" for="filter-confirmed">
+                                <span class="badge bg-success">Confirmed</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input filter-status" type="checkbox" id="filter-pending" value="Pending" checked>
+                            <label class="form-check-label" for="filter-pending">
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input filter-status" type="checkbox" id="filter-completed" value="Completed" checked>
+                            <label class="form-check-label" for="filter-completed">
+                                <span class="badge bg-info">Completed</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input filter-status" type="checkbox" id="filter-cancelled" value="Cancelled">
+                            <label class="form-check-label" for="filter-cancelled">
+                                <span class="badge bg-danger">Cancelled</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input filter-status" type="checkbox" id="filter-no-show" value="No-Show">
+                            <label class="form-check-label" for="filter-no-show">
+                                <span class="badge bg-secondary">No-Show</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-body calendar-container p-0">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Today's Appointments
+            </div>
+            <div class="card-body">
+                <h3 class="text-center mb-3">{{ today.strftime('%A, %b %d, %Y') }}</h3>
+                
+                {% if today_appointments %}
+                <div class="list-group">
+                    {% for appointment in today_appointments %}
+                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ appointment.time.strftime('%I:%M %p') }}</h6>
+                            <span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span>
+                        </div>
+                        <p class="mb-1">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</p>
+                        {% if appointment.vehicle_interest %}
+                        <small class="text-muted">{{ appointment.vehicle_interest }}</small>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-calendar-day me-1"></i> No appointments scheduled for today.
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('appointments.schedule_appointment') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus"></i> Schedule New
+                    </a>
+                    <a href="{{ url_for('appointments.day_view', date=today.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-calendar-day"></i> Day View
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-pie me-1"></i> Appointment Stats
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ stats.total_month }}</h3>
+                            <p class="mb-0 text-muted">This Month</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ stats.total_week }}</h3>
+                            <p class="mb-0 text-muted">This Week</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ stats.no_show_rate }}%</h3>
+                            <p class="mb-0 text-muted">No-Show Rate</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ stats.conversion_rate }}%</h3>
+                            <p class="mb-0 text-muted">Conversion</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Upcoming Available Slots</h5>
+                    <div class="list-group">
+                        {% for slot in available_slots %}
+                        <a href="{{ url_for('appointments.schedule_appointment', date=slot.date, time=slot.time) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-0">{{ slot.day_of_week }}</h6>
+                                <small>{{ slot.date }}</small>
+                            </div>
+                            <small>{{ slot.time }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Quick View Modal -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="appointment-loading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading appointment details...</p>
+                </div>
+                <div id="appointment-details" class="d-none">
+                    <div class="mb-3">
+                        <label class="form-label">Lead:</label>
+                        <p id="appointment-lead" class="form-control"></p>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date:</label>
+                            <p id="appointment-date" class="form-control"></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Time:</label>
+                            <p id="appointment-time" class="form-control"></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status:</label>
+                        <p id="appointment-status" class="form-control"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vehicle Interest:</label>
+                        <p id="appointment-vehicle" class="form-control"></p>
+                    </div>
+                    <div class="mb-3" id="appointment-notes-container">
+                        <label class="form-label">Notes:</label>
+                        <div id="appointment-notes" class="p-3 border rounded bg-light"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group" role="group" id="appointment-actions">
+                    <a href="#" id="appointment-view-link" class="btn btn-primary">
+                        <i class="fas fa-eye"></i> View Full Details
+                    </a>
+                    <a href="#" id="appointment-edit-link" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        
+        // Initialize FullCalendar
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            height: '100%',
+            firstDay: 1, // Monday
+            businessHours: {
+                daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // Monday - Sunday
+                startTime: '09:00',
+                endTime: '20:00',
+            },
+            events: {{ appointments_json|safe }},
+            eventClick: function(info) {
+                showAppointmentDetails(info.event.id);
+            },
+            eventClassNames: function(arg) {
+                const status = arg.event.extendedProps.status.toLowerCase().replace(' ', '-');
+                return ['appointment-' + status];
+            }
+        });
+        
+        calendar.render();
+        
+        // Navigation buttons
+        document.getElementById('prev-button').addEventListener('click', function() {
+            calendar.prev();
+        });
+        
+        document.getElementById('next-button').addEventListener('click', function() {
+            calendar.next();
+        });
+        
+        document.getElementById('today-button').addEventListener('click', function() {
+            calendar.today();
+        });
+        
+        // View buttons
+        document.getElementById('month-view').addEventListener('click', function() {
+            calendar.changeView('dayGridMonth');
+            updateActiveButton(this);
+        });
+        
+        document.getElementById('week-view').addEventListener('click', function() {
+            calendar.changeView('timeGridWeek');
+            updateActiveButton(this);
+        });
+        
+        document.getElementById('day-view').addEventListener('click', function() {
+            calendar.changeView('timeGridDay');
+            updateActiveButton(this);
+        });
+        
+        document.getElementById('list-view').addEventListener('click', function() {
+            calendar.changeView('listWeek');
+            updateActiveButton(this);
+        });
+        
+        // Update active button
+        function updateActiveButton(button) {
+            document.querySelectorAll('#month-view, #week-view, #day-view, #list-view').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+        
+        // Filter appointments by status
+        const filterCheckboxes = document.querySelectorAll('.filter-status');
+        filterCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                filterEvents();
+            });
+        });
+        
+        function filterEvents() {
+            const selectedStatuses = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
+            
+            calendar.getEvents().forEach(function(event) {
+                if (selectedStatuses.includes(event.extendedProps.status)) {
+                    event.setProp('display', 'auto');
+                } else {
+                    event.setProp('display', 'none');
+                }
+            });
+        }
+        
+        // Print calendar
+        document.getElementById('print-calendar').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Show appointment details in modal
+        function showAppointmentDetails(appointmentId) {
+            const modal = new bootstrap.Modal(document.getElementById('appointmentModal'));
+            
+            // Show loading
+            document.getElementById('appointment-loading').classList.remove('d-none');
+            document.getElementById('appointment-details').classList.add('d-none');
+            
+            // Fetch appointment details
+            fetch(`/appointments/api/get/${appointmentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading
+                    document.getElementById('appointment-loading').classList.add('d-none');
+                    document.getElementById('appointment-details').classList.remove('d-none');
+                    
+                    // Populate modal
+                    document.getElementById('appointment-lead').textContent = `${data.lead.first_name} ${data.lead.last_name}`;
+                    document.getElementById('appointment-date').textContent = data.date;
+                    document.getElementById('appointment-time').textContent = data.time;
+                    document.getElementById('appointment-status').textContent = data.status;
+                    document.getElementById('appointment-status').className = `form-control text-white bg-${data.status.toLowerCase().replace(' ', '-')}`;
+                    document.getElementById('appointment-vehicle').textContent = data.vehicle_interest || 'Not specified';
+                    
+                    if (data.notes) {
+                        document.getElementById('appointment-notes-container').classList.remove('d-none');
+                        document.getElementById('appointment-notes').textContent = data.notes;
+                    } else {
+                        document.getElementById('appointment-notes-container').classList.add('d-none');
+                    }
+                    
+                    // Update links
+                    document.getElementById('appointment-view-link').href = `/appointments/view/${appointmentId}`;
+                    document.getElementById('appointment-edit-link').href = `/appointments/edit/${appointmentId}`;
+                    
+                    // Show modal
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error fetching appointment details:', error);
+                    alert('Error loading appointment details. Please try again.');
+                });
+        }
+    });
+</script>
+{% endblock %}

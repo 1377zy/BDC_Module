@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if template %}Edit Template{% else %}Create Template{% endif %} - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            {% if template %}
+            <i class="fas fa-edit"></i> Edit {{ template.type|capitalize }} Template
+            {% else %}
+            <i class="fas fa-plus"></i> Create New {{ type|capitalize }} Template
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">{{ form.name.label }}</label>
+                        {{ form.name(class="form-control", placeholder="Template Name") }}
+                        {% for error in form.name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">{{ form.category.label }}</label>
+                        {{ form.category(class="form-select") }}
+                        {% for error in form.category.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if type == 'email' or (template and template.type == 'email') %}
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">{{ form.subject.label }}</label>
+                        {{ form.subject(class="form-control", placeholder="Email Subject") }}
+                        {% for error in form.subject.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="body" class="form-label">{{ form.body.label }}</label>
+                        {% if type == 'email' or (template and template.type == 'email') %}
+                        {{ form.body(class="form-control", id="emailBody", rows=15) }}
+                        {% else %}
+                        {{ form.body(class="form-control", id="smsBody", rows=5) }}
+                        <div class="text-end mt-1">
+                            <small class="text-muted">Characters: <span id="char-count">0</span> / 160</small>
+                        </div>
+                        {% endif %}
+                        {% for error in form.body.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.is_default(class="form-check-input") }}
+                        <label class="form-check-label" for="is_default">{{ form.is_default.label }}</label>
+                        {% for error in form.is_default.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                        <a href="{{ url_for('templates.list_templates') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header {% if type == 'email' or (template and template.type == 'email') %}bg-info text-white{% else %}bg-warning text-dark{% endif %}">
+                <i class="fas fa-info-circle me-1"></i> Template Information
+            </div>
+            <div class="card-body">
+                <h5>Available Placeholders</h5>
+                <p>You can use the following placeholders in your template:</p>
+                <ul>
+                    <li><code>{first_name}</code> - Lead's first name</li>
+                    <li><code>{last_name}</code> - Lead's last name</li>
+                    <li><code>{full_name}</code> - Lead's full name</li>
+                    <li><code>{email}</code> - Lead's email address</li>
+                    <li><code>{phone}</code> - Lead's phone number</li>
+                    <li><code>{agent_name}</code> - Your name</li>
+                    <li><code>{dealership_name}</code> - Dealership name</li>
+                    <li><code>{dealership_phone}</code> - Dealership phone</li>
+                    <li><code>{dealership_address}</code> - Dealership address</li>
+                    <li><code>{appointment_date}</code> - Appointment date</li>
+                    <li><code>{appointment_time}</code> - Appointment time</li>
+                    <li><code>{vehicle}</code> - Lead's vehicle of interest</li>
+                </ul>
+                
+                <button type="button" class="btn btn-outline-secondary" id="btn-preview-template">
+                    <i class="fas fa-eye"></i> Preview with Sample Data
+                </button>
+                
+                {% if type == 'sms' or (template and template.type == 'sms') %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i> SMS messages are limited to 160 characters. Messages longer than this may be split into multiple messages.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-lightbulb me-1"></i> Template Tips
+            </div>
+            <div class="card-body">
+                <h5>Effective Templates</h5>
+                <ul>
+                    <li>Keep messages clear and concise</li>
+                    <li>Personalize using placeholders</li>
+                    <li>Include a clear call to action</li>
+                    <li>For SMS, keep messages under 160 characters</li>
+                    <li>For emails, use proper formatting for readability</li>
+                </ul>
+                
+                <h5>Categories</h5>
+                <ul>
+                    <li><strong>Welcome:</strong> Initial contact with leads</li>
+                    <li><strong>Follow-up:</strong> Checking in with leads</li>
+                    <li><strong>Appointment:</strong> Setting or confirming appointments</li>
+                    <li><strong>Thank You:</strong> After meetings or purchases</li>
+                    <li><strong>Special Offer:</strong> Promotions and incentives</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+    <div class="modal-dialog {% if type == 'email' or (template and template.type == 'email') %}modal-lg{% endif %}">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalLabel">Template Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if type == 'email' or (template and template.type == 'email') %}
+                <div class="mb-3">
+                    <label class="form-label">Subject:</label>
+                    <p id="preview-subject" class="form-control"></p>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <label class="form-label">Content:</label>
+                    <div id="preview-body" class="p-3 border rounded bg-light"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        {% if type == 'sms' or (template and template.type == 'sms') %}
+        // Character counter for SMS
+        function updateCharCount() {
+            const currentLength = $('#smsBody').val().length;
+            $('#char-count').text(currentLength);
+            
+            if (currentLength > 160) {
+                $('#char-count').addClass('text-danger').removeClass('text-muted');
+            } else {
+                $('#char-count').addClass('text-muted').removeClass('text-danger');
+            }
+        }
+        
+        $('#smsBody').on('input', updateCharCount);
+        
+        // Initialize character count
+        updateCharCount();
+        {% endif %}
+        
+        {% if type == 'email' or (template and template.type == 'email') %}
+        // Initialize rich text editor for email templates
+        ClassicEditor
+            .create(document.querySelector('#emailBody'))
+            .catch(error => {
+                console.error(error);
+            });
+        {% endif %}
+        
+        // Preview template with sample data
+        $('#btn-preview-template').click(function() {
+            // Sample data
+            const sampleData = {
+                first_name: 'John',
+                last_name: 'Smith',
+                full_name: 'John Smith',
+                email: 'john.smith@example.com',
+                phone: '(555) 123-4567',
+                agent_name: 'Sales Rep',
+                dealership_name: 'Acme Auto Dealership',
+                dealership_phone: '(555) 987-6543',
+                dealership_address: '123 Main St, Anytown, USA',
+                appointment_date: '03/15/2025',
+                appointment_time: '2:30 PM',
+                vehicle: '2025 Honda Accord EX-L'
+            };
+            
+            // Replace placeholders in template
+            {% if type == 'email' or (template and template.type == 'email') %}
+            let subject = $('#subject').val();
+            {% endif %}
+            let body = $('#{% if type == "email" or (template and template.type == "email") %}emailBody{% else %}smsBody{% endif %}').val();
+            
+            // Replace all placeholders
+            for (const [key, value] of Object.entries(sampleData)) {
+                const placeholder = new RegExp(`{${key}}`, 'g');
+                {% if type == 'email' or (template and template.type == 'email') %}
+                subject = subject.replace(placeholder, value);
+                {% endif %}
+                body = body.replace(placeholder, value);
+            }
+            
+            // Show in modal
+            {% if type == 'email' or (template and template.type == 'email') %}
+            $('#preview-subject').text(subject);
+            {% endif %}
+            $('#preview-body').html(body.replace(/\n/g, '<br>'));
+            
+            // Show the modal
+            $('#previewModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

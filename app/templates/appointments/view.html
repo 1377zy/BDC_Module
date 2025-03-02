@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}Appointment Details - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-calendar-alt"></i> Appointment Details
+            <span class="appointment-status bg-{{ appointment.status|lower }} text-white ms-2">{{ appointment.status }}</span>
+        </h1>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('appointments.edit_appointment', appointment_id=appointment.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('communications.send_email', lead_id=appointment.lead.id) }}" class="btn btn-outline-info">
+                <i class="fas fa-envelope"></i> Email
+            </a>
+            <a href="{{ url_for('communications.send_sms', lead_id=appointment.lead.id) }}" class="btn btn-outline-warning">
+                <i class="fas fa-sms"></i> SMS
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Appointment Details Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Appointment Information
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-calendar me-2"></i> Date:</strong> {{ appointment.date.strftime('%Y-%m-%d') }}</p>
+                        <p><strong><i class="fas fa-clock me-2"></i> Time:</strong> {{ appointment.time.strftime('%I:%M %p') }}</p>
+                        <p><strong><i class="fas fa-user me-2"></i> Lead:</strong> 
+                            <a href="{{ url_for('leads.view_lead', lead_id=appointment.lead.id) }}">
+                                {{ appointment.lead.first_name }} {{ appointment.lead.last_name }}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong><i class="fas fa-car me-2"></i> Vehicle Interest:</strong> 
+                            {% if appointment.vehicle_interest %}
+                            {{ appointment.vehicle_interest }}
+                            {% else %}
+                            <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </p>
+                        <p><strong><i class="fas fa-tag me-2"></i> Status:</strong> {{ appointment.status }}</p>
+                        <p><strong><i class="fas fa-user-edit me-2"></i> Created By:</strong> {{ appointment.created_by.username }}</p>
+                    </div>
+                </div>
+                
+                {% if appointment.notes %}
+                <div class="mt-3">
+                    <h5 class="card-title"><i class="fas fa-sticky-note me-2"></i> Notes</h5>
+                    <div class="p-3 bg-light rounded">{{ appointment.notes|nl2br }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h5 class="card-title"><i class="fas fa-history me-2"></i> Appointment History</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Appointment Created</h6>
+                                <small>{{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">
+                                Created by {{ appointment.created_by.username }} for {{ appointment.date.strftime('%Y-%m-%d') }} at {{ appointment.time.strftime('%I:%M %p') }}
+                            </p>
+                        </li>
+                        
+                        {% if appointment.updated_at != appointment.created_at %}
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Appointment Updated</h6>
+                                <small>{{ appointment.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">Status changed to {{ appointment.status }}</p>
+                        </li>
+                        {% endif %}
+                        
+                        {% for log in appointment_logs %}
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ log.action }}</h6>
+                                <small>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            <p class="mb-1">{{ log.details }}</p>
+                            <small>By {{ log.user.username }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Communications Related to This Appointment Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-comments me-1"></i> Related Communications
+            </div>
+            <div class="card-body">
+                {% if related_communications %}
+                <div class="timeline">
+                    {% for communication in related_communications %}
+                    <div class="communication-item communication-{{ communication.type|lower }} {% if communication.direction == 'Inbound' %}communication-inbound{% else %}communication-outbound{% endif %}">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-1">
+                                {% if communication.type == 'Email' %}
+                                <i class="fas fa-envelope me-2"></i>
+                                {% elif communication.type == 'SMS' %}
+                                <i class="fas fa-sms me-2"></i>
+                                {% elif communication.type == 'Call' %}
+                                <i class="fas fa-phone me-2"></i>
+                                {% else %}
+                                <i class="fas fa-comment me-2"></i>
+                                {% endif %}
+                                {{ communication.type }} - {{ communication.direction }}
+                            </h5>
+                            <small>{{ communication.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        {% if communication.type == 'Email' and communication.subject %}
+                        <p class="mb-1"><strong>Subject:</strong> {{ communication.subject }}</p>
+                        {% endif %}
+                        <p class="mb-3">{{ communication.content|nl2br }}</p>
+                        <div class="text-muted small">
+                            <i class="fas fa-user me-1"></i> By: {{ communication.user.username if communication.user else 'System' }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No communications related to this appointment.
+                </div>
+                {% endif %}
+                <div class="text-end mt-3">
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('communications.send_email', lead_id=appointment.lead.id, appointment_id=appointment.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope"></i> Send Email
+                        </a>
+                        <a href="{{ url_for('communications.send_sms', lead_id=appointment.lead.id, appointment_id=appointment.id) }}" class="btn btn-outline-warning">
+                            <i class="fas fa-sms"></i> Send SMS
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Lead Information Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</h5>
+                <p class="mb-2">
+                    {% if appointment.lead.email %}
+                    <i class="fas fa-envelope me-1"></i> <a href="mailto:{{ appointment.lead.email }}">{{ appointment.lead.email }}</a><br>
+                    {% endif %}
+                    {% if appointment.lead.phone %}
+                    <i class="fas fa-phone me-1"></i> <a href="tel:{{ appointment.lead.phone }}">{{ appointment.lead.phone }}</a>
+                    {% endif %}
+                </p>
+                <p class="mb-1"><strong>Status:</strong> {{ appointment.lead.status }}</p>
+                <p class="mb-1"><strong>Source:</strong> {{ appointment.lead.source }}</p>
+                
+                {% if appointment.lead.vehicle_interests %}
+                <hr>
+                <h6 class="card-subtitle mb-2">Vehicle Interests</h6>
+                <ul class="list-unstyled">
+                    {% for interest in appointment.lead.vehicle_interests %}
+                    <li><i class="fas fa-car me-1"></i> {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('leads.view_lead', lead_id=appointment.lead.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-user"></i> View Full Lead Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-bolt me-1"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('appointments.update_status', appointment_id=appointment.id, status='Confirmed') }}" class="btn btn-outline-success">
+                        <i class="fas fa-check"></i> Mark as Confirmed
+                    </a>
+                    <a href="{{ url_for('appointments.update_status', appointment_id=appointment.id, status='Completed') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-check-double"></i> Mark as Completed
+                    </a>
+                    <a href="{{ url_for('appointments.update_status', appointment_id=appointment.id, status='No-Show') }}" class="btn btn-outline-danger">
+                        <i class="fas fa-times"></i> Mark as No-Show
+                    </a>
+                    <a href="{{ url_for('appointments.update_status', appointment_id=appointment.id, status='Cancelled') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-ban"></i> Mark as Cancelled
+                    </a>
+                    <a href="{{ url_for('appointments.reschedule', appointment_id=appointment.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar-alt"></i> Reschedule
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Calendar Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-calendar-day me-1"></i> Calendar
+            </div>
+            <div class="card-body">
+                <p><strong>Appointment Date:</strong></p>
+                <div class="alert alert-info text-center p-3">
+                    <h3 class="display-6 mb-0">{{ appointment.date.strftime('%b %d, %Y') }}</h3>
+                    <h4 class="mt-2 mb-0">{{ appointment.time.strftime('%I:%M %p') }}</h4>
+                </div>
+                
+                <p class="mb-2"><strong>Other Appointments on this Day:</strong></p>
+                {% if other_appointments %}
+                <ul class="list-group">
+                    {% for other in other_appointments %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center {% if other.id == appointment.id %}bg-light{% endif %}">
+                        <div>
+                            <strong>{{ other.time.strftime('%I:%M %p') }}</strong> - 
+                            <a href="{{ url_for('leads.view_lead', lead_id=other.lead.id) }}">
+                                {{ other.lead.first_name }} {{ other.lead.last_name }}
+                            </a>
+                        </div>
+                        <span class="badge bg-{{ other.status|lower }} rounded-pill">{{ other.status }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-light">
+                    <i class="fas fa-info-circle me-1"></i> No other appointments on this day.
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('appointments.day_view', date=appointment.date.strftime('%Y-%m-%d')) }}" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-day"></i> View Full Day
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

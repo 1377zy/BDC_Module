@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}View Communication - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-5 fw-bold">
+            {% if communication.type == 'Email' %}
+            <i class="fas fa-envelope"></i>
+            {% elif communication.type == 'SMS' %}
+            <i class="fas fa-sms"></i>
+            {% elif communication.type == 'Call' %}
+            <i class="fas fa-phone"></i>
+            {% else %}
+            <i class="fas fa-sticky-note"></i>
+            {% endif %}
+            {{ communication.type }} - {{ communication.direction }}
+        </h1>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="btn-group" role="group">
+            {% if communication.type == 'Email' %}
+            <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-info">
+                <i class="fas fa-reply"></i> Reply
+            </a>
+            {% elif communication.type == 'SMS' %}
+            <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-warning">
+                <i class="fas fa-reply"></i> Reply
+            </a>
+            {% endif %}
+            <a href="{{ url_for('leads.view_lead', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-user"></i> View Lead
+            </a>
+            <a href="{{ url_for('communications.list_communications') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> Back to List
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header {% if communication.type == 'Email' %}bg-info{% elif communication.type == 'SMS' %}bg-warning text-dark{% elif communication.type == 'Call' %}bg-success{% else %}bg-secondary{% endif %} {% if communication.type != 'SMS' %}text-white{% endif %}">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <i class="
+                            {% if communication.type == 'Email' %}fas fa-envelope
+                            {% elif communication.type == 'SMS' %}fas fa-sms
+                            {% elif communication.type == 'Call' %}fas fa-phone
+                            {% else %}fas fa-sticky-note{% endif %} me-1"></i>
+                        {{ communication.type }} - {{ communication.direction }}
+                    </div>
+                    <div>{{ communication.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if communication.type == 'Email' and communication.subject %}
+                <h5 class="card-title mb-3">{{ communication.subject }}</h5>
+                {% endif %}
+                
+                <div class="sender-info mb-3">
+                    <p class="mb-0">
+                        {% if communication.direction == 'Outbound' %}
+                        <strong>From:</strong> {{ communication.user.full_name if communication.user else 'System' }} ({{ communication.user.email if communication.user else 'system@example.com' }})
+                        <br>
+                        <strong>To:</strong> {{ communication.lead.first_name }} {{ communication.lead.last_name }} ({{ communication.lead.email }})
+                        {% else %}
+                        <strong>From:</strong> {{ communication.lead.first_name }} {{ communication.lead.last_name }} ({{ communication.lead.email if communication.type == 'Email' else communication.lead.phone }})
+                        <br>
+                        <strong>To:</strong> {{ communication.user.full_name if communication.user else 'Dealership' }} ({{ communication.user.email if communication.user else 'contact@example.com' }})
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <hr>
+                
+                <div class="communication-content">
+                    {% if communication.type == 'Email' %}
+                    <div class="email-body">
+                        {{ communication.content|nl2br|safe }}
+                    </div>
+                    {% else %}
+                    <div class="p-3 {% if communication.direction == 'Inbound' %}bg-light{% else %}bg-info text-white{% endif %} rounded">
+                        {{ communication.content|nl2br }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if communication.attachments %}
+                <hr>
+                <div class="attachments mt-3">
+                    <h6><i class="fas fa-paperclip me-1"></i> Attachments</h6>
+                    <ul class="list-group">
+                        {% for attachment in communication.attachments %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="
+                                    {% if attachment.mime_type.startswith('image') %}fas fa-image
+                                    {% elif attachment.mime_type.startswith('application/pdf') %}fas fa-file-pdf
+                                    {% elif attachment.mime_type.startswith('application/msword') or attachment.mime_type.startswith('application/vnd.openxmlformats-officedocument.wordprocessingml') %}fas fa-file-word
+                                    {% elif attachment.mime_type.startswith('application/vnd.ms-excel') or attachment.mime_type.startswith('application/vnd.openxmlformats-officedocument.spreadsheetml') %}fas fa-file-excel
+                                    {% else %}fas fa-file{% endif %} me-2"></i>
+                                {{ attachment.filename }}
+                                <small class="text-muted">({{ attachment.size|filesizeformat }})</small>
+                            </div>
+                            <a href="{{ url_for('communications.download_attachment', attachment_id=attachment.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer text-muted">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <small>
+                            <i class="fas fa-user me-1"></i> {{ communication.user.username if communication.user else 'System' }}
+                        </small>
+                    </div>
+                    {% if communication.type == 'Email' %}
+                    <div>
+                        <small>
+                            <i class="fas fa-check-double me-1"></i> 
+                            {% if communication.is_read %}
+                            Read on {{ communication.read_at.strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                            Not yet read
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if related_communications %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-comments me-1"></i> Related Communications
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for related in related_communications %}
+                    <a href="{{ url_for('communications.view_communication', communication_id=related.id) }}" class="list-group-item list-group-item-action {% if related.id == communication.id %}active{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if related.type == 'Email' %}
+                                <i class="fas fa-envelope me-1"></i>
+                                {% elif related.type == 'SMS' %}
+                                <i class="fas fa-sms me-1"></i>
+                                {% elif related.type == 'Call' %}
+                                <i class="fas fa-phone me-1"></i>
+                                {% else %}
+                                <i class="fas fa-sticky-note me-1"></i>
+                                {% endif %}
+                                {{ related.type }} - {{ related.direction }}
+                            </h6>
+                            <small>{{ related.timestamp.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        {% if related.type == 'Email' and related.subject %}
+                        <p class="mb-1 {% if related.id == communication.id %}text-white{% endif %}"><strong>{{ related.subject }}</strong></p>
+                        {% endif %}
+                        <p class="mb-0 small text-truncate {% if related.id == communication.id %}text-white{% endif %}">{{ related.content|truncate(100) }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Lead Information Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ communication.lead.first_name }} {{ communication.lead.last_name }}</h5>
+                <p class="mb-2">
+                    {% if communication.lead.email %}
+                    <i class="fas fa-envelope me-1"></i> <a href="mailto:{{ communication.lead.email }}">{{ communication.lead.email }}</a><br>
+                    {% endif %}
+                    {% if communication.lead.phone %}
+                    <i class="fas fa-phone me-1"></i> <a href="tel:{{ communication.lead.phone }}">{{ communication.lead.phone }}</a>
+                    {% endif %}
+                </p>
+                <p class="mb-1"><strong>Status:</strong> {{ communication.lead.status }}</p>
+                <p class="mb-1"><strong>Source:</strong> {{ communication.lead.source }}</p>
+                
+                {% if communication.lead.vehicle_interests %}
+                <hr>
+                <h6 class="card-subtitle mb-2">Vehicle Interests</h6>
+                <ul class="list-unstyled">
+                    {% for interest in communication.lead.vehicle_interests %}
+                    <li><i class="fas fa-car me-1"></i> {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('leads.view_lead', lead_id=communication.lead.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-user"></i> View Full Lead Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% if appointments %}
+        <!-- Appointments Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-alt me-1"></i> Appointments
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for appointment in appointments %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ appointment.date.strftime('%Y-%m-%d') }}</strong> at {{ appointment.time.strftime('%I:%M %p') }}
+                            {% if appointment.vehicle_interest %}
+                            <br><small>{{ appointment.vehicle_interest }}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-{{ appointment.status|lower }} rounded-pill">{{ appointment.status }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-plus"></i> Schedule Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Actions Card -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-bolt me-1"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if communication.type == 'Email' %}
+                    <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-info">
+                        <i class="fas fa-reply"></i> Reply to Email
+                    </a>
+                    {% elif communication.type == 'SMS' %}
+                    <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-reply"></i> Reply to SMS
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope"></i> Send Email
+                    </a>
+                    <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-sms"></i> Send SMS
+                    </a>
+                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=communication.lead.id) }}" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-plus"></i> Schedule Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

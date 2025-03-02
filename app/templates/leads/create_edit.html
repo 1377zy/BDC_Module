@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if lead %}Edit Lead{% else %}Add New Lead{% endif %} - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            {% if lead %}
+            <i class="fas fa-user-edit"></i> Edit Lead: {{ lead.first_name }} {{ lead.last_name }}
+            {% else %}
+            <i class="fas fa-user-plus"></i> Add New Lead
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">{{ form.first_name.label }}</label>
+                            {{ form.first_name(class="form-control", placeholder="First Name") }}
+                            {% for error in form.first_name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">{{ form.last_name.label }}</label>
+                            {{ form.last_name(class="form-control", placeholder="Last Name") }}
+                            {% for error in form.last_name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email(class="form-control", placeholder="Email") }}
+                            {% for error in form.email.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">{{ form.phone.label }}</label>
+                            {{ form.phone(class="form-control", placeholder="Phone") }}
+                            {% for error in form.phone.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="source" class="form-label">{{ form.source.label }}</label>
+                            {{ form.source(class="form-select") }}
+                            {% for error in form.source.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">{{ form.status.label }}</label>
+                            {{ form.status(class="form-select") }}
+                            {% for error in form.status.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">{{ form.notes.label }}</label>
+                        {{ form.notes(class="form-control", rows=4, placeholder="Notes about this lead") }}
+                        {% for error in form.notes.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="mb-3">
+                        <h4>Vehicle Interests</h4>
+                        <div id="vehicle-interest-forms">
+                            {% if vehicle_interest_forms %}
+                                {% for vehicle_form in vehicle_interest_forms %}
+                                <div class="card mb-3 vehicle-interest-card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label">Year</label>
+                                                {{ vehicle_form.year(class="form-control") }}
+                                                {% for error in vehicle_form.year.errors %}
+                                                <div class="text-danger small">{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label">Make</label>
+                                                {{ vehicle_form.make(class="form-control") }}
+                                                {% for error in vehicle_form.make.errors %}
+                                                <div class="text-danger small">{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label">Model</label>
+                                                {{ vehicle_form.model(class="form-control") }}
+                                                {% for error in vehicle_form.model.errors %}
+                                                <div class="text-danger small">{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label">Trim</label>
+                                                {{ vehicle_form.trim(class="form-control") }}
+                                                {% for error in vehicle_form.trim.errors %}
+                                                <div class="text-danger small">{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mt-2 text-end">
+                                                <button type="button" class="btn btn-sm btn-danger remove-vehicle">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button type="button" id="add-vehicle" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add Vehicle Interest
+                        </button>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if lead %}Update Lead{% else %}Create Lead{% endif %}
+                        </button>
+                        <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <h5>What is a Lead?</h5>
+                <p>A lead represents a potential customer interested in purchasing a vehicle from the dealership.</p>
+                <ul>
+                    <li><strong>Contact details</strong> are used for communication</li>
+                    <li><strong>Status</strong> tracks the progress of the lead through the sales funnel</li>
+                    <li><strong>Vehicle interests</strong> help understand what the customer is looking for</li>
+                </ul>
+                <h5>Tips for Lead Management</h5>
+                <ul>
+                    <li>Response time is critical - contact new leads within 15 minutes</li>
+                    <li>Record all interactions with the lead in the notes section</li>
+                    <li>Update the lead status as you progress through the sales process</li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if lead %}
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-exclamation-triangle me-1"></i> Advanced Options
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('leads.delete_lead', lead_id=lead.id) }}" class="btn btn-danger confirm-delete">
+                        <i class="fas fa-trash"></i> Delete Lead
+                    </a>
+                </div>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-exclamation-circle me-1"></i> Deleting a lead will permanently remove all of its data, including communications and appointments.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Template for adding new vehicle interest form
+        function getVehicleFormTemplate() {
+            const index = $('.vehicle-interest-card').length;
+            return `
+                <div class="card mb-3 vehicle-interest-card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Year</label>
+                                <input class="form-control" id="vehicle_interests-${index}-year" name="vehicle_interests-${index}-year" type="text" placeholder="e.g. 2023">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Make</label>
+                                <input class="form-control" id="vehicle_interests-${index}-make" name="vehicle_interests-${index}-make" type="text" placeholder="e.g. Honda">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Model</label>
+                                <input class="form-control" id="vehicle_interests-${index}-model" name="vehicle_interests-${index}-model" type="text" placeholder="e.g. Accord">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Trim</label>
+                                <input class="form-control" id="vehicle_interests-${index}-trim" name="vehicle_interests-${index}-trim" type="text" placeholder="e.g. EX-L">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mt-2 text-end">
+                                <button type="button" class="btn btn-sm btn-danger remove-vehicle">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Add vehicle interest form
+        $('#add-vehicle').click(function() {
+            $('#vehicle-interest-forms').append(getVehicleFormTemplate());
+        });
+        
+        // Remove vehicle interest form
+        $(document).on('click', '.remove-vehicle', function() {
+            $(this).closest('.vehicle-interest-card').remove();
+        });
+        
+        // If no vehicle interests, add one by default
+        if ($('.vehicle-interest-card').length === 0) {
+            $('#vehicle-interest-forms').append(getVehicleFormTemplate());
+        }
+    });
+</script>
+{% endblock %}

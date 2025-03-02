@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if appointment %}Edit Appointment{% else %}Schedule Appointment{% endif %} - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            {% if appointment %}
+            <i class="fas fa-calendar-alt"></i> Edit Appointment
+            {% else %}
+            <i class="fas fa-calendar-plus"></i> Schedule New Appointment
+            {% endif %}
+            {% if lead %}
+            for {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">{{ form.lead_id.label }}</label>
+                        {{ form.lead_id(class="form-select") }}
+                        {% for error in form.lead_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">
+                            Can't find the lead? <a href="{{ url_for('leads.create_lead') }}">Create a new one</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">{{ form.date.label }}</label>
+                            {{ form.date(class="form-control datepicker", placeholder="YYYY-MM-DD") }}
+                            {% for error in form.date.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">{{ form.time.label }}</label>
+                            {{ form.time(class="form-control", placeholder="HH:MM") }}
+                            {% for error in form.time.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="vehicle_interest" class="form-label">{{ form.vehicle_interest.label }}</label>
+                        {{ form.vehicle_interest(class="form-control", placeholder="e.g. 2023 Honda Accord EX-L") }}
+                        {% for error in form.vehicle_interest.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        {% if lead and lead.vehicle_interests %}
+                        <div class="form-text">
+                            <strong>Lead's Vehicle Interests:</strong>
+                            <ul class="list-inline mb-0">
+                                {% for interest in lead.vehicle_interests %}
+                                <li class="list-inline-item">
+                                    <a href="#" class="vehicle-interest-item">
+                                        {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">{{ form.status.label }}</label>
+                        {{ form.status(class="form-select", id="appointment-status") }}
+                        {% for error in form.status.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3" id="notes-section" {% if not appointment or appointment.status not in ['Cancelled', 'Rescheduled'] %}class="d-none"{% endif %}>
+                        <label for="notes" class="form-label">{{ form.notes.label }}</label>
+                        {{ form.notes(class="form-control", rows=3, placeholder="Any notes about this appointment") }}
+                        {% for error in form.notes.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.send_confirmation(class="form-check-input") }}
+                        <label class="form-check-label" for="send_confirmation">{{ form.send_confirmation.label }}</label>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if appointment %}Update Appointment{% else %}Schedule Appointment{% endif %}
+                        </button>
+                        <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Appointment Information
+            </div>
+            <div class="card-body">
+                <h5>Best Practices for Appointments</h5>
+                <ul>
+                    <li>Schedule appointments at least 24 hours in advance</li>
+                    <li>Allow 1-2 hours for each appointment</li>
+                    <li>Send a confirmation email and SMS after scheduling</li>
+                    <li>Call to confirm the appointment a day before</li>
+                    <li>Follow up after the appointment with a thank you message</li>
+                </ul>
+                
+                <h5>Available Times</h5>
+                <p>Dealership hours:</p>
+                <ul>
+                    <li><strong>Monday - Friday:</strong> 9:00 AM - 8:00 PM</li>
+                    <li><strong>Saturday:</strong> 9:00 AM - 6:00 PM</li>
+                    <li><strong>Sunday:</strong> 11:00 AM - 5:00 PM</li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if appointment %}
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-exclamation-triangle me-1"></i> Advanced Options
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('appointments.delete_appointment', appointment_id=appointment.id) }}" class="btn btn-danger confirm-delete">
+                        <i class="fas fa-trash"></i> Delete Appointment
+                    </a>
+                </div>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-exclamation-circle me-1"></i> Deleting an appointment will permanently remove it. Consider updating its status to "Cancelled" instead.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize date picker
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            startDate: 'today'
+        });
+        
+        // Handle appointment status changes
+        $('#appointment-status').change(function() {
+            const status = $(this).val();
+            if (status === 'Cancelled' || status === 'Rescheduled') {
+                $('#notes-section').removeClass('d-none');
+                $('#notes').attr('required', true);
+            } else {
+                $('#notes-section').addClass('d-none');
+                $('#notes').attr('required', false);
+            }
+        });
+        
+        // Click on vehicle interest to fill the field
+        $('.vehicle-interest-item').click(function(e) {
+            e.preventDefault();
+            $('#vehicle_interest').val($(this).text().trim());
+        });
+    });
+</script>
+{% endblock %}

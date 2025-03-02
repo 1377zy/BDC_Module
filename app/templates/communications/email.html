@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Email - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-envelope"></i> Send Email
+            {% if lead %}
+            to {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">{{ form.lead_id.label }}</label>
+                        {{ form.lead_id(class="form-select") }}
+                        {% for error in form.lead_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="template_id" class="form-label">{{ form.template_id.label }}</label>
+                        {{ form.template_id(class="form-select") }}
+                        {% for error in form.template_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">{{ form.subject.label }}</label>
+                        {{ form.subject(class="form-control", placeholder="Email Subject") }}
+                        {% for error in form.subject.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="body" class="form-label">{{ form.body.label }}</label>
+                        {{ form.body(class="form-control", rows=10, placeholder="Email Body") }}
+                        {% for error in form.body.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if appointment_id %}
+                    <div class="mb-3 form-check">
+                        {{ form.include_appointment_details(class="form-check-input") }}
+                        <label class="form-check-label" for="include_appointment_details">
+                            {{ form.include_appointment_details.label }}
+                        </label>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Email
+                        </button>
+                        <a href="{% if lead %}{{ url_for('leads.view_lead', lead_id=lead.id) }}{% else %}{{ url_for('communications.list_communications') }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-1"></i> Email Information
+            </div>
+            <div class="card-body">
+                <h5>Available Placeholders</h5>
+                <p>You can use the following placeholders in your email:</p>
+                <ul>
+                    <li><code>{first_name}</code> - Lead's first name</li>
+                    <li><code>{last_name}</code> - Lead's last name</li>
+                    <li><code>{email}</code> - Lead's email address</li>
+                    <li><code>{phone}</code> - Lead's phone number</li>
+                    <li><code>{agent_name}</code> - Your name</li>
+                    <li><code>{dealership_name}</code> - Dealership name</li>
+                    <li><code>{dealership_phone}</code> - Dealership phone</li>
+                    <li><code>{dealership_address}</code> - Dealership address</li>
+                    {% if appointment %}
+                    <li><code>{appointment_date}</code> - Appointment date</li>
+                    <li><code>{appointment_time}</code> - Appointment time</li>
+                    {% endif %}
+                    {% if lead and lead.vehicle_interests %}
+                    <li><code>{vehicle}</code> - Lead's vehicle of interest</li>
+                    {% endif %}
+                </ul>
+                
+                <button class="btn btn-outline-info show-placeholders">
+                    <i class="fas fa-list"></i> View All Placeholders
+                </button>
+                
+                {% if lead %}
+                <hr>
+                <h5>Lead Information</h5>
+                <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                <p><strong>Email:</strong> {{ lead.email }}</p>
+                <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if lead %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-1"></i> Previous Communications
+            </div>
+            <div class="card-body">
+                {% if previous_communications %}
+                <div class="list-group">
+                    {% for comm in previous_communications %}
+                    <a href="{{ url_for('communications.view_communication', communication_id=comm.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if comm.type == 'Email' %}
+                                <i class="fas fa-envelope me-1"></i>
+                                {% elif comm.type == 'SMS' %}
+                                <i class="fas fa-sms me-1"></i>
+                                {% else %}
+                                <i class="fas fa-comment me-1"></i>
+                                {% endif %}
+                                {{ comm.type }} - {{ comm.direction }}
+                            </h6>
+                            <small>{{ comm.timestamp.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        {% if comm.type == 'Email' and comm.subject %}
+                        <p class="mb-1 small"><strong>{{ comm.subject }}</strong></p>
+                        {% endif %}
+                        <p class="mb-0 small text-truncate">{{ comm.content|truncate(100) }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No previous communications with this lead.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Placeholder Modal -->
+<div class="modal fade" id="placeholderModal" tabindex="-1" aria-labelledby="placeholderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="placeholderModalLabel">Available Placeholders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be dynamically inserted -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle template selection
+        $('#template_id').change(function() {
+            const templateId = $(this).val();
+            if (templateId != 0) {
+                $.get(`/communications/get_template/email/${templateId}`, function(data) {
+                    $('#subject').val(data.subject);
+                    $('#body').val(data.body);
+                    
+                    {% if lead %}
+                    // If lead is selected, replace placeholders with actual data
+                    fillTemplateWithLeadData({{ lead.id }});
+                    {% endif %}
+                });
+            }
+        });
+        
+        {% if lead and previous_communications %}
+        // If this is a reply, populate the message
+        {% if reply_to %}
+        const replyId = {{ reply_to }};
+        $.get(`/communications/get_communication/${replyId}`, function(data) {
+            if (data.type === 'Email') {
+                let subject = data.subject;
+                if (!subject.startsWith('Re:')) {
+                    subject = 'Re: ' + subject;
+                }
+                $('#subject').val(subject);
+                
+                const originalMessage = data.content;
+                const replyHeader = `\n\n---- Original Message ----\nFrom: ${data.lead.first_name} ${data.lead.last_name}\nDate: ${data.timestamp}\n\n`;
+                const quotedMessage = originalMessage.split('\n').map(line => '> ' + line).join('\n');
+                
+                $('#body').val($('#body').val() + replyHeader + quotedMessage);
+            }
+        });
+        {% endif %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
