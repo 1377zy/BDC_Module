@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Matched Leads - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold mb-4"><i class="fas fa-handshake"></i> Matched Leads</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-handshake me-2"></i> Leads with High Match Potential
+            </div>
+            <div class="card-body">
+                {% if matches %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Lead</th>
+                                <th>Contact Info</th>
+                                <th>Vehicle Interest</th>
+                                <th>Match Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matches %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('leads.view_lead', lead_id=match.lead.id) }}">
+                                        {{ match.lead.first_name }} {{ match.lead.last_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div>{{ match.lead.email }}</div>
+                                    <div>{{ match.lead.phone }}</div>
+                                </td>
+                                <td>
+                                    {% for interest in match.lead.vehicle_interests %}
+                                    <div>{{ interest.year }} {{ interest.make }} {{ interest.model }}</div>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ match.score }}%" 
+                                             aria-valuenow="{{ match.score }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ match.score }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('communications.send_email', lead_id=match.lead.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-envelope"></i> Email
+                                        </a>
+                                        <a href="{{ url_for('communications.send_sms', lead_id=match.lead.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-sms"></i> SMS
+                                        </a>
+                                        <a href="{{ url_for('appointments.create_appointment', lead_id=match.lead.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-calendar-plus"></i> Schedule
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No matched leads found.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-lightbulb me-2"></i> Match Recommendations
+            </div>
+            <div class="card-body">
+                <p>The matching system analyzes lead preferences, browsing history, and vehicle interests to identify potential matches. Leads with a match score of 70% or higher are considered high-potential matches.</p>
+                
+                <h5 class="mt-4">Tips for Converting Matched Leads:</h5>
+                <ul>
+                    <li>Reach out within 24 hours of a match being identified</li>
+                    <li>Reference specific vehicles they've shown interest in</li>
+                    <li>Offer personalized incentives based on their preferences</li>
+                    <li>Schedule a test drive for their preferred vehicle</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}System Preferences - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold mb-4"><i class="fas fa-cogs"></i> System Preferences</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-sliders-h me-2"></i> BDC System Settings
+            </div>
+            <div class="card-body">
+                <form id="preferences-form" method="POST">
+                    <div class="mb-4">
+                        <h5><i class="fas fa-bell me-2"></i> Notification Settings</h5>
+                        <hr>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="email_notifications" name="email_notifications" 
+                                {% if preferences.email_notifications %}checked{% endif %}>
+                            <label class="form-check-label" for="email_notifications">Email Notifications</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="sms_notifications" name="sms_notifications"
+                                {% if preferences.sms_notifications %}checked{% endif %}>
+                            <label class="form-check-label" for="sms_notifications">SMS Notifications</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="appointment_reminders" name="appointment_reminders"
+                                {% if preferences.appointment_reminders %}checked{% endif %}>
+                            <label class="form-check-label" for="appointment_reminders">Appointment Reminders</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5><i class="fas fa-calendar-alt me-2"></i> Appointment Settings</h5>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="appointment_buffer" class="form-label">Minimum Time Between Appointments (minutes)</label>
+                            <input type="number" class="form-control" id="appointment_buffer" name="appointment_buffer" 
+                                value="{{ preferences.appointment_buffer or 30 }}" min="0" max="120">
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminder_time" class="form-label">Send Appointment Reminders (hours before)</label>
+                            <input type="number" class="form-control" id="reminder_time" name="reminder_time" 
+                                value="{{ preferences.reminder_time or 24 }}" min="1" max="72">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5><i class="fas fa-users me-2"></i> Lead Management</h5>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="lead_follow_up_days" class="form-label">Default Follow-up Time (days)</label>
+                            <input type="number" class="form-control" id="lead_follow_up_days" name="lead_follow_up_days" 
+                                value="{{ preferences.lead_follow_up_days or 3 }}" min="1" max="30">
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="auto_assign_leads" name="auto_assign_leads"
+                                {% if preferences.auto_assign_leads %}checked{% endif %}>
+                            <label class="form-check-label" for="auto_assign_leads">Auto-assign New Leads</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5><i class="fas fa-chart-pie me-2"></i> Dashboard Settings</h5>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="dashboard_timeframe" class="form-label">Default Dashboard Timeframe</label>
+                            <select class="form-select" id="dashboard_timeframe" name="dashboard_timeframe">
+                                <option value="day" {% if preferences.dashboard_timeframe == 'day' %}selected{% endif %}>Today</option>
+                                <option value="week" {% if preferences.dashboard_timeframe == 'week' %}selected{% endif %}>This Week</option>
+                                <option value="month" {% if preferences.dashboard_timeframe == 'month' %}selected{% endif %}>This Month</option>
+                                <option value="quarter" {% if preferences.dashboard_timeframe == 'quarter' %}selected{% endif %}>This Quarter</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('preferences-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        
+        for (const [key, value] of formData.entries()) {
+            if (key.includes('_notifications') || key.includes('auto_assign_leads')) {
+                data[key] = value === 'on';
+            } else {
+                data[key] = value;
+            }
+        }
+        
+        fetch('{{ url_for("main.preferences") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show success message
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success alert-dismissible fade show';
+                alert.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i> Preferences saved successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                document.querySelector('.card-body').prepend(alert);
+                
+                // Auto-dismiss after 3 seconds
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 3000);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Show error message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show';
+            alert.innerHTML = `
+                <i class="fas fa-exclamation-circle me-2"></i> An error occurred while saving preferences.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.querySelector('.card-body').prepend(alert);
+        });
+    });
+</script>
+{% endblock %}
