@@ -1,5 +1,6 @@
 from app import create_app, db
 from app.models import User, Lead, VehicleInterest, Communication, Appointment, EmailTemplate, SMSTemplate
+from app.models.car import Car, CarImage, Match, UserPreference
 from datetime import datetime, timedelta, time
 from werkzeug.security import generate_password_hash
 import random
@@ -17,6 +18,123 @@ def init_db():
             db.session.add(user)
             db.session.commit()
             print("Admin user created")
+        
+        # Create sample cars if none exist
+        if Car.query.count() == 0:
+            # Sample car data
+            sample_cars = [
+                {
+                    'make': 'Toyota', 
+                    'model': 'Camry', 
+                    'year': 2023, 
+                    'trim': 'XSE', 
+                    'color': 'Silver', 
+                    'price': 32999.00, 
+                    'mileage': 0, 
+                    'vin': 'ABC123456789XYZ01', 
+                    'status': 'Available',
+                    'description': 'Brand new Toyota Camry with all the latest features. Includes Toyota Safety Sense, Apple CarPlay, and Android Auto.',
+                    'features': 'Leather Seats, Sunroof, Navigation, Bluetooth, Backup Camera',
+                    'new_or_used': 'New',
+                    'body_style': 'Sedan',
+                    'transmission': 'Automatic',
+                    'fuel_type': 'Gasoline'
+                },
+                {
+                    'make': 'Honda', 
+                    'model': 'Accord', 
+                    'year': 2022, 
+                    'trim': 'Sport', 
+                    'color': 'Black', 
+                    'price': 28999.00, 
+                    'mileage': 12500, 
+                    'vin': 'DEF123456789XYZ02', 
+                    'status': 'Available',
+                    'description': 'Low mileage Honda Accord Sport. One owner, clean history.',
+                    'features': 'Cloth Seats, Sunroof, Apple CarPlay, Android Auto, Backup Camera',
+                    'new_or_used': 'Used',
+                    'body_style': 'Sedan',
+                    'transmission': 'Automatic',
+                    'fuel_type': 'Gasoline'
+                },
+                {
+                    'make': 'Ford', 
+                    'model': 'F-150', 
+                    'year': 2023, 
+                    'trim': 'Lariat', 
+                    'color': 'Blue', 
+                    'price': 52999.00, 
+                    'mileage': 0, 
+                    'vin': 'GHI123456789XYZ03', 
+                    'status': 'Available',
+                    'description': 'New Ford F-150 Lariat with 3.5L EcoBoost engine. Includes Ford Co-Pilot360 and SYNC 4.',
+                    'features': 'Leather Seats, Navigation, Trailer Tow Package, 360-Degree Camera',
+                    'new_or_used': 'New',
+                    'body_style': 'Truck',
+                    'transmission': 'Automatic',
+                    'fuel_type': 'Gasoline'
+                },
+                {
+                    'make': 'Chevrolet', 
+                    'model': 'Silverado', 
+                    'year': 2021, 
+                    'trim': 'LT', 
+                    'color': 'Red', 
+                    'price': 39999.00, 
+                    'mileage': 25000, 
+                    'vin': 'JKL123456789XYZ04', 
+                    'status': 'Available',
+                    'description': 'Well-maintained Chevrolet Silverado with towing package. Perfect for work or play.',
+                    'features': 'Cloth Seats, Towing Package, Bluetooth, Backup Camera',
+                    'new_or_used': 'Used',
+                    'body_style': 'Truck',
+                    'transmission': 'Automatic',
+                    'fuel_type': 'Gasoline'
+                },
+                {
+                    'make': 'Tesla', 
+                    'model': 'Model 3', 
+                    'year': 2023, 
+                    'trim': 'Long Range', 
+                    'color': 'White', 
+                    'price': 48999.00, 
+                    'mileage': 0, 
+                    'vin': 'MNO123456789XYZ05', 
+                    'status': 'Available',
+                    'description': 'Brand new Tesla Model 3 Long Range. Includes Autopilot and premium interior.',
+                    'features': 'Vegan Leather Seats, Glass Roof, Autopilot, Premium Sound System',
+                    'new_or_used': 'New',
+                    'body_style': 'Sedan',
+                    'transmission': 'Electric',
+                    'fuel_type': 'Electric'
+                }
+            ]
+            
+            # Create cars and sample images
+            for car_data in sample_cars:
+                car = Car(**car_data)
+                db.session.add(car)
+                db.session.flush()  # Get ID before commit
+                
+                # Add a primary image
+                primary_image = CarImage(
+                    car_id=car.id,
+                    url=f"https://example.com/images/{car.make.lower()}_{car.model.lower()}_1.jpg",
+                    is_primary=True
+                )
+                db.session.add(primary_image)
+                
+                # Add additional images
+                for i in range(2, 5):
+                    image = CarImage(
+                        car_id=car.id,
+                        url=f"https://example.com/images/{car.make.lower()}_{car.model.lower()}_{i}.jpg",
+                        is_primary=False
+                    )
+                    db.session.add(image)
+            
+            db.session.commit()
+            print("Sample cars created")
         
         # Create email templates
         if EmailTemplate.query.count() == 0:

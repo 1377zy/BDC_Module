@@ -8,15 +8,34 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    phone = db.Column(db.String(20))
+    role = db.Column(db.String(20), default='bdc_agent')  # bdc_agent, manager, admin
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-        
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+    # Relationships
+    leads = db.relationship('Lead', backref='assigned_to', lazy='dynamic')
+    appointments = db.relationship('Appointment', backref='scheduled_by', lazy='dynamic')
+    communications = db.relationship('Communication', backref='sent_by', lazy='dynamic')
+    
+    # Car preferences (for the car matching functionality)
+    preferences = db.relationship('UserPreference', backref='user', uselist=False)
+    car_matches = db.relationship('Match', backref='user', lazy='dynamic')
     
     def __repr__(self):
         return f'<User {self.username}>'
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
 
 @login.user_loader
 def load_user(id):
