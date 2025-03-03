@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}User Profile - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold mb-4"><i class="fas fa-user-circle"></i> User Profile</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body text-center">
+                <img src="{{ user.profile_image }}" alt="Profile Image" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                <h3 class="card-title">{{ user.first_name }} {{ user.last_name }}</h3>
+                <p class="text-muted">{{ user.role }}</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle"></i> Account Information
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Username</label>
+                    <p class="form-control-plaintext">{{ user.username }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Email</label>
+                    <p class="form-control-plaintext">{{ user.email }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Phone</label>
+                    <p class="form-control-plaintext">{{ user.phone }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Account Created</label>
+                    <p class="form-control-plaintext">{{ user.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-muted">Last Login</label>
+                    <p class="form-control-plaintext">{{ user.last_login.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-line"></i> Activity Statistics
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ activity.leads_added }}</h3>
+                            <p class="mb-0 text-muted">Leads Added</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ activity.appointments_scheduled }}</h3>
+                            <p class="mb-0 text-muted">Appointments</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ activity.conversion_rate }}%</h3>
+                            <p class="mb-0 text-muted">Conversion Rate</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ activity.emails_sent }}</h3>
+                            <p class="mb-0 text-muted">Emails Sent</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 border rounded">
+                            <h3>{{ activity.sms_sent }}</h3>
+                            <p class="mb-0 text-muted">SMS Sent</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-history"></i> Recent Activity
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for activity in recent_activity %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if activity.type == 'appointment' %}
+                                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                {% elif activity.type == 'email' %}
+                                <i class="fas fa-envelope text-success me-2"></i>
+                                {% elif activity.type == 'lead' %}
+                                <i class="fas fa-user-plus text-warning me-2"></i>
+                                {% elif activity.type == 'sms' %}
+                                <i class="fas fa-sms text-info me-2"></i>
+                                {% elif activity.type == 'note' %}
+                                <i class="fas fa-sticky-note text-secondary me-2"></i>
+                                {% endif %}
+                                {{ activity.description }}
+                            </h6>
+                            <small class="text-muted">{{ activity.timestamp.strftime('%I:%M %p') }}</small>
+                        </div>
+                        <small class="text-muted">{{ activity.timestamp.strftime('%B %d, %Y') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="#" class="btn btn-outline-primary btn-sm">View All Activity</a>
+            </div>
+        </div>
+        
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-cog"></i> Preferences
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                        <label class="form-check-label" for="emailNotifications">Email Notifications</label>
+                    </div>
+                    <small class="text-muted">Receive email notifications for new leads and appointments</small>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="smsNotifications">
+                        <label class="form-check-label" for="smsNotifications">SMS Notifications</label>
+                    </div>
+                    <small class="text-muted">Receive SMS notifications for urgent matters</small>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="darkMode">
+                        <label class="form-check-label" for="darkMode">Dark Mode</label>
+                    </div>
+                    <small class="text-muted">Use dark theme for the interface</small>
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-primary">Save Preferences</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="firstName" value="{{ user.first_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="lastName" value="{{ user.last_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{ user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control" id="phone" value="{{ user.phone }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="profileImage" class="form-label">Profile Image</label>
+                        <input type="file" class="form-control" id="profileImage">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

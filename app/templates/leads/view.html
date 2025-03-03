@@ -12,18 +12,42 @@
     </div>
     <div class="col-md-4 text-md-end">
         <div class="btn-group" role="group">
-            <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
+            <a href="/leads/edit/{{ lead.id }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit"></i> Edit Lead
             </a>
-            <a href="{{ url_for('communications.send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
+            <a href="/communications/email?lead_id={{ lead.id }}" class="btn btn-outline-info">
                 <i class="fas fa-envelope"></i> Send Email
             </a>
-            <a href="{{ url_for('communications.send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
+            <a href="/communications/sms?lead_id={{ lead.id }}" class="btn btn-outline-warning">
                 <i class="fas fa-sms"></i> Send SMS
             </a>
-            <a href="{{ url_for('appointments.schedule_appointment', lead_id=lead.id) }}" class="btn btn-outline-success">
+            <a href="/appointments/add?lead_id={{ lead.id }}" class="btn btn-outline-success">
                 <i class="fas fa-calendar-plus"></i> Schedule Appointment
             </a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteLeadModal">
+                <i class="fas fa-trash"></i> Delete Lead
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Lead Modal -->
+<div class="modal fade" id="deleteLeadModal" tabindex="-1" aria-labelledby="deleteLeadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteLeadModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong>{{ lead.first_name }} {{ lead.last_name }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="/leads/delete/{{ lead.id }}" method="post">
+                    <button type="submit" class="btn btn-danger">Delete Lead</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -52,64 +76,20 @@
                             <span class="text-muted">Not provided</span>
                             {% endif %}
                         </p>
-                        <p><strong><i class="fas fa-tag me-2"></i> Source:</strong> {{ lead.source }}</p>
+                        <p><strong><i class="fas fa-tag me-2"></i> Status:</strong> {{ lead.status }}</p>
                     </div>
                     <div class="col-md-6">
                         <p><strong><i class="fas fa-calendar me-2"></i> Created:</strong> {{ lead.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                        <p><strong><i class="fas fa-clock me-2"></i> Last Updated:</strong> {{ lead.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                        <p><strong><i class="fas fa-user me-2"></i> Assigned To:</strong> 
-                            {% if lead.assigned_to %}
-                            {{ lead.assigned_to.username }}
-                            {% else %}
-                            <span class="text-muted">Unassigned</span>
-                            {% endif %}
-                        </p>
+                        <p><strong><i class="fas fa-car me-2"></i> Vehicle Interest:</strong> {{ lead.vehicle_interest|default('Not specified') }}</p>
                     </div>
                 </div>
                 
                 {% if lead.notes %}
                 <div class="mt-3">
                     <h5 class="card-title"><i class="fas fa-sticky-note me-2"></i> Notes</h5>
-                    <div class="p-3 bg-light rounded">{{ lead.notes|nl2br }}</div>
+                    <div class="p-3 bg-light rounded">{{ lead.notes|default('No notes available') }}</div>
                 </div>
                 {% endif %}
-            </div>
-        </div>
-        
-        <!-- Vehicle Interests Card -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-car me-1"></i> Vehicle Interests
-            </div>
-            <div class="card-body">
-                {% if lead.vehicle_interests %}
-                <div class="row">
-                    {% for interest in lead.vehicle_interests %}
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ interest.year }} {{ interest.make }} {{ interest.model }}</h5>
-                                {% if interest.trim %}
-                                <h6 class="card-subtitle mb-2 text-muted">{{ interest.trim }}</h6>
-                                {% endif %}
-                                <div class="mt-2">
-                                    <small class="text-muted">Added on {{ interest.created_at.strftime('%Y-%m-%d') }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-1"></i> No vehicle interests recorded for this lead.
-                </div>
-                {% endif %}
-                <div class="text-end mt-3">
-                    <a href="{{ url_for('leads.add_vehicle_interest', lead_id=lead.id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-plus"></i> Add Vehicle Interest
-                    </a>
-                </div>
             </div>
         </div>
         
@@ -122,7 +102,7 @@
                 {% if communications %}
                 <div class="timeline">
                     {% for communication in communications %}
-                    <div class="communication-item communication-{{ communication.type|lower }} {% if communication.direction == 'Inbound' %}communication-inbound{% else %}communication-outbound{% endif %}">
+                    <div class="communication-item communication-{{ communication.type|lower }}">
                         <div class="d-flex justify-content-between">
                             <h5 class="mb-1">
                                 {% if communication.type == 'Email' %}
@@ -134,17 +114,11 @@
                                 {% else %}
                                 <i class="fas fa-comment me-2"></i>
                                 {% endif %}
-                                {{ communication.type }} - {{ communication.direction }}
+                                {{ communication.type }}
                             </h5>
-                            <small>{{ communication.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <small>{{ communication.sent_at.strftime('%Y-%m-%d %H:%M') }}</small>
                         </div>
-                        {% if communication.type == 'Email' and communication.subject %}
-                        <p class="mb-1"><strong>Subject:</strong> {{ communication.subject }}</p>
-                        {% endif %}
-                        <p class="mb-3">{{ communication.content|nl2br }}</p>
-                        <div class="text-muted small">
-                            <i class="fas fa-user me-1"></i> By: {{ communication.user.username if communication.user else 'System' }}
-                        </div>
+                        <p class="mb-3">{{ communication.content }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -155,13 +129,13 @@
                 {% endif %}
                 <div class="text-end mt-3">
                     <div class="btn-group" role="group">
-                        <a href="{{ url_for('communications.send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
+                        <a href="/communications/email?lead_id={{ lead.id }}" class="btn btn-outline-info">
                             <i class="fas fa-envelope"></i> Send Email
                         </a>
-                        <a href="{{ url_for('communications.send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
+                        <a href="/communications/sms?lead_id={{ lead.id }}" class="btn btn-outline-warning">
                             <i class="fas fa-sms"></i> Send SMS
                         </a>
-                        <a href="{{ url_for('communications.add_communication', lead_id=lead.id) }}" class="btn btn-outline-secondary">
+                        <a href="/communications/call?lead_id={{ lead.id }}" class="btn btn-outline-secondary">
                             <i class="fas fa-plus"></i> Log Communication
                         </a>
                     </div>
@@ -180,16 +154,13 @@
                 {% if appointments %}
                 <div class="list-group mb-3">
                     {% for appointment in appointments %}
-                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action appointment-card appointment-{{ appointment.status|lower }}">
+                    <a href="#" class="list-group-item list-group-item-action appointment-card appointment-{{ appointment.status|lower }}">
                         <div class="d-flex w-100 justify-content-between">
                             <h5 class="mb-1">{{ appointment.date.strftime('%Y-%m-%d') }} at {{ appointment.time.strftime('%I:%M %p') }}</h5>
                             <span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span>
                         </div>
-                        {% if appointment.vehicle_interest %}
-                        <p class="mb-1"><i class="fas fa-car me-1"></i> {{ appointment.vehicle_interest }}</p>
-                        {% endif %}
-                        {% if appointment.notes %}
-                        <p class="mb-0 small text-muted">{{ appointment.notes|truncate(100) }}</p>
+                        {% if appointment.purpose %}
+                        <p class="mb-1"><i class="fas fa-car me-1"></i> {{ appointment.purpose }}</p>
                         {% endif %}
                     </a>
                     {% endfor %}
@@ -200,43 +171,10 @@
                 </div>
                 {% endif %}
                 <div class="d-grid">
-                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=lead.id) }}" class="btn btn-success">
+                    <a href="/appointments/add?lead_id={{ lead.id }}" class="btn btn-success">
                         <i class="fas fa-calendar-plus"></i> Schedule New Appointment
                     </a>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Follow-up Card -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-warning text-dark">
-                <i class="fas fa-clock me-1"></i> Follow-up
-            </div>
-            <div class="card-body">
-                {% if follow_up %}
-                <div class="mb-3">
-                    <h5 class="card-title">Next Follow-up</h5>
-                    <p><strong>Date:</strong> {{ follow_up.follow_up_date.strftime('%Y-%m-%d') }}</p>
-                    <p><strong>Notes:</strong> {{ follow_up.notes }}</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('leads.edit_follow_up', lead_id=lead.id) }}" class="btn btn-warning">
-                            <i class="fas fa-edit"></i> Edit Follow-up
-                        </a>
-                        <a href="{{ url_for('leads.complete_follow_up', lead_id=lead.id) }}" class="btn btn-outline-success">
-                            <i class="fas fa-check"></i> Mark as Completed
-                        </a>
-                    </div>
-                </div>
-                {% else %}
-                <div class="alert alert-info mb-3">
-                    <i class="fas fa-info-circle me-1"></i> No follow-up scheduled for this lead.
-                </div>
-                <div class="d-grid">
-                    <a href="{{ url_for('leads.set_follow_up', lead_id=lead.id) }}" class="btn btn-warning">
-                        <i class="fas fa-plus"></i> Set Follow-up Reminder
-                    </a>
-                </div>
-                {% endif %}
             </div>
         </div>
         
@@ -247,17 +185,14 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
+                    <a href="/leads/edit/{{ lead.id }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit"></i> Edit Lead Information
                     </a>
-                    <a href="{{ url_for('leads.update_status', lead_id=lead.id) }}" class="btn btn-outline-secondary">
+                    <a href="/leads/update-status/{{ lead.id }}" class="btn btn-outline-secondary">
                         <i class="fas fa-tag"></i> Update Status
                     </a>
-                    <a href="{{ url_for('leads.assign_lead', lead_id=lead.id) }}" class="btn btn-outline-dark">
-                        <i class="fas fa-user-tag"></i> Assign Lead
-                    </a>
-                    <a href="{{ url_for('leads.delete_lead', lead_id=lead.id) }}" class="btn btn-outline-danger confirm-delete">
-                        <i class="fas fa-trash"></i> Delete Lead
+                    <a href="/leads" class="btn btn-outline-dark">
+                        <i class="fas fa-arrow-left"></i> Back to Leads
                     </a>
                 </div>
             </div>

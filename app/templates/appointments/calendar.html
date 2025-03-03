@@ -52,10 +52,10 @@
     </div>
     <div class="col-md-6 text-md-end">
         <div class="btn-group">
-            <a href="{{ url_for('appointments.schedule_appointment') }}" class="btn btn-outline-primary">
+            <a href="{{ url_for('add_appointment') }}" class="btn btn-outline-primary">
                 <i class="fas fa-plus"></i> Schedule Appointment
             </a>
-            <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-list"></i> List View
             </a>
             <button id="print-calendar" class="btn btn-outline-info">
@@ -145,7 +145,7 @@
                 {% if today_appointments %}
                 <div class="list-group">
                     {% for appointment in today_appointments %}
-                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ appointment.time.strftime('%I:%M %p') }}</h6>
                             <span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span>
@@ -164,10 +164,10 @@
                 {% endif %}
                 
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('appointments.schedule_appointment') }}" class="btn btn-outline-primary">
+                    <a href="{{ url_for('add_appointment') }}" class="btn btn-outline-primary">
                         <i class="fas fa-plus"></i> Schedule New
                     </a>
-                    <a href="{{ url_for('appointments.day_view', date=today.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('day_view', date=today.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
                         <i class="fas fa-calendar-day"></i> Day View
                     </a>
                 </div>
@@ -210,7 +210,7 @@
                     <h5>Upcoming Available Slots</h5>
                     <div class="list-group">
                         {% for slot in available_slots %}
-                        <a href="{{ url_for('appointments.schedule_appointment', date=slot.date, time=slot.time) }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('add_appointment', date=slot.date, time=slot.time) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-0">{{ slot.day_of_week }}</h6>
                                 <small>{{ slot.date }}</small>

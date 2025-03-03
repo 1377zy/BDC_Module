@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Call - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-phone-alt"></i> Log Call
+            {% if lead %}
+            with {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post" action="/communications/call">
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select class="form-select" id="lead_id" name="lead_id">
+                            <option value="">Select a lead...</option>
+                            {% for lead in leads_data %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Call Duration (minutes)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" min="1" value="5">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="call_outcome" class="form-label">Call Outcome</label>
+                        <select class="form-select" id="call_outcome" name="call_outcome">
+                            <option value="Interested">Interested</option>
+                            <option value="Not Interested">Not Interested</option>
+                            <option value="Call Back">Call Back</option>
+                            <option value="Left Voicemail">Left Voicemail</option>
+                            <option value="No Answer">No Answer</option>
+                            <option value="Wrong Number">Wrong Number</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Call Notes</label>
+                        <textarea class="form-control" id="content" name="content" rows="5" placeholder="Enter notes about the call..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Call Log
+                        </button>
+                        <a href="{% if lead %}/leads/{{ lead.id }}{% else %}/leads{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if lead %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-user me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                <p><strong>Email:</strong> {{ lead.email }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                <p><strong>Vehicle Interest:</strong> {{ lead.vehicle_interest }}</p>
+                <p><strong>Notes:</strong> {{ lead.notes }}</p>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-1"></i> Previous Calls
+            </div>
+            <div class="card-body">
+                {% set previous_calls = communications_data|selectattr('lead_id', 'equalto', lead.id)|selectattr('type', 'equalto', 'Call')|list %}
+                {% if previous_calls %}
+                <div class="list-group">
+                    {% for call in previous_calls %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-phone-alt me-1"></i> {{ call.call_outcome }}
+                            </h6>
+                            <small>{{ call.sent_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1 small">Duration: {{ call.duration }} minutes</p>
+                        <p class="mb-0 small">{{ call.content }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No previous calls with this lead.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-lightbulb me-1"></i> Call Tips
+            </div>
+            <div class="card-body">
+                <h5>Effective Call Strategies</h5>
+                <ul>
+                    <li>Introduce yourself clearly and state the purpose of your call</li>
+                    <li>Ask open-ended questions to understand the customer's needs</li>
+                    <li>Listen actively and take detailed notes</li>
+                    <li>Always schedule a next step or follow-up</li>
+                    <li>End the call by summarizing what was discussed</li>
+                </ul>
+                
+                <h5>Common Questions to Ask</h5>
+                <ul>
+                    <li>What features are most important to you in a vehicle?</li>
+                    <li>What is your timeline for purchasing?</li>
+                    <li>Are you considering a trade-in?</li>
+                    <li>Would you like to schedule a test drive?</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

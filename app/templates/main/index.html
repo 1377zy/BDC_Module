@@ -11,32 +11,40 @@
 
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="stat-card bg-primary text-white">
-            <i class="fas fa-users fa-3x"></i>
-            <div class="stat-number">{{ stats.total_leads }}</div>
-            <div class="stat-label">Total Leads</div>
-        </div>
+        <a href="{{ url_for('leads') }}" class="text-decoration-none">
+            <div class="stat-card bg-primary">
+                <i class="fas fa-users fa-3x text-white"></i>
+                <div class="stat-number text-white">{{ stats.total_leads }}</div>
+                <div class="stat-label text-white">Total Leads</div>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="stat-card bg-success text-white">
-            <i class="fas fa-calendar-check fa-3x"></i>
-            <div class="stat-number">{{ stats.total_appointments }}</div>
-            <div class="stat-label">Total Appointments</div>
-        </div>
+        <a href="{{ url_for('appointments') }}" class="text-decoration-none">
+            <div class="stat-card bg-success">
+                <i class="fas fa-calendar-check fa-3x text-white"></i>
+                <div class="stat-number text-white">{{ stats.total_appointments }}</div>
+                <div class="stat-label text-white">Total Appointments</div>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="stat-card bg-warning text-dark">
-            <i class="fas fa-calendar-day fa-3x"></i>
-            <div class="stat-number">{{ stats.todays_appointments }}</div>
-            <div class="stat-label">Today's Appointments</div>
-        </div>
+        <a href="{{ url_for('appointments_calendar') }}" class="text-decoration-none">
+            <div class="stat-card bg-warning">
+                <i class="fas fa-calendar-day fa-3x text-dark"></i>
+                <div class="stat-number text-dark">{{ stats.todays_appointments }}</div>
+                <div class="stat-label text-dark">Today's Appointments</div>
+            </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="stat-card bg-info text-white">
-            <i class="fas fa-comments fa-3x"></i>
-            <div class="stat-number">{{ stats.total_communications }}</div>
-            <div class="stat-label">Total Communications</div>
-        </div>
+        <a href="{{ url_for('communications') }}" class="text-decoration-none">
+            <div class="stat-card bg-info">
+                <i class="fas fa-comments fa-3x text-white"></i>
+                <div class="stat-number text-white">{{ stats.communications_today }}</div>
+                <div class="stat-label text-white">Today's Communications</div>
+            </div>
+        </a>
     </div>
 </div>
 
@@ -49,16 +57,16 @@
             <div class="card-body">
                 {% if today_appointments %}
                 <div class="list-group">
-                    {% for appointment in today_appointments %}
-                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    {% for apt in today_appointments %}
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="mb-1">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</h5>
-                            <p class="mb-1"><i class="far fa-clock me-1"></i> {{ appointment.time.strftime('%I:%M %p') }}</p>
-                            {% if appointment.vehicle_interest %}
-                            <small><i class="fas fa-car me-1"></i> {{ appointment.vehicle_interest }}</small>
+                            <h5 class="mb-1">{{ apt.lead.first_name }} {{ apt.lead.last_name }}</h5>
+                            <p class="mb-1"><i class="far fa-clock me-1"></i> {{ apt.appointment.time.strftime('%H:%M') }}</p>
+                            {% if apt.lead.vehicle_interest %}
+                            <small><i class="fas fa-car me-1"></i> {{ apt.lead.vehicle_interest }}</small>
                             {% endif %}
                         </div>
-                        <span class="badge bg-{{ appointment.status|lower }} rounded-pill">{{ appointment.status }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ apt.appointment.status }}</span>
                     </a>
                     {% endfor %}
                 </div>
@@ -68,7 +76,7 @@
                 </div>
                 {% endif %}
                 <div class="d-grid mt-3">
-                    <a href="{{ url_for('appointments.today_appointments') }}" class="btn btn-outline-primary">View All Today's Appointments</a>
+                    <a href="{{ url_for('appointments') }}" class="btn btn-outline-primary">View All Appointments</a>
                 </div>
             </div>
         </div>
@@ -82,7 +90,7 @@
                 {% if recent_leads %}
                 <div class="list-group">
                     {% for lead in recent_leads %}
-                    <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h5>
                             <p class="mb-1">
@@ -93,18 +101,11 @@
                                 <i class="fas fa-envelope ms-2 me-1"></i> {{ lead.email }}
                                 {% endif %}
                             </p>
-                            {% if lead.vehicle_interests %}
-                            <small><i class="fas fa-car me-1"></i> 
-                                {% for interest in lead.vehicle_interests[:1] %}
-                                {{ interest.make }} {{ interest.model }}
-                                {% endfor %}
-                                {% if lead.vehicle_interests|length > 1 %}
-                                and {{ lead.vehicle_interests|length - 1 }} more
-                                {% endif %}
-                            </small>
+                            {% if lead.vehicle_interest %}
+                            <small><i class="fas fa-car me-1"></i> {{ lead.vehicle_interest }}</small>
                             {% endif %}
                         </div>
-                        <span class="badge bg-{{ lead.status|lower }} rounded-pill">{{ lead.status }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ lead.status }}</span>
                     </a>
                     {% endfor %}
                 </div>
@@ -114,152 +115,10 @@
                 </div>
                 {% endif %}
                 <div class="d-grid mt-3">
-                    <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-success">View All Leads</a>
+                    <a href="{{ url_for('leads') }}" class="btn btn-outline-success">View All Leads</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card dashboard-card">
-            <div class="card-header bg-warning text-dark">
-                <i class="fas fa-tasks me-2"></i> Tasks & Followups
-            </div>
-            <div class="card-body">
-                {% if follow_ups %}
-                <div class="list-group">
-                    {% for follow_up in follow_ups %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{ follow_up.lead.first_name }} {{ follow_up.lead.last_name }}</h5>
-                            <small>{{ follow_up.follow_up_date.strftime('%Y-%m-%d') }}</small>
-                        </div>
-                        <p class="mb-1">{{ follow_up.notes }}</p>
-                        <div class="btn-group mt-2" role="group">
-                            <a href="{{ url_for('leads.view_lead', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">View Lead</a>
-                            <a href="{{ url_for('communications.send_email', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">Send Email</a>
-                            <a href="{{ url_for('communications.send_sms', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">Send SMS</a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i> No follow-ups scheduled for today.
-                </div>
-                {% endif %}
-                <div class="d-grid mt-3">
-                    <a href="{{ url_for('leads.follow_ups') }}" class="btn btn-outline-warning">View All Follow-ups</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card dashboard-card">
-            <div class="card-header bg-info text-white">
-                <i class="fas fa-chart-line me-2"></i> Performance Summary
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-body text-center">
-                                <h6 class="card-title text-muted">Conversion Rate</h6>
-                                <h2 class="display-4">{{ stats.conversion_rate }}%</h2>
-                                <p class="card-text small">Leads to Appointments</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-body text-center">
-                                <h6 class="card-title text-muted">Response Time</h6>
-                                <h2 class="display-4">{{ stats.avg_response_time }}</h2>
-                                <p class="card-text small">Average (hours)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Lead Status Breakdown</h5>
-                        <div class="progress" style="height: 30px;">
-                            {% for status, percent in stats.lead_status_breakdown.items() %}
-                            <div class="progress-bar bg-{{ status|lower }}" role="progressbar" 
-                                 style="width: {{ percent }}%" 
-                                 aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
-                                {{ status }} ({{ percent }}%)
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card dashboard-card">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-calendar-week me-2"></i> This Week's Appointments
-            </div>
-            <div class="card-body">
-                {% if week_appointments %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th scope="col">Date & Time</th>
-                                <th scope="col">Lead</th>
-                                <th scope="col">Vehicle Interest</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for appointment in week_appointments %}
-                            <tr>
-                                <td>{{ appointment.date.strftime('%Y-%m-%d') }} at {{ appointment.time.strftime('%I:%M %p') }}</td>
-                                <td><a href="{{ url_for('leads.view_lead', lead_id=appointment.lead.id) }}">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</a></td>
-                                <td>{{ appointment.vehicle_interest or 'N/A' }}</td>
-                                <td><span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span></td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="btn btn-sm btn-outline-primary">View</a>
-                                        <a href="{{ url_for('appointments.edit_appointment', appointment_id=appointment.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                        <a href="{{ url_for('communications.send_email', lead_id=appointment.lead.id) }}" class="btn btn-sm btn-outline-info">Email</a>
-                                        <a href="{{ url_for('communications.send_sms', lead_id=appointment.lead.id) }}" class="btn btn-sm btn-outline-warning">SMS</a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> No appointments scheduled for this week.
-                </div>
-                {% endif %}
-                <div class="d-grid mt-3">
-                    <a href="{{ url_for('appointments.week_appointments') }}" class="btn btn-outline-primary">View All This Week's Appointments</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // Example of a simple chart using Chart.js
-        // You could add Chart.js library to implement real charts
-        console.log('Dashboard loaded');
-    });
-</script>
 {% endblock %}

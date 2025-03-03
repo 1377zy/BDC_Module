@@ -9,54 +9,9 @@
     </div>
     <div class="col-md-6 text-md-end">
         <div class="btn-group">
-            <a href="{{ url_for('templates.create_template', type='email') }}" class="btn btn-outline-info">
-                <i class="fas fa-envelope"></i> New Email Template
+            <a href="/templates/add" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> New Template
             </a>
-            <a href="{{ url_for('templates.create_template', type='sms') }}" class="btn btn-outline-warning">
-                <i class="fas fa-sms"></i> New SMS Template
-            </a>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form action="{{ url_for('templates.list_templates') }}" method="get" class="mb-0">
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <label for="type" class="form-label">Type</label>
-                            <select name="type" id="type" class="form-select">
-                                <option value="">All Types</option>
-                                <option value="email" {% if type == 'email' %}selected{% endif %}>Email</option>
-                                <option value="sms" {% if type == 'sms' %}selected{% endif %}>SMS</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <label for="category" class="form-label">Category</label>
-                            <select name="category" id="category" class="form-select">
-                                <option value="">All Categories</option>
-                                {% for cat in categories %}
-                                <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <label for="search" class="form-label">Search</label>
-                            <input type="text" name="search" id="search" class="form-control" value="{{ search if search else '' }}" placeholder="Search by name or content">
-                        </div>
-                        <div class="col-md-12 mt-2 text-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i> Search
-                            </button>
-                            <a href="{{ url_for('templates.list_templates') }}" class="btn btn-secondary">
-                                <i class="fas fa-redo"></i> Reset
-                            </a>
-                        </div>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 </div>
@@ -67,13 +22,13 @@
             <div class="card-body">
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">
-                        <a class="nav-link {% if not type %}active{% endif %}" href="{{ url_for('templates.list_templates') }}">All</a>
+                        <a class="nav-link active" href="/templates">All Templates</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'email' %}active{% endif %}" href="{{ url_for('templates.list_templates', type='email') }}">Email Templates</a>
+                        <a class="nav-link" href="/templates?type=Email">Email Templates</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'sms' %}active{% endif %}" href="{{ url_for('templates.list_templates', type='sms') }}">SMS Templates</a>
+                        <a class="nav-link" href="/templates?type=SMS">SMS Templates</a>
                     </li>
                 </ul>
                 
@@ -84,10 +39,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Type</th>
-                                <th>Category</th>
                                 <th>Preview</th>
-                                <th>Created By</th>
-                                <th>Last Updated</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -96,27 +48,21 @@
                             <tr>
                                 <td>{{ template.name }}</td>
                                 <td>
-                                    {% if template.type == 'email' %}
+                                    {% if template.type == 'Email' %}
                                     <span class="badge bg-info"><i class="fas fa-envelope me-1"></i> Email</span>
                                     {% else %}
                                     <span class="badge bg-warning text-dark"><i class="fas fa-sms me-1"></i> SMS</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ template.category }}</td>
                                 <td>
-                                    {% if template.type == 'email' %}
+                                    {% if template.type == 'Email' %}
                                     <strong>{{ template.subject }}</strong><br>
                                     {% endif %}
-                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ template.body|truncate(100) }}</span>
+                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ template.content|truncate(100) }}</span>
                                 </td>
-                                <td>{{ template.created_by.username }}</td>
-                                <td>{{ template.updated_at.strftime('%Y-%m-%d') }}</td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url_for('templates.view_template', template_id=template.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('templates.edit_template', template_id=template.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
+                                        <a href="/templates/edit/{{ template.id }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-template" data-id="{{ template.id }}" data-bs-toggle="tooltip" title="Delete">
@@ -129,59 +75,9 @@
                         </tbody>
                     </table>
                 </div>
-                
-                <!-- Pagination -->
-                {% if pagination and pagination.pages > 1 %}
-                <nav aria-label="Template pagination">
-                    <ul class="pagination justify-content-center">
-                        {% if pagination.has_prev %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **request.args) }}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link" aria-hidden="true">&laquo;</span>
-                        </li>
-                        {% endif %}
-                        
-                        {% for page in pagination.iter_pages() %}
-                            {% if page %}
-                                {% if page != pagination.page %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for(request.endpoint, page=page, **request.args) }}">{{ page }}</a>
-                                </li>
-                                {% else %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ page }}</span>
-                                </li>
-                                {% endif %}
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <span class="page-link">…</span>
-                                </li>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if pagination.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **request.args) }}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link" aria-hidden="true">&raquo;</span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-                
                 {% else %}
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> No templates found. {% if search_applied %}Try adjusting your search criteria.{% endif %}
+                    <i class="fas fa-info-circle me-2"></i> No templates found. Create your first template to get started.
                 </div>
                 {% endif %}
             </div>
@@ -202,7 +98,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="delete-template-form" action="" method="post">
+                <form id="deleteTemplateForm" method="post" action="">
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </div>
@@ -213,18 +109,18 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        // Enable tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-        
-        // Handle delete template
-        $('.delete-template').click(function() {
-            const templateId = $(this).data('id');
-            $('#delete-template-form').attr('action', `/templates/delete/${templateId}`);
-            $('#deleteTemplateModal').modal('show');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete template button clicks
+        const deleteButtons = document.querySelectorAll('.delete-template');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const templateId = this.getAttribute('data-id');
+                const deleteForm = document.getElementById('deleteTemplateForm');
+                deleteForm.action = '/templates/delete/' + templateId;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteTemplateModal'));
+                modal.show();
+            });
         });
     });
 </script>

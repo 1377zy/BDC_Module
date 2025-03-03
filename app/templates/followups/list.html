@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Follow-ups - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-calendar-check"></i> Follow-ups</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <div class="btn-group">
+            <a href="/followups/add" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> Schedule Follow-up
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/followups">All Follow-ups</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/followups?status=Pending">Pending</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/followups?status=Completed">Completed</a>
+                    </li>
+                </ul>
+                
+                {% if followups %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Lead</th>
+                                <th>Type</th>
+                                <th>Scheduled For</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for followup in followups %}
+                            <tr>
+                                <td>
+                                    <a href="/leads/{{ followup.lead_id }}">
+                                        {{ followup.lead_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if followup.type == 'Call' %}
+                                    <span class="badge bg-info"><i class="fas fa-phone-alt me-1"></i> Call</span>
+                                    {% elif followup.type == 'Email' %}
+                                    <span class="badge bg-primary"><i class="fas fa-envelope me-1"></i> Email</span>
+                                    {% elif followup.type == 'SMS' %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-sms me-1"></i> SMS</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-tasks me-1"></i> {{ followup.type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ followup.scheduled_date }}</td>
+                                <td>
+                                    {% if followup.status == 'Pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif followup.status == 'Completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% elif followup.status == 'Overdue' %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ followup.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-truncate d-inline-block" style="max-width: 200px;">{{ followup.notes }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if followup.status != 'Completed' %}
+                                        <a href="/followups/complete/{{ followup.id }}" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Mark Complete">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if followup.type == 'Call' and followup.status != 'Completed' %}
+                                        <a href="/communications/call?followup_id={{ followup.id }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Log Call">
+                                            <i class="fas fa-phone-alt"></i>
+                                        </a>
+                                        {% elif followup.type == 'Email' and followup.status != 'Completed' %}
+                                        <a href="/communications/email?followup_id={{ followup.id }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Send Email">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                        {% elif followup.type == 'SMS' and followup.status != 'Completed' %}
+                                        <a href="/communications/sms?followup_id={{ followup.id }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Send SMS">
+                                            <i class="fas fa-sms"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        <a href="/followups/edit/{{ followup.id }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-followup" data-id="{{ followup.id }}" data-bs-toggle="tooltip" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No follow-ups found. Schedule your first follow-up to get started.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFollowupModal" tabindex="-1" aria-labelledby="deleteFollowupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteFollowupModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this follow-up? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteFollowupForm" method="post" action="">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete followup button clicks
+        const deleteButtons = document.querySelectorAll('.delete-followup');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const followupId = this.getAttribute('data-id');
+                const deleteForm = document.getElementById('deleteFollowupForm');
+                deleteForm.action = '/followups/delete/' + followupId;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteFollowupModal'));
+                modal.show();
+            });
+        });
+        
+        // Enable tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

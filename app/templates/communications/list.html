@@ -9,13 +9,13 @@
     </div>
     <div class="col-md-6 text-md-end">
         <div class="btn-group">
-            <a href="{{ url_for('communications.send_email') }}" class="btn btn-outline-info">
+            <a href="#" class="btn btn-outline-info">
                 <i class="fas fa-envelope"></i> Send Email
             </a>
-            <a href="{{ url_for('communications.send_sms') }}" class="btn btn-outline-warning">
+            <a href="#" class="btn btn-outline-warning">
                 <i class="fas fa-sms"></i> Send SMS
             </a>
-            <a href="{{ url_for('communications.add_communication') }}" class="btn btn-outline-secondary">
+            <a href="#" class="btn btn-outline-secondary">
                 <i class="fas fa-plus"></i> Log Communication
             </a>
         </div>
@@ -26,37 +26,51 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{{ url_for('communications.list_communications') }}" method="get" class="mb-0">
+                <form action="#" method="get" class="mb-0">
                     <div class="row">
                         <div class="col-md-3 mb-2">
-                            {{ search_form.type(class="form-select") }}
+                            <select class="form-select">
+                                <option value="">All Types</option>
+                                <option value="Email">Email</option>
+                                <option value="SMS">SMS</option>
+                                <option value="Call">Call</option>
+                                <option value="Note">Note</option>
+                            </select>
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.direction(class="form-select") }}
+                            <select class="form-select">
+                                <option value="">All Directions</option>
+                                <option value="Inbound">Inbound</option>
+                                <option value="Outbound">Outbound</option>
+                            </select>
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.lead_name(class="form-control", placeholder="Lead Name") }}
+                            <input type="text" class="form-control" placeholder="Lead Name">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.date_from(class="form-control datepicker", placeholder="Date From") }}
+                            <input type="text" class="form-control datepicker" placeholder="Date From">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.date_to(class="form-control datepicker", placeholder="Date To") }}
+                            <input type="text" class="form-control datepicker" placeholder="Date To">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.content(class="form-control", placeholder="Search in content") }}
+                            <input type="text" class="form-control" placeholder="Search in content">
                         </div>
                         <div class="col-md-6 mb-2">
                             <div class="input-group">
                                 <span class="input-group-text">Staff</span>
-                                {{ search_form.user_id(class="form-select") }}
+                                <select class="form-select">
+                                    <option value="">All Staff</option>
+                                    <option value="1">Admin</option>
+                                    <option value="2">Sales Rep</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-12 mt-2 text-end">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i> Search
                             </button>
-                            <a href="{{ url_for('communications.list_communications') }}" class="btn btn-secondary">
+                            <a href="#" class="btn btn-secondary">
                                 <i class="fas fa-redo"></i> Reset
                             </a>
                         </div>
@@ -73,19 +87,19 @@
             <div class="card-body">
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'all' %}active{% endif %}" href="{{ url_for('communications.list_communications') }}">All</a>
+                        <a class="nav-link {% if type == 'all' %}active{% endif %}" href="#">All</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'email' %}active{% endif %}" href="{{ url_for('communications.list_communications', type='email') }}">Emails</a>
+                        <a class="nav-link {% if type == 'email' %}active{% endif %}" href="#">Emails</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'sms' %}active{% endif %}" href="{{ url_for('communications.list_communications', type='sms') }}">SMS</a>
+                        <a class="nav-link {% if type == 'sms' %}active{% endif %}" href="#">SMS</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'call' %}active{% endif %}" href="{{ url_for('communications.list_communications', type='call') }}">Calls</a>
+                        <a class="nav-link {% if type == 'call' %}active{% endif %}" href="#">Calls</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'note' %}active{% endif %}" href="{{ url_for('communications.list_communications', type='note') }}">Notes</a>
+                        <a class="nav-link {% if type == 'note' %}active{% endif %}" href="#">Notes</a>
                     </li>
                 </ul>
                 
@@ -97,57 +111,44 @@
                                 <th>Date & Time</th>
                                 <th>Lead</th>
                                 <th>Type</th>
-                                <th>Direction</th>
                                 <th>Content</th>
-                                <th>Staff</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for comm in communications %}
                             <tr>
-                                <td>{{ comm.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ comm.communication.sent_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>
-                                    <a href="{{ url_for('leads.view_lead', lead_id=comm.lead.id) }}">
+                                    <a href="#">
                                         {{ comm.lead.first_name }} {{ comm.lead.last_name }}
                                     </a>
                                 </td>
                                 <td>
-                                    {% if comm.type == 'Email' %}
-                                    <span class="badge bg-info"><i class="fas fa-envelope me-1"></i> {{ comm.type }}</span>
-                                    {% elif comm.type == 'SMS' %}
-                                    <span class="badge bg-warning text-dark"><i class="fas fa-sms me-1"></i> {{ comm.type }}</span>
-                                    {% elif comm.type == 'Call' %}
-                                    <span class="badge bg-success"><i class="fas fa-phone me-1"></i> {{ comm.type }}</span>
+                                    {% if comm.communication.type == 'Email' %}
+                                    <span class="badge badge-comm-email"><i class="fas fa-envelope me-1"></i> {{ comm.communication.type }}</span>
+                                    {% elif comm.communication.type == 'SMS' %}
+                                    <span class="badge badge-comm-sms"><i class="fas fa-sms me-1"></i> {{ comm.communication.type }}</span>
+                                    {% elif comm.communication.type == 'Call' %}
+                                    <span class="badge badge-comm-call"><i class="fas fa-phone me-1"></i> {{ comm.communication.type }}</span>
                                     {% else %}
-                                    <span class="badge bg-secondary"><i class="fas fa-comment me-1"></i> {{ comm.type }}</span>
+                                    <span class="badge badge-comm-note"><i class="fas fa-comment me-1"></i> {{ comm.communication.type }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if comm.direction == 'Outbound' %}
-                                    <span class="badge bg-primary">Outbound</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">Inbound</span>
-                                    {% endif %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ comm.communication.content }}</span>
                                 </td>
-                                <td>
-                                    {% if comm.type == 'Email' and comm.subject %}
-                                    <strong>{{ comm.subject }}</strong><br>
-                                    {% endif %}
-                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ comm.content }}</span>
-                                </td>
-                                <td>{{ comm.user.username if comm.user else 'System' }}</td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url_for('communications.view_communication', communication_id=comm.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
+                                        <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        {% if comm.type == 'Email' %}
-                                        <a href="{{ url_for('communications.send_email', lead_id=comm.lead.id, reply_to=comm.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Reply">
+                                        {% if comm.communication.type == 'Email' %}
+                                        <a href="#" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Reply">
                                             <i class="fas fa-reply"></i>
                                         </a>
-                                        {% elif comm.type == 'SMS' %}
-                                        <a href="{{ url_for('communications.send_sms', lead_id=comm.lead.id, reply_to=comm.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Reply">
+                                        {% elif comm.communication.type == 'SMS' %}
+                                        <a href="#" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Reply">
                                             <i class="fas fa-reply"></i>
                                         </a>
                                         {% endif %}
@@ -165,7 +166,7 @@
                     <ul class="pagination justify-content-center">
                         {% if pagination.has_prev %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **request.args) }}" aria-label="Previous">
+                            <a class="page-link" href="#" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -179,7 +180,7 @@
                             {% if page %}
                                 {% if page != pagination.page %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for(request.endpoint, page=page, **request.args) }}">{{ page }}</a>
+                                    <a class="page-link" href="#">{{ page }}</a>
                                 </li>
                                 {% else %}
                                 <li class="page-item active">
@@ -195,7 +196,7 @@
                         
                         {% if pagination.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **request.args) }}" aria-label="Next">
+                            <a class="page-link" href="#" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>

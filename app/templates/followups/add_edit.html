@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if followup %}Edit Follow-up{% else %}Schedule Follow-up{% endif %} - Auto Dealership BDC
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-calendar-check"></i> 
+            {% if followup %}Edit Follow-up{% else %}Schedule Follow-up{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{% if followup %}/followups/edit/{{ followup.id }}{% else %}/followups/add{% endif %}">
+                    {% if not lead and not followup %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select class="form-select" id="lead_id" name="lead_id" required>
+                            <option value="">Select a lead...</option>
+                            {% for lead in leads %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="lead_id" value="{% if followup %}{{ followup.lead_id }}{% else %}{{ lead.id }}{% endif %}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Follow-up Type</label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="">Select a type...</option>
+                            <option value="Call" {% if followup and followup.type == 'Call' %}selected{% endif %}>Phone Call</option>
+                            <option value="Email" {% if followup and followup.type == 'Email' %}selected{% endif %}>Email</option>
+                            <option value="SMS" {% if followup and followup.type == 'SMS' %}selected{% endif %}>SMS</option>
+                            <option value="In-Person" {% if followup and followup.type == 'In-Person' %}selected{% endif %}>In-Person Meeting</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scheduled_date" class="form-label">Scheduled Date</label>
+                        <input type="date" class="form-control" id="scheduled_date" name="scheduled_date" value="{{ followup.scheduled_date if followup else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="scheduled_time" class="form-label">Scheduled Time</label>
+                        <input type="time" class="form-control" id="scheduled_time" name="scheduled_time" value="{{ followup.scheduled_time if followup else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="4">{{ followup.notes if followup else '' }}</textarea>
+                        <div class="form-text">Add any details about this follow-up that will help you prepare</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="Low" {% if followup and followup.priority == 'Low' %}selected{% endif %}>Low</option>
+                            <option value="Medium" {% if not followup or followup.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="High" {% if followup and followup.priority == 'High' %}selected{% endif %}>High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/followups" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if followup %}Update Follow-up{% else %}Schedule Follow-up{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        {% if lead or followup %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-user"></i> Lead Information
+            </div>
+            <div class="card-body">
+                {% if lead %}
+                <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                <p><strong>Email:</strong> {{ lead.email }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                <p><strong>Vehicle Interest:</strong> {{ lead.vehicle_interest }}</p>
+                {% elif followup %}
+                <p><strong>Name:</strong> {{ followup.lead_name }}</p>
+                <p><strong>Lead ID:</strong> {{ followup.lead_id }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-lightbulb"></i> Follow-up Tips
+            </div>
+            <div class="card-body">
+                <h5>Effective Follow-up Strategies</h5>
+                <ul>
+                    <li>Schedule follow-ups at times when leads are most likely to be available</li>
+                    <li>Be specific in your notes about what you need to discuss</li>
+                    <li>Set high priority for hot leads or those close to making a decision</li>
+                    <li>Follow up within 24 hours of initial contact for best results</li>
+                    <li>Use a mix of communication methods (call, email, SMS) for better engagement</li>
+                </ul>
+                
+                <h5>Recommended Follow-up Timeline</h5>
+                <ul>
+                    <li><strong>Initial Inquiry:</strong> Same day or within 24 hours</li>
+                    <li><strong>After Test Drive:</strong> 1-2 days</li>
+                    <li><strong>After Price Quote:</strong> 2-3 days</li>
+                    <li><strong>After "Think About It":</strong> 3-5 days</li>
+                    <li><strong>Long-term Prospects:</strong> Every 2-4 weeks</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date to today if scheduling new follow-up
+        const scheduledDateField = document.getElementById('scheduled_date');
+        if (scheduledDateField && !scheduledDateField.value) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            scheduledDateField.value = `${year}-${month}-${day}`;
+        }
+        
+        // Set default time if scheduling new follow-up
+        const scheduledTimeField = document.getElementById('scheduled_time');
+        if (scheduledTimeField && !scheduledTimeField.value) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            scheduledTimeField.value = `${hours}:${minutes}`;
+        }
+    });
+</script>
+{% endblock %}

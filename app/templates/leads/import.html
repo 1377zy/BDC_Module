@@ -8,7 +8,7 @@
         <h1 class="display-5 fw-bold"><i class="fas fa-file-import"></i> Import Leads</h1>
     </div>
     <div class="col-md-6 text-md-end">
-        <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('leads') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to Lead List
         </a>
     </div>
@@ -21,151 +21,18 @@
                 <i class="fas fa-upload me-1"></i> Upload Lead Data
             </div>
             <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    {{ form.hidden_tag() }}
-                    
+                <form method="post" enctype="multipart/form-data" action="{{ url_for('import_leads') }}">
                     <div class="mb-4">
-                        <label for="file" class="form-label">{{ form.file.label }}</label>
-                        {{ form.file(class="form-control", accept=".csv, .xlsx") }}
-                        {% for error in form.file.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                        <div class="form-text">Supported formats: CSV, Excel (.xlsx)</div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="source" class="form-label">{{ form.source.label }}</label>
-                        {{ form.source(class="form-select") }}
-                        {% for error in form.source.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="lead_type" class="form-label">{{ form.lead_type.label }}</label>
-                        {{ form.lead_type(class="form-select") }}
-                        {% for error in form.lead_type.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-4">
-                        <div class="form-check">
-                            {{ form.skip_header(class="form-check-input") }}
-                            <label class="form-check-label" for="skip_header">{{ form.skip_header.label }}</label>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <div class="form-check">
-                            {{ form.detect_duplicates(class="form-check-input") }}
-                            <label class="form-check-label" for="detect_duplicates">{{ form.detect_duplicates.label }}</label>
-                        </div>
-                        <div class="form-text">Automatically detect and handle duplicate leads based on email or phone number.</div>
-                    </div>
-                    
-                    <div class="mb-4 border p-3 rounded">
-                        <div class="mb-2"><strong>Duplicate Handling:</strong></div>
-                        <div class="form-check">
-                            {{ form.duplicate_action(class="form-check-input", id="duplicate_action_1", value="skip") }}
-                            <label class="form-check-label" for="duplicate_action_1">Skip duplicates</label>
-                        </div>
-                        <div class="form-check">
-                            {{ form.duplicate_action(class="form-check-input", id="duplicate_action_2", value="update") }}
-                            <label class="form-check-label" for="duplicate_action_2">Update existing lead data</label>
-                        </div>
-                        <div class="form-check">
-                            {{ form.duplicate_action(class="form-check-input", id="duplicate_action_3", value="merge") }}
-                            <label class="form-check-label" for="duplicate_action_3">Merge with existing lead data</label>
-                        </div>
-                    </div>
-                    
-                    <button type="button" class="btn btn-outline-secondary mb-4" id="show-mapping">
-                        <i class="fas fa-columns me-1"></i> Show Column Mapping Options
-                    </button>
-                    
-                    <div id="mapping-options" class="d-none mb-4">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <i class="fas fa-columns me-1"></i> Custom Column Mapping
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted">Map your file columns to the correct lead fields. Leave blank to skip a column.</p>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">First Name Column:</label>
-                                        {{ form.first_name_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Last Name Column:</label>
-                                        {{ form.last_name_col(class="form-control") }}
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Email Column:</label>
-                                        {{ form.email_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Phone Column:</label>
-                                        {{ form.phone_col(class="form-control") }}
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Address Column:</label>
-                                        {{ form.address_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">City Column:</label>
-                                        {{ form.city_col(class="form-control") }}
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">State Column:</label>
-                                        {{ form.state_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Zip Column:</label>
-                                        {{ form.zip_col(class="form-control") }}
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Vehicle Interest Column:</label>
-                                        {{ form.vehicle_interest_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Status Column:</label>
-                                        {{ form.status_col(class="form-control") }}
-                                    </div>
-                                </div>
-                                
-                                <div class="row mb-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Notes Column:</label>
-                                        {{ form.notes_col(class="form-control") }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Source Column:</label>
-                                        {{ form.source_col(class="form-control") }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <label for="file" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                        <div class="form-text">Upload a CSV file with your lead data</div>
                     </div>
                     
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-file-import me-1"></i> Import Leads
                         </button>
-                        <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ url_for('leads') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -180,32 +47,33 @@
             <div class="card-body">
                 <h5>How to Import Leads</h5>
                 <ol>
-                    <li>Prepare your CSV or Excel file with lead data</li>
+                    <li>Prepare your CSV file with lead data</li>
                     <li>Select the file using the upload button</li>
-                    <li>Choose the lead source and type</li>
-                    <li>Configure duplicate handling settings</li>
-                    <li>Optionally map columns if your headers don't match our system</li>
                     <li>Click "Import Leads" to begin the import process</li>
                 </ol>
                 
-                <h5>Template Format</h5>
-                <p>For best results, your file should contain the following columns:</p>
+                <h5>CSV Format Requirements</h5>
+                <p>Your CSV file should contain the following columns:</p>
                 <ul>
-                    <li>First Name</li>
-                    <li>Last Name</li>
-                    <li>Email</li>
-                    <li>Phone</li>
-                    <li>Address (optional)</li>
-                    <li>City (optional)</li>
-                    <li>State (optional)</li>
-                    <li>Zip (optional)</li>
-                    <li>Vehicle Interest (optional)</li>
-                    <li>Status (optional)</li>
-                    <li>Notes (optional)</li>
+                    <li><strong>first_name</strong> (required)</li>
+                    <li><strong>last_name</strong> (required)</li>
+                    <li><strong>email</strong> (required)</li>
+                    <li><strong>phone</strong> (required)</li>
+                    <li><strong>source</strong> (optional, defaults to "Import")</li>
+                    <li><strong>status</strong> (optional, defaults to "New")</li>
+                    <li><strong>notes</strong> (optional)</li>
+                    <li><strong>make</strong> (optional - vehicle interest)</li>
+                    <li><strong>model</strong> (optional - vehicle interest)</li>
+                    <li><strong>year</strong> (optional - vehicle interest)</li>
+                    <li><strong>new_or_used</strong> (optional - vehicle interest)</li>
                 </ul>
                 
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i> <strong>Important:</strong> The first row of your CSV must contain the column headers exactly as shown above.
+                </div>
+                
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('leads.download_template') }}" class="btn btn-outline-primary">
+                    <a href="{{ url_for('download_lead_template') }}" class="btn btn-outline-primary">
                         <i class="fas fa-download me-1"></i> Download Template
                     </a>
                 </div>
@@ -214,115 +82,23 @@
         
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-warning text-dark">
-                <i class="fas fa-exclamation-triangle me-1"></i> Common Issues
+                <i class="fas fa-lightbulb me-1"></i> Tips
             </div>
             <div class="card-body">
-                <h5>Troubleshooting</h5>
                 <ul>
-                    <li><strong>File Format:</strong> Ensure your file is saved as CSV or XLSX</li>
-                    <li><strong>Required Fields:</strong> First name, last name, and either email or phone are required</li>
-                    <li><strong>Special Characters:</strong> Avoid special characters in your data</li>
-                    <li><strong>Large Files:</strong> Files over 5MB may take longer to process</li>
-                    <li><strong>Date Formats:</strong> Use MM/DD/YYYY format for any dates</li>
+                    <li>Make sure your CSV is properly formatted with commas separating each field</li>
+                    <li>Use the template for the correct column headers</li>
+                    <li>First name and last name are required for each lead</li>
+                    <li>For best results, include at least an email or phone number</li>
                 </ul>
                 
                 <div class="alert alert-info">
-                    <i class="fas fa-lightbulb me-1"></i> <strong>Tip:</strong> If you're unsure about your file format, download our template and copy your data into it.
+                    <i class="fas fa-info-circle me-1"></i> <strong>Sample CSV content:</strong><br>
+                    <code>first_name,last_name,email,phone,source,status,notes,make,model,year,new_or_used<br>
+                    John,Doe,john@example.com,555-123-4567,Website,New,Interested in financing,Toyota,Camry,2023,New</code>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-{% if preview_data %}
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-success text-white">
-        <i class="fas fa-table me-1"></i> Data Preview
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        {% for header in preview_data.headers %}
-                        <th>{{ header }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in preview_data.rows %}
-                    <tr>
-                        {% for cell in row %}
-                        <td>{{ cell }}</td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-1"></i> Showing first 5 rows of {{ preview_data.total_rows }} total rows.
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // Toggle mapping options
-        $('#show-mapping').click(function() {
-            $('#mapping-options').toggleClass('d-none');
-            if ($('#mapping-options').hasClass('d-none')) {
-                $(this).html('<i class="fas fa-columns me-1"></i> Show Column Mapping Options');
-            } else {
-                $(this).html('<i class="fas fa-columns me-1"></i> Hide Column Mapping Options');
-            }
-        });
-        
-        // File upload preview
-        $('#file').change(function() {
-            var fileName = $(this).val().split('\\').pop();
-            if (fileName) {
-                $('.custom-file-label').text(fileName);
-                
-                // Submit form to get preview
-                var formData = new FormData();
-                formData.append('file', $(this)[0].files[0]);
-                formData.append('preview', 'true');
-                
-                $.ajax({
-                    url: "{{ url_for('leads.import_leads') }}",
-                    type: 'POST',
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        if (response.preview_data) {
-                            // Update the page with preview data
-                            location.reload();
-                        }
-                    }
-                });
-            }
-        });
-        
-        // Toggle duplicate handling options based on detect_duplicates checkbox
-        $('#detect_duplicates').change(function() {
-            if ($(this).is(':checked')) {
-                $('.duplicate-handling').removeClass('d-none');
-            } else {
-                $('.duplicate-handling').addClass('d-none');
-            }
-        });
-        
-        // Initialize the duplicate handling visibility
-        if ($('#detect_duplicates').is(':checked')) {
-            $('.duplicate-handling').removeClass('d-none');
-        } else {
-            $('.duplicate-handling').addClass('d-none');
-        }
-    });
-</script>
 {% endblock %}

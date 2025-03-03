@@ -8,8 +8,11 @@
         <h1 class="display-5 fw-bold"><i class="fas fa-calendar-alt"></i> {{ title }}</h1>
     </div>
     <div class="col-md-6 text-md-end">
-        <a href="{{ url_for('appointments.schedule_appointment') }}" class="btn btn-primary">
+        <a href="{{ url_for('add_appointment') }}" class="btn btn-primary">
             <i class="fas fa-calendar-plus"></i> Schedule New Appointment
+        </a>
+        <a href="{{ url_for('appointment_calendar') }}" class="btn btn-info">
+            <i class="fas fa-calendar"></i> Calendar View
         </a>
     </div>
 </div>
@@ -18,25 +21,32 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{{ url_for('appointments.list_appointments') }}" method="get" class="mb-0">
+                <form action="#" method="get" class="mb-0">
                     <div class="row">
                         <div class="col-md-3 mb-2">
-                            {{ search_form.date_from(class="form-control datepicker", placeholder="Date From") }}
+                            <input type="text" class="form-control datepicker" placeholder="Date From">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.date_to(class="form-control datepicker", placeholder="Date To") }}
+                            <input type="text" class="form-control datepicker" placeholder="Date To">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.lead_name(class="form-control", placeholder="Lead Name") }}
+                            <input type="text" class="form-control" placeholder="Lead Name">
                         </div>
                         <div class="col-md-3 mb-2">
-                            {{ search_form.status(class="form-select") }}
+                            <select class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Canceled">Canceled</option>
+                                <option value="No-Show">No-Show</option>
+                            </select>
                         </div>
                         <div class="col-md-12 mt-2 text-end">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i> Search
                             </button>
-                            <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-secondary">
+                            <a href="#" class="btn btn-secondary">
                                 <i class="fas fa-redo"></i> Reset
                             </a>
                         </div>
@@ -50,11 +60,11 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="btn-group">
-            <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-primary {% if current_view == 'all' %}active{% endif %}">All</a>
-            <a href="{{ url_for('appointments.today_appointments') }}" class="btn btn-outline-primary {% if current_view == 'today' %}active{% endif %}">Today</a>
-            <a href="{{ url_for('appointments.tomorrow_appointments') }}" class="btn btn-outline-primary {% if current_view == 'tomorrow' %}active{% endif %}">Tomorrow</a>
-            <a href="{{ url_for('appointments.week_appointments') }}" class="btn btn-outline-primary {% if current_view == 'week' %}active{% endif %}">This Week</a>
-            <a href="{{ url_for('appointments.month_appointments') }}" class="btn btn-outline-primary {% if current_view == 'month' %}active{% endif %}">This Month</a>
+            <a href="{{ url_for('appointments', view='all') }}" class="btn btn-outline-primary {% if current_view == 'all' %}active{% endif %}">All</a>
+            <a href="{{ url_for('appointments', view='today') }}" class="btn btn-outline-primary {% if current_view == 'today' %}active{% endif %}">Today</a>
+            <a href="{{ url_for('appointments', view='tomorrow') }}" class="btn btn-outline-primary {% if current_view == 'tomorrow' %}active{% endif %}">Tomorrow</a>
+            <a href="{{ url_for('appointments', view='week') }}" class="btn btn-outline-primary {% if current_view == 'week' %}active{% endif %}">This Week</a>
+            <a href="{{ url_for('appointments', view='month') }}" class="btn btn-outline-primary {% if current_view == 'month' %}active{% endif %}">This Month</a>
         </div>
     </div>
 </div>
@@ -70,9 +80,8 @@
                             <tr>
                                 <th>Date & Time</th>
                                 <th>Lead</th>
-                                <th>Vehicle Interest</th>
+                                <th>Purpose</th>
                                 <th>Status</th>
-                                <th>Created By</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -80,11 +89,11 @@
                             {% for appointment in appointments %}
                             <tr>
                                 <td>
-                                    <div class="fw-bold">{{ appointment.date.strftime('%Y-%m-%d') }}</div>
-                                    <div>{{ appointment.time.strftime('%I:%M %p') }}</div>
+                                    <div class="fw-bold">{{ appointment.appointment.date.strftime('%Y-%m-%d') }}</div>
+                                    <div>{{ appointment.appointment.time.strftime('%H:%M') }}</div>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('leads.view_lead', lead_id=appointment.lead.id) }}" class="fw-bold text-decoration-none">
+                                    <a href="#" class="fw-bold text-decoration-none">
                                         {{ appointment.lead.first_name }} {{ appointment.lead.last_name }}
                                     </a>
                                     <div class="small text-muted">
@@ -93,25 +102,24 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td>{{ appointment.vehicle_interest or 'N/A' }}</td>
+                                <td>{{ appointment.appointment.purpose }}</td>
                                 <td>
-                                    <span class="appointment-status bg-{{ appointment.status|lower }} text-white">
-                                        {{ appointment.status }}
+                                    <span class="appointment-status status-{{ appointment.appointment.status|lower }} text-white">
+                                        {{ appointment.appointment.status }}
                                     </span>
                                 </td>
-                                <td>{{ appointment.created_by.username }}</td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View Appointment">
+                                        <a href="{{ url_for('view_appointment', appointment_id=appointment.appointment.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View Appointment">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ url_for('appointments.edit_appointment', appointment_id=appointment.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit Appointment">
+                                        <a href="{{ url_for('edit_appointment', appointment_id=appointment.appointment.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit Appointment">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{{ url_for('communications.send_email', lead_id=appointment.lead.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Send Email">
+                                        <a href="{{ url_for('send_email', appointment_id=appointment.appointment.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Send Email">
                                             <i class="fas fa-envelope"></i>
                                         </a>
-                                        <a href="{{ url_for('communications.send_sms', lead_id=appointment.lead.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Send SMS">
+                                        <a href="{{ url_for('send_sms', appointment_id=appointment.appointment.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Send SMS">
                                             <i class="fas fa-sms"></i>
                                         </a>
                                     </div>
@@ -128,7 +136,7 @@
                     <ul class="pagination justify-content-center">
                         {% if pagination.has_prev %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **request.args) }}" aria-label="Previous">
+                            <a class="page-link" href="{{ url_for('appointments', page=pagination.prev_num) }}" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -142,7 +150,7 @@
                             {% if page %}
                                 {% if page != pagination.page %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for(request.endpoint, page=page, **request.args) }}">{{ page }}</a>
+                                    <a class="page-link" href="{{ url_for('appointments', page=page) }}">{{ page }}</a>
                                 </li>
                                 {% else %}
                                 <li class="page-item active">
@@ -158,7 +166,7 @@
                         
                         {% if pagination.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **request.args) }}" aria-label="Next">
+                            <a class="page-link" href="{{ url_for('appointments', page=pagination.next_num) }}" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>

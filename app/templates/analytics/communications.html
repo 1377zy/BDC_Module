@@ -1,0 +1,522 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4 mb-4">Communication Analytics</h1>
+    
+    <div class="row">
+        <!-- Communication Statistics -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Communications</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_communications }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Communications Today</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ communications_today }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comment-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Communications This Week</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ communications_week }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comment-dots fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Communications This Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ communications_month }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Communication Type Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Communication Type Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="communicationTypeChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        {% for type, count in communication_types %}
+                        <span class="mr-2">
+                            <i class="fas fa-circle" style="color: {{ ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'][loop.index0 % 6] }}"></i> {{ type }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Communication Status Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Communication Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="communicationStatusChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        {% for status, count in communication_statuses %}
+                        <span class="mr-2">
+                            <i class="fas fa-circle" style="color: {{ ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'][loop.index0 % 6] }}"></i> {{ status }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Day of Week Distribution -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Communications by Day of Week</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="dayDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time of Day Distribution -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Communications by Time of Day</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="timeDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monthly Communication Trends -->
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Communication Trends by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="monthlyCommunicationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Export Options -->
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Export Communication Reports</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Communications Report (CSV)</h5>
+                                    <p class="card-text">Export all communication data in CSV format</p>
+                                    <a href="{{ url_for('analytics.export_report', report_type='communications', format='csv') }}" class="btn btn-primary">Download CSV</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Communications Report (Excel)</h5>
+                                    <p class="card-text">Export all communication data in Excel format</p>
+                                    <a href="{{ url_for('analytics.export_report', report_type='communications', format='excel') }}" class="btn btn-success">Download Excel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Communication Type Chart
+    var communicationTypeCtx = document.getElementById("communicationTypeChart");
+    var communicationTypeChart = new Chart(communicationTypeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for type, count in communication_types %}"{{ type }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for type, count in communication_types %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+
+    // Communication Status Chart
+    var communicationStatusCtx = document.getElementById("communicationStatusChart");
+    var communicationStatusChart = new Chart(communicationStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for status, count in communication_statuses %}"{{ status }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for status, count in communication_statuses %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+
+    // Day Distribution Chart
+    var dayDistributionCtx = document.getElementById("dayDistributionChart");
+    var dayDistributionChart = new Chart(dayDistributionCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in day_distribution %}"{{ item.day }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: "Communications",
+                backgroundColor: "#4e73df",
+                hoverBackgroundColor: "#2e59d9",
+                borderColor: "#4e73df",
+                data: [{% for item in day_distribution %}{{ item.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 7
+                    },
+                    maxBarThickness: 25,
+                }],
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        maxTicksLimit: 5,
+                        padding: 10,
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: false
+            },
+            tooltips: {
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+        }
+    });
+
+    // Time Distribution Chart
+    var timeDistributionCtx = document.getElementById("timeDistributionChart");
+    var timeDistributionChart = new Chart(timeDistributionCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in hour_distribution %}"{{ item.hour }}:00"{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: "Communications",
+                backgroundColor: "#36b9cc",
+                hoverBackgroundColor: "#2c9faf",
+                borderColor: "#36b9cc",
+                data: [{% for item in hour_distribution %}{{ item.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 24
+                    },
+                    maxBarThickness: 25,
+                }],
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        maxTicksLimit: 5,
+                        padding: 10,
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: false
+            },
+            tooltips: {
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+        }
+    });
+
+    // Monthly Communication Chart
+    var monthlyCommunicationCtx = document.getElementById("monthlyCommunicationChart");
+    var monthlyCommunicationChart = new Chart(monthlyCommunicationCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for item in monthly_communications %}"{{ item.month }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    label: "Email",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(78, 115, 223, 0.05)",
+                    borderColor: "rgba(78, 115, 223, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                    pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: [{% for item in monthly_communications %}{{ item.email }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                },
+                {
+                    label: "SMS",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(28, 200, 138, 0.05)",
+                    borderColor: "rgba(28, 200, 138, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(28, 200, 138, 1)",
+                    pointBorderColor: "rgba(28, 200, 138, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(28, 200, 138, 1)",
+                    pointHoverBorderColor: "rgba(28, 200, 138, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: [{% for item in monthly_communications %}{{ item.sms }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                },
+                {
+                    label: "Call",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(54, 185, 204, 0.05)",
+                    borderColor: "rgba(54, 185, 204, 1)",
+                    pointRadius: 3,
+                    pointBackgroundColor: "rgba(54, 185, 204, 1)",
+                    pointBorderColor: "rgba(54, 185, 204, 1)",
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: "rgba(54, 185, 204, 1)",
+                    pointHoverBorderColor: "rgba(54, 185, 204, 1)",
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    data: [{% for item in monthly_communications %}{{ item.call }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                }
+            ],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                xAxes: [{
+                    time: {
+                        unit: 'month'
+                    },
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 12
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                        beginAtZero: true
+                    },
+                    gridLines: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                }],
+            },
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                titleMarginBottom: 10,
+                titleFontColor: '#6e707e',
+                titleFontSize: 14,
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: true,
+                intersect: false,
+                mode: 'index',
+                caretPadding: 10,
+            }
+        }
+    });
+</script>
+{% endblock %}

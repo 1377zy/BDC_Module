@@ -33,7 +33,7 @@
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                         <div class="form-text">
-                            Can't find the lead? <a href="{{ url_for('leads.create_lead') }}">Create a new one</a>
+                            Can't find the lead? <a href="{{ url_for('add_lead') }}">Create a new one</a>
                         </div>
                     </div>
                     {% endif %}
@@ -103,7 +103,7 @@
                             <i class="fas fa-save"></i> 
                             {% if appointment %}Update Appointment{% else %}Schedule Appointment{% endif %}
                         </button>
-                        <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ url_for('list_appointments') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -142,7 +142,7 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('appointments.delete_appointment', appointment_id=appointment.id) }}" class="btn btn-danger confirm-delete">
+                    <a href="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" class="btn btn-danger confirm-delete">
                         <i class="fas fa-trash"></i> Delete Appointment
                     </a>
                 </div>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Auto Dealership BDC{% endblock %}</title>
     <!-- Bootstrap CSS -->
-    {{ bootstrap.load_css() }}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <!-- Font Awesome -->
@@ -15,7 +15,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">Auto Dealership BDC</a>
+            <a class="navbar-brand" href="{{ url_for('index') }}">Auto Dealership BDC</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -23,15 +23,14 @@
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="leadsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-users"></i> Leads
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="leadsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('leads.list_leads') }}">All Leads</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('leads.create_lead') }}">Add New Lead</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('leads') }}">All Leads</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -39,9 +38,7 @@
                             <i class="fas fa-calendar-alt"></i> Appointments
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="appointmentsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('appointments.list_appointments') }}">All Appointments</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('appointments.today_appointments') }}">Today's Appointments</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('appointments.week_appointments') }}">This Week's Appointments</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments') }}">All Appointments</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -49,10 +46,18 @@
                             <i class="fas fa-comments"></i> Communications
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="communicationsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('communications.list_communications') }}">All Communications</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('communications.list_email_templates') }}">Email Templates</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('communications.list_sms_templates') }}">SMS Templates</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('communications') }}">Communication History</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="analyticsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-line"></i> Analytics
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="analyticsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">Analytics Dashboard</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('lead_analytics') }}">Lead Analytics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointment_analytics') }}">Appointment Analytics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('communication_analytics') }}">Communication Analytics</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -61,17 +66,30 @@
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user"></i> {{ current_user.username }}
+                            <i class="fas fa-user"></i> {{ current_user.username if current_user.username else 'User' }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('user_profile') }}"><i class="fas fa-user-cog"></i> Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                        <a class="nav-link" href="#"><i class="fas fa-sign-in-alt"></i> Login</a>
                     </li>
                     {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/templates">Templates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/followups">Follow-ups</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">Settings</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -102,20 +120,20 @@
                 <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
                     <h5 class="text-uppercase">Quick Links</h5>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="{{ url_for('main.index') }}" class="text-dark">Dashboard</a></li>
-                        <li><a href="{{ url_for('leads.list_leads') }}" class="text-dark">Leads</a></li>
-                        <li><a href="{{ url_for('appointments.list_appointments') }}" class="text-dark">Appointments</a></li>
+                        <li><a href="{{ url_for('index') }}" class="text-dark">Dashboard</a></li>
+                        <li><a href="{{ url_for('leads') }}" class="text-dark">Leads</a></li>
+                        <li><a href="{{ url_for('appointments') }}" class="text-dark">Appointments</a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
-            © {% now year %} Auto Dealership BDC
+            &copy; {{ now().year }} Auto Dealership BDC
         </div>
     </footer>
 
     <!-- Bootstrap JavaScript -->
-    {{ bootstrap.load_js() }}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Custom JavaScript -->

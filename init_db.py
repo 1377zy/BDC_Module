@@ -1,358 +1,96 @@
 from app import create_app, db
 from app.models import User, Lead, VehicleInterest, Communication, Appointment, EmailTemplate, SMSTemplate
 from app.models.car import Car, CarImage, Match, UserPreference
-from datetime import datetime, timedelta, time
 from werkzeug.security import generate_password_hash
-import random
 
-def init_db():
-    app = create_app()
+app = create_app()
+
+with app.app_context():
+    # Create all tables
+    db.create_all()
+    
+    # Check if admin user exists
+    admin = User.query.filter_by(username='admin').first()
+    if not admin:
+        # Create admin user
+        admin = User(
+            username='admin',
+            email='admin@example.com',
+            first_name='Admin',
+            last_name='User',
+            role='admin'
+        )
+        admin.set_password('admin123')  # Set a default password
+        db.session.add(admin)
+    
+    # Create a BDC agent user if it doesn't exist
+    agent = User.query.filter_by(username='bdcagent').first()
+    if not agent:
+        agent = User(
+            username='bdcagent',
+            email='bdc@example.com',
+            first_name='BDC',
+            last_name='Agent',
+            role='bdc_agent'
+        )
+        agent.set_password('bdc123')  # Set a default password
+        db.session.add(agent)
+    
+    # Create email templates if they don't exist
+    if not EmailTemplate.query.first():
+        welcome_template = EmailTemplate(
+            name='Welcome Email',
+            subject='Welcome to our Dealership!',
+            body='Dear {first_name},\n\nThank you for your interest in our dealership. We look forward to helping you find your perfect vehicle.\n\nBest regards,\nThe Team at {dealership_name}',
+            purpose='Initial Contact'
+        )
+        db.session.add(welcome_template)
+        
+        followup_template = EmailTemplate(
+            name='Follow-up Email',
+            subject='Following up on your recent inquiry',
+            body='Dear {first_name},\n\nI wanted to follow up on your recent inquiry about {vehicle_interest}. Are you available for a test drive this week?\n\nBest regards,\n{agent_name}\n{dealership_name}',
+            purpose='Follow-up'
+        )
+        db.session.add(followup_template)
+        
+        appointment_template = EmailTemplate(
+            name='Appointment Confirmation',
+            subject='Your appointment is confirmed',
+            body='Dear {first_name},\n\nThis is to confirm your appointment on {appointment_date} at {appointment_time}. We look forward to seeing you!\n\nBest regards,\n{agent_name}\n{dealership_name}',
+            purpose='Appointment Confirmation'
+        )
+        db.session.add(appointment_template)
+    
+    # Create SMS templates if they don't exist
+    if not SMSTemplate.query.first():
+        welcome_sms = SMSTemplate(
+            name='Welcome SMS',
+            body='Hi {first_name}, thanks for your interest in {dealership_name}! Let me know when you\'d like to schedule a visit.',
+            purpose='Initial Contact'
+        )
+        db.session.add(welcome_sms)
+        
+        followup_sms = SMSTemplate(
+            name='Follow-up SMS',
+            body='Hi {first_name}, just following up on your interest in {vehicle_interest}. Available for a test drive this week?',
+            purpose='Follow-up'
+        )
+        db.session.add(followup_sms)
+        
+        appointment_sms = SMSTemplate(
+            name='Appointment Reminder',
+            body='Reminder: Your appointment at {dealership_name} is tomorrow at {appointment_time}. See you then!',
+            purpose='Appointment Reminder'
+        )
+        db.session.add(appointment_sms)
+    
+    # Commit all changes
+    db.session.commit()
+    
+    print("Database initialized successfully with default data.")
+
+if __name__ == '__main__':
     with app.app_context():
         # Create all tables
         db.create_all()
-        
-        # Create admin user if not exists
-        if User.query.filter_by(username='admin').first() is None:
-            user = User(username='admin', email='admin@example.com')
-            user.set_password('admin123')
-            db.session.add(user)
-            db.session.commit()
-            print("Admin user created")
-        
-        # Create sample cars if none exist
-        if Car.query.count() == 0:
-            # Sample car data
-            sample_cars = [
-                {
-                    'make': 'Toyota', 
-                    'model': 'Camry', 
-                    'year': 2023, 
-                    'trim': 'XSE', 
-                    'color': 'Silver', 
-                    'price': 32999.00, 
-                    'mileage': 0, 
-                    'vin': 'ABC123456789XYZ01', 
-                    'status': 'Available',
-                    'description': 'Brand new Toyota Camry with all the latest features. Includes Toyota Safety Sense, Apple CarPlay, and Android Auto.',
-                    'features': 'Leather Seats, Sunroof, Navigation, Bluetooth, Backup Camera',
-                    'new_or_used': 'New',
-                    'body_style': 'Sedan',
-                    'transmission': 'Automatic',
-                    'fuel_type': 'Gasoline'
-                },
-                {
-                    'make': 'Honda', 
-                    'model': 'Accord', 
-                    'year': 2022, 
-                    'trim': 'Sport', 
-                    'color': 'Black', 
-                    'price': 28999.00, 
-                    'mileage': 12500, 
-                    'vin': 'DEF123456789XYZ02', 
-                    'status': 'Available',
-                    'description': 'Low mileage Honda Accord Sport. One owner, clean history.',
-                    'features': 'Cloth Seats, Sunroof, Apple CarPlay, Android Auto, Backup Camera',
-                    'new_or_used': 'Used',
-                    'body_style': 'Sedan',
-                    'transmission': 'Automatic',
-                    'fuel_type': 'Gasoline'
-                },
-                {
-                    'make': 'Ford', 
-                    'model': 'F-150', 
-                    'year': 2023, 
-                    'trim': 'Lariat', 
-                    'color': 'Blue', 
-                    'price': 52999.00, 
-                    'mileage': 0, 
-                    'vin': 'GHI123456789XYZ03', 
-                    'status': 'Available',
-                    'description': 'New Ford F-150 Lariat with 3.5L EcoBoost engine. Includes Ford Co-Pilot360 and SYNC 4.',
-                    'features': 'Leather Seats, Navigation, Trailer Tow Package, 360-Degree Camera',
-                    'new_or_used': 'New',
-                    'body_style': 'Truck',
-                    'transmission': 'Automatic',
-                    'fuel_type': 'Gasoline'
-                },
-                {
-                    'make': 'Chevrolet', 
-                    'model': 'Silverado', 
-                    'year': 2021, 
-                    'trim': 'LT', 
-                    'color': 'Red', 
-                    'price': 39999.00, 
-                    'mileage': 25000, 
-                    'vin': 'JKL123456789XYZ04', 
-                    'status': 'Available',
-                    'description': 'Well-maintained Chevrolet Silverado with towing package. Perfect for work or play.',
-                    'features': 'Cloth Seats, Towing Package, Bluetooth, Backup Camera',
-                    'new_or_used': 'Used',
-                    'body_style': 'Truck',
-                    'transmission': 'Automatic',
-                    'fuel_type': 'Gasoline'
-                },
-                {
-                    'make': 'Tesla', 
-                    'model': 'Model 3', 
-                    'year': 2023, 
-                    'trim': 'Long Range', 
-                    'color': 'White', 
-                    'price': 48999.00, 
-                    'mileage': 0, 
-                    'vin': 'MNO123456789XYZ05', 
-                    'status': 'Available',
-                    'description': 'Brand new Tesla Model 3 Long Range. Includes Autopilot and premium interior.',
-                    'features': 'Vegan Leather Seats, Glass Roof, Autopilot, Premium Sound System',
-                    'new_or_used': 'New',
-                    'body_style': 'Sedan',
-                    'transmission': 'Electric',
-                    'fuel_type': 'Electric'
-                }
-            ]
-            
-            # Create cars and sample images
-            for car_data in sample_cars:
-                car = Car(**car_data)
-                db.session.add(car)
-                db.session.flush()  # Get ID before commit
-                
-                # Add a primary image
-                primary_image = CarImage(
-                    car_id=car.id,
-                    url=f"https://example.com/images/{car.make.lower()}_{car.model.lower()}_1.jpg",
-                    is_primary=True
-                )
-                db.session.add(primary_image)
-                
-                # Add additional images
-                for i in range(2, 5):
-                    image = CarImage(
-                        car_id=car.id,
-                        url=f"https://example.com/images/{car.make.lower()}_{car.model.lower()}_{i}.jpg",
-                        is_primary=False
-                    )
-                    db.session.add(image)
-            
-            db.session.commit()
-            print("Sample cars created")
-        
-        # Create email templates
-        if EmailTemplate.query.count() == 0:
-            templates = [
-                {
-                    'name': 'Initial Contact - New Lead',
-                    'subject': 'Thank you for your interest in our dealership',
-                    'body': '''Dear {first_name},
-
-Thank you for your interest in our dealership. We're excited to help you find your perfect vehicle.
-
-Would you prefer to schedule an appointment to discuss your needs in person? I'm available this week and would be happy to show you our inventory.
-
-Please let me know what day and time would work best for you, or feel free to call me directly.
-
-Looking forward to helping you!
-
-Best regards,
-{agent_name}
-{dealership_name}
-{dealership_phone}''',
-                    'purpose': 'Initial Contact'
-                },
-                {
-                    'name': 'Follow-up - No Response',
-                    'subject': 'Following up on your vehicle inquiry',
-                    'body': '''Dear {first_name},
-
-I wanted to follow up on your recent inquiry about our vehicles. I haven't heard back from you and wanted to check if you're still interested or if you have any questions I can answer.
-
-Our dealership currently has several special offers that might interest you. I'd be happy to provide more details or schedule a time for you to visit us.
-
-Please let me know how I can help.
-
-Best regards,
-{agent_name}
-{dealership_name}
-{dealership_phone}''',
-                    'purpose': 'Follow-up'
-                },
-                {
-                    'name': 'Appointment Confirmation',
-                    'subject': 'Your appointment is confirmed',
-                    'body': '''Dear {first_name},
-
-This email confirms your appointment at {dealership_name} on {appointment_date} at {appointment_time}.
-
-During your visit, we'll discuss your vehicle preferences and requirements, and you'll have the opportunity to test drive vehicles that interest you.
-
-Please bring your driver's license for test drives. If you're considering a trade-in, bringing your current vehicle's registration and any loan information would be helpful.
-
-We're located at {dealership_address}. If you need directions or have any questions before your appointment, please don't hesitate to contact me.
-
-I look forward to meeting you!
-
-Best regards,
-{agent_name}
-{dealership_name}
-{dealership_phone}''',
-                    'purpose': 'Appointment Confirmation'
-                },
-                {
-                    'name': 'Post-Visit Thank You',
-                    'subject': 'Thank you for visiting our dealership',
-                    'body': '''Dear {first_name},
-
-Thank you for visiting {dealership_name} today. It was a pleasure meeting you and discussing your vehicle needs.
-
-I hope you enjoyed your experience with us and found the {vehicle_of_interest} to your liking. If you have any additional questions about the vehicle or our financing options, please don't hesitate to reach out.
-
-I'll be in touch soon to follow up, but feel free to contact me anytime if you'd like to schedule another test drive or discuss next steps.
-
-Thank you again for your time!
-
-Best regards,
-{agent_name}
-{dealership_name}
-{dealership_phone}''',
-                    'purpose': 'Thank You'
-                }
-            ]
-            
-            for template in templates:
-                email_template = EmailTemplate(
-                    name=template['name'],
-                    subject=template['subject'],
-                    body=template['body'],
-                    purpose=template['purpose']
-                )
-                db.session.add(email_template)
-            
-            db.session.commit()
-            print("Email templates created")
-        
-        # Create SMS templates
-        if SMSTemplate.query.count() == 0:
-            templates = [
-                {
-                    'name': 'Initial Contact',
-                    'body': 'Hi {first_name}, this is {agent_name} from {dealership_name}. Thanks for your inquiry! When would be a good time to schedule a visit? Reply anytime!',
-                    'purpose': 'Initial Contact'
-                },
-                {
-                    'name': 'Follow-up',
-                    'body': 'Hi {first_name}, following up on your recent inquiry. Still interested in the {vehicle}? I'm here to answer any questions!',
-                    'purpose': 'Follow-up'
-                },
-                {
-                    'name': 'Appointment Confirmation',
-                    'body': 'Hi {first_name}, your appointment at {dealership_name} is confirmed for {date} at {time}. Reply Y to confirm or call to reschedule.',
-                    'purpose': 'Appointment Confirmation'
-                },
-                {
-                    'name': 'Appointment Reminder',
-                    'body': 'Hi {first_name}, reminder: your appointment at {dealership_name} is tomorrow at {time}. We look forward to seeing you!',
-                    'purpose': 'Appointment Reminder'
-                },
-                {
-                    'name': 'Post-Visit',
-                    'body': 'Hi {first_name}, thank you for visiting us today! How did you enjoy the {vehicle}? Let me know if you have any questions!',
-                    'purpose': 'Thank You'
-                }
-            ]
-            
-            for template in templates:
-                sms_template = SMSTemplate(
-                    name=template['name'],
-                    body=template['body'],
-                    purpose=template['purpose']
-                )
-                db.session.add(sms_template)
-            
-            db.session.commit()
-            print("SMS templates created")
-            
-        # Create sample leads if none exist
-        if Lead.query.count() == 0:
-            # Sample lead data
-            sample_leads = [
-                {'first_name': 'John', 'last_name': 'Smith', 'email': 'john.smith@example.com', 'phone': '5551234567', 'source': 'Website', 'status': 'New'},
-                {'first_name': 'Emily', 'last_name': 'Johnson', 'email': 'emily.j@example.com', 'phone': '5552345678', 'source': 'Third Party', 'status': 'Contacted'},
-                {'first_name': 'Michael', 'last_name': 'Williams', 'email': 'mwilliams@example.com', 'phone': '5553456789', 'source': 'Referral', 'status': 'Qualified'},
-                {'first_name': 'Sarah', 'last_name': 'Brown', 'email': 'sarah.brown@example.com', 'phone': '5554567890', 'source': 'Walk-in', 'status': 'Appointment Set'},
-                {'first_name': 'David', 'last_name': 'Miller', 'email': 'dmiller@example.com', 'phone': '5555678901', 'source': 'Website', 'status': 'Contacted'}
-            ]
-            
-            # Vehicle interests
-            vehicle_interests = [
-                {'make': 'Toyota', 'model': 'Camry', 'year': 2023, 'new_or_used': 'New'},
-                {'make': 'Honda', 'model': 'Accord', 'year': 2022, 'new_or_used': 'New'},
-                {'make': 'Ford', 'model': 'F-150', 'year': 2021, 'new_or_used': 'Used'},
-                {'make': 'Chevrolet', 'model': 'Silverado', 'year': 2023, 'new_or_used': 'New'},
-                {'make': 'Tesla', 'model': 'Model 3', 'year': 2023, 'new_or_used': 'New'},
-                {'make': 'BMW', 'model': 'X5', 'year': 2020, 'new_or_used': 'Used'},
-                {'make': 'Nissan', 'model': 'Altima', 'year': 2022, 'new_or_used': 'New'}
-            ]
-            
-            # Create leads and associated data
-            for lead_data in sample_leads:
-                lead = Lead(**lead_data)
-                db.session.add(lead)
-                db.session.flush()  # Get ID before commit
-                
-                # Add 1-2 vehicle interests
-                for i in range(random.randint(1, 2)):
-                    vi = random.choice(vehicle_interests)
-                    vehicle_interest = VehicleInterest(
-                        lead_id=lead.id,
-                        make=vi['make'],
-                        model=vi['model'],
-                        year=vi['year'],
-                        new_or_used=vi['new_or_used']
-                    )
-                    db.session.add(vehicle_interest)
-                
-                # Add some communications
-                if lead.status in ['Contacted', 'Qualified', 'Appointment Set']:
-                    # Add email communication
-                    comm1 = Communication(
-                        lead_id=lead.id,
-                        type='Email',
-                        direction='Outbound',
-                        content=f"Hello {lead.first_name}, thank you for your interest in our dealership. We'd love to schedule a time for you to visit us.",
-                        status='Sent',
-                        sent_at=datetime.now() - timedelta(days=random.randint(1, 5))
-                    )
-                    db.session.add(comm1)
-                    
-                    # Add SMS communication
-                    comm2 = Communication(
-                        lead_id=lead.id,
-                        type='SMS',
-                        direction='Outbound',
-                        content=f"Hi {lead.first_name}, this is Auto Dealership. When would be a good time to schedule a visit? Reply anytime!",
-                        status='Sent',
-                        sent_at=datetime.now() - timedelta(days=random.randint(1, 3))
-                    )
-                    db.session.add(comm2)
-                
-                # Add appointment if status is Appointment Set
-                if lead.status == 'Appointment Set':
-                    appointment_date = datetime.now().date() + timedelta(days=random.randint(1, 7))
-                    appointment_time = time(hour=random.randint(9, 16), minute=0)
-                    
-                    appointment = Appointment(
-                        lead_id=lead.id,
-                        date=appointment_date,
-                        time=appointment_time,
-                        purpose='Test Drive',
-                        status='Scheduled',
-                        notes='Customer is interested in financing options.'
-                    )
-                    db.session.add(appointment)
-            
-            db.session.commit()
-            print("Sample leads, vehicle interests, communications, and appointments created")
-            
-        print("Database initialization complete")
-
-if __name__ == '__main__':
-    init_db()

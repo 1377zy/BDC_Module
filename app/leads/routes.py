@@ -127,3 +127,129 @@ def add_vehicle_interest(lead_id):
         
     return render_template('leads/add_vehicle_interest.html', 
                            title='Add Vehicle Interest', form=form, lead=lead)
+
+@bp.route('/download-template')
+@login_required
+def download_template():
+    """Download a CSV template for lead imports"""
+    import csv
+    from io import StringIO
+    import datetime
+    
+    # Create CSV data in memory
+    csv_data = StringIO()
+    writer = csv.writer(csv_data)
+    
+    # Write header row with all required and optional fields
+    writer.writerow([
+        'first_name', 'last_name', 'email', 'phone', 'source', 'status', 
+        'notes', 'make', 'model', 'year', 'new_or_used'
+    ])
+    
+    # Write a sample row to show the expected format
+    writer.writerow([
+        'John', 'Doe', 'john.doe@example.com', '555-123-4567', 'Website', 'New',
+        'Interested in financing options', 'Toyota', 'Camry', '2023', 'New'
+    ])
+    
+    # Write another sample row
+    writer.writerow([
+        'Jane', 'Smith', 'jane.smith@example.com', '555-987-6543', 'Walk-in', 'Contacted',
+        'Prefers to be contacted in the evening', 'Honda', 'Civic', '2020', 'Used'
+    ])
+    
+    # Prepare response
+    from flask import Response
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"lead_import_template_{timestamp}.csv"
+    
+    return Response(
+        csv_data.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename={filename}"}
+    )
+
+@bp.route('/import', methods=['GET', 'POST'])
+@login_required
+def import_leads():
+    """Import leads from a CSV file"""
+    import csv
+    from io import TextIOWrapper
+    
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+            
+        file = request.files['file']
+        
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+            
+        if file and file.filename.endswith('.csv'):
+            # Process the CSV file
+            csv_file = TextIOWrapper(file, encoding='utf-8')
+            csv_reader = csv.DictReader(csv_file)
+            
+            # Validate the CSV structure
+            required_fields = ['first_name', 'last_name', 'email', 'phone']
+            first_row = next(csv_reader, None)
+            csv_file.seek(0)  # Reset to beginning of file
+            next(csv_reader)  # Skip header row again
+            
+            missing_fields = [field for field in required_fields if field not in first_row]
+            if missing_fields:
+                flash(f'CSV file is missing required fields: {", ".join(missing_fields)}', 'danger')
+                return redirect(request.url)
+            
+            # Process each row
+            success_count = 0
+            error_count = 0
+            
+            for row in csv_reader:
+                try:
+                    # Create new lead
+                    lead = Lead(
+                        first_name=row.get('first_name', '').strip(),
+                        last_name=row.get('last_name', '').strip(),
+                        email=row.get('email', '').strip(),
+                        phone=row.get('phone', '').strip(),
+                        source=row.get('source', 'Import').strip(),
+                        status=row.get('status', 'New').strip(),
+                        notes=row.get('notes', '').strip()
+                    )
+                    db.session.add(lead)
+                    db.session.flush()  # Get the lead ID without committing
+                    
+                    # Add vehicle interest if provided
+                    if all(key in row and row[key].strip() for key in ['make', 'model']):
+                        vehicle_interest = VehicleInterest(
+                            lead_id=lead.id,
+                            make=row.get('make', '').strip(),
+                            model=row.get('model', '').strip(),
+                            year=row.get('year', '').strip(),
+                            new_or_used=row.get('new_or_used', '').strip(),
+                            notes=''
+                        )
+                        db.session.add(vehicle_interest)
+                    
+                    success_count += 1
+                except Exception as e:
+                    error_count += 1
+                    print(f"Error importing lead: {e}")
+            
+            # Commit all successful imports
+            db.session.commit()
+            
+            if success_count > 0:
+                flash(f'Successfully imported {success_count} leads', 'success')
+            if error_count > 0:
+                flash(f'Failed to import {error_count} leads', 'warning')
+                
+            return redirect(url_for('leads.list_leads'))
+        else:
+            flash('File must be a CSV', 'danger')
+            return redirect(request.url)
+    
+    return render_template('leads/import.html', title='Import Leads')

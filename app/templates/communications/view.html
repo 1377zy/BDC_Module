@@ -21,18 +21,18 @@
     <div class="col-md-4 text-md-end">
         <div class="btn-group" role="group">
             {% if communication.type == 'Email' %}
-            <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-info">
+            <a href="#" class="btn btn-outline-info">
                 <i class="fas fa-reply"></i> Reply
             </a>
             {% elif communication.type == 'SMS' %}
-            <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-warning">
+            <a href="#" class="btn btn-outline-warning">
                 <i class="fas fa-reply"></i> Reply
             </a>
             {% endif %}
-            <a href="{{ url_for('leads.view_lead', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+            <a href="#" class="btn btn-outline-primary">
                 <i class="fas fa-user"></i> View Lead
             </a>
-            <a href="{{ url_for('communications.list_communications') }}" class="btn btn-outline-secondary">
+            <a href="#" class="btn btn-outline-secondary">
                 <i class="fas fa-list"></i> Back to List
             </a>
         </div>
@@ -105,7 +105,7 @@
                                 {{ attachment.filename }}
                                 <small class="text-muted">({{ attachment.size|filesizeformat }})</small>
                             </div>
-                            <a href="{{ url_for('communications.download_attachment', attachment_id=attachment.id) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="#" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-download"></i> Download
                             </a>
                         </li>
@@ -145,7 +145,7 @@
             <div class="card-body">
                 <div class="list-group">
                     {% for related in related_communications %}
-                    <a href="{{ url_for('communications.view_communication', communication_id=related.id) }}" class="list-group-item list-group-item-action {% if related.id == communication.id %}active{% endif %}">
+                    <a href="#" class="list-group-item list-group-item-action {% if related.id == communication.id %}active{% endif %}">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">
                                 {% if related.type == 'Email' %}
@@ -190,20 +190,9 @@
                     {% endif %}
                 </p>
                 <p class="mb-1"><strong>Status:</strong> {{ communication.lead.status }}</p>
-                <p class="mb-1"><strong>Source:</strong> {{ communication.lead.source }}</p>
-                
-                {% if communication.lead.vehicle_interests %}
-                <hr>
-                <h6 class="card-subtitle mb-2">Vehicle Interests</h6>
-                <ul class="list-unstyled">
-                    {% for interest in communication.lead.vehicle_interests %}
-                    <li><i class="fas fa-car me-1"></i> {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}</li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
                 
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('leads.view_lead', lead_id=communication.lead.id) }}" class="btn btn-outline-success">
+                    <a href="#" class="btn btn-outline-success">
                         <i class="fas fa-user"></i> View Full Lead Profile
                     </a>
                 </div>
@@ -222,8 +211,8 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ appointment.date.strftime('%Y-%m-%d') }}</strong> at {{ appointment.time.strftime('%I:%M %p') }}
-                            {% if appointment.vehicle_interest %}
-                            <br><small>{{ appointment.vehicle_interest }}</small>
+                            {% if appointment.purpose %}
+                            <br><small>{{ appointment.purpose }}</small>
                             {% endif %}
                         </div>
                         <span class="badge bg-{{ appointment.status|lower }} rounded-pill">{{ appointment.status }}</span>
@@ -231,7 +220,7 @@
                     {% endfor %}
                 </ul>
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+                    <a href="#" class="btn btn-outline-primary">
                         <i class="fas fa-calendar-plus"></i> Schedule Appointment
                     </a>
                 </div>
@@ -247,21 +236,21 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     {% if communication.type == 'Email' %}
-                    <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-info">
+                    <a href="#" class="btn btn-outline-info">
                         <i class="fas fa-reply"></i> Reply to Email
                     </a>
                     {% elif communication.type == 'SMS' %}
-                    <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id, reply_to=communication.id) }}" class="btn btn-outline-warning">
+                    <a href="#" class="btn btn-outline-warning">
                         <i class="fas fa-reply"></i> Reply to SMS
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('communications.send_email', lead_id=communication.lead.id) }}" class="btn btn-outline-primary">
+                    <a href="#" class="btn btn-outline-primary">
                         <i class="fas fa-envelope"></i> Send Email
                     </a>
-                    <a href="{{ url_for('communications.send_sms', lead_id=communication.lead.id) }}" class="btn btn-outline-secondary">
+                    <a href="#" class="btn btn-outline-secondary">
                         <i class="fas fa-sms"></i> Send SMS
                     </a>
-                    <a href="{{ url_for('appointments.schedule_appointment', lead_id=communication.lead.id) }}" class="btn btn-outline-success">
+                    <a href="#" class="btn btn-outline-success">
                         <i class="fas fa-calendar-plus"></i> Schedule Appointment
                     </a>
                 </div>

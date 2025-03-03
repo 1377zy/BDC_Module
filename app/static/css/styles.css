@@ -173,12 +173,47 @@
     border-left-color: #6610f2;
 }
 
+.communication-call {
+    border-left-color: #198754;
+}
+
+.communication-note {
+    border-left-color: #6c757d;
+}
+
 .communication-inbound {
     background-color: #e7f5ff;
 }
 
 .communication-outbound {
     background-color: #f8f9fa;
+}
+
+/* Badge styles for communications */
+.badge-comm-email {
+    background-color: #cfe2ff !important;
+    color: #084298 !important;
+}
+
+.badge-comm-sms {
+    background-color: #fff3cd !important;
+    color: #664d03 !important;
+}
+
+.badge-comm-call {
+    background-color: #d1e7dd !important;
+    color: #0a3622 !important;
+}
+
+.badge-comm-note {
+    background-color: #e2e3e5 !important;
+    color: #383d41 !important;
+}
+
+/* Table hover effects */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    transition: background-color 0.2s ease;
 }
 
 /* Template styles */
