@@ -33,3 +33,17 @@ ENV/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Sensitive files
+client_secret.json
+*client_secret*.json
+*api_key*.json
+secrets.json
+credentials.json
+
+# Logs
+logs/
+*.log
+
+# Data files
+data/
