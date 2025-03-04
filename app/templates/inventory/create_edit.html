@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>{{ 'Edit' if inventory else 'Add' }} Vehicle</h1>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Vehicle Details</h3>
+            </div>
+            <div class="panel-body">
+                <form method="post" class="form">
+                    {{ form.hidden_tag() }}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.stock_number.label }}
+                                {{ form.stock_number(class="form-control") }}
+                                {% for error in form.stock_number.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.new_or_used.label }}
+                                {{ form.new_or_used(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.status.label }}
+                                {{ form.status(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.year.label }}
+                                {{ form.year(class="form-control") }}
+                                {% for error in form.year.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.make.label }}
+                                {{ form.make(class="form-control") }}
+                                {% for error in form.make.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.model.label }}
+                                {{ form.model(class="form-control") }}
+                                {% for error in form.model.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.trim.label }}
+                                {{ form.trim(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.body_style.label }}
+                                {{ form.body_style(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.color_exterior.label }}
+                                {{ form.color_exterior(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.color_interior.label }}
+                                {{ form.color_interior(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ form.mileage.label }}
+                                {{ form.mileage(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.engine.label }}
+                                {{ form.engine(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.transmission.label }}
+                                {{ form.transmission(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.drivetrain.label }}
+                                {{ form.drivetrain(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.fuel_type.label }}
+                                {{ form.fuel_type(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.location.label }}
+                                {{ form.location(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4>Pricing Information</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.invoice_price.label }}
+                                <div class="input-group">
+                                    <span class="input-group-addon">$</span>
+                                    {{ form.invoice_price(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.msrp.label }}
+                                <div class="input-group">
+                                    <span class="input-group-addon">$</span>
+                                    {{ form.msrp(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.sale_price.label }}
+                                <div class="input-group">
+                                    <span class="input-group-addon">$</span>
+                                    {{ form.sale_price(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {{ form.features.label }}
+                                {{ form.features(class="form-control", rows=3) }}
+                                <small class="text-muted">Enter key features of the vehicle, one per line or comma-separated</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {{ form.description.label }}
+                                {{ form.description(class="form-control", rows=3) }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {{ form.image_urls.label }}
+                                {{ form.image_urls(class="form-control", rows=3) }}
+                                <small class="text-muted">Enter one URL per line</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-default">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

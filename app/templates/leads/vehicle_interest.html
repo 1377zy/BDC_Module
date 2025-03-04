@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-car"></i> 
+                    {% if is_edit %}
+                    Edit Vehicle Interest
+                    {% else %}
+                    Add Vehicle Interest
+                    {% endif %}
+                    for {{ lead.first_name }} {{ lead.last_name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.make.label(class="form-label") }}
+                                {{ form.make(class="form-control") }}
+                                {% for error in form.make.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.model.label(class="form-label") }}
+                                {{ form.model(class="form-control") }}
+                                {% for error in form.model.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.year.label(class="form-label") }}
+                                {{ form.year(class="form-control") }}
+                                {% for error in form.year.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.trim.label(class="form-label") }}
+                                {{ form.trim(class="form-control") }}
+                                {% for error in form.trim.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.body_style.label(class="form-label") }}
+                                {{ form.body_style(class="form-control") }}
+                                {% for error in form.body_style.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.new_or_used.label(class="form-label") }}
+                                {{ form.new_or_used(class="form-control") }}
+                                {% for error in form.new_or_used.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.color_exterior.label(class="form-label") }}
+                                {{ form.color_exterior(class="form-control") }}
+                                {% for error in form.color_exterior.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.color_interior.label(class="form-label") }}
+                                {{ form.color_interior(class="form-control") }}
+                                {% for error in form.color_interior.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.engine.label(class="form-label") }}
+                                {{ form.engine(class="form-control") }}
+                                {% for error in form.engine.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.transmission.label(class="form-label") }}
+                                {{ form.transmission(class="form-control") }}
+                                {% for error in form.transmission.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.drivetrain.label(class="form-label") }}
+                                {{ form.drivetrain(class="form-control") }}
+                                {% for error in form.drivetrain.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.fuel_type.label(class="form-label") }}
+                                {{ form.fuel_type(class="form-control") }}
+                                {% for error in form.fuel_type.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.mileage.label(class="form-label") }}
+                                {{ form.mileage(class="form-control") }}
+                                {% for error in form.mileage.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                {{ form.priority.label(class="form-label") }}
+                                {{ form.priority(class="form-control") }}
+                                {% for error in form.priority.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.price_min.label(class="form-label") }}
+                                {{ form.price_min(class="form-control") }}
+                                {% for error in form.price_min.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.price_max.label(class="form-label") }}
+                                {{ form.price_max(class="form-control") }}
+                                {% for error in form.price_max.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        {{ form.features.label(class="form-label") }}
+                        {{ form.features(class="form-control", rows=3) }}
+                        <small class="form-text text-muted">Enter features separated by commas (e.g., Sunroof, Navigation, Leather Seats)</small>
+                        {% for error in form.features.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows=3) }}
+                        {% for error in form.notes.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Lead
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if is_edit %}
+                            Update Vehicle Interest
+                            {% else %}
+                            Add Vehicle Interest
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

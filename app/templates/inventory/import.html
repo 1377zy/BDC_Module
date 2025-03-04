@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <h1>Import Inventory</h1>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Upload Inventory CSV File</h3>
+            </div>
+            <div class="panel-body">
+                <div class="alert alert-info">
+                    <p><strong>Instructions:</strong></p>
+                    <ol>
+                        <li>Download the <a href="{{ url_for('inventory.download_template') }}">inventory template</a> to get started.</li>
+                        <li>Fill in your inventory data in the CSV file. Required fields are marked with an asterisk (*).</li>
+                        <li>Save the file and upload it using the form below.</li>
+                        <li>Review any errors that may occur during import.</li>
+                    </ol>
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.file.label }}
+                        {{ form.file(class="form-control") }}
+                        {% for error in form.file.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                        <p class="help-block">Upload a CSV file with your inventory data.</p>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                {{ form.has_header() }} {{ form.has_header.label.text }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-default">Cancel</a>
+                        <a href="{{ url_for('inventory.download_template') }}" class="btn btn-info">
+                            <span class="glyphicon glyphicon-download"></span> Download Template
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">CSV Format Requirements</h3>
+            </div>
+            <div class="panel-body">
+                <p>Your CSV file should include the following columns:</p>
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>stock_number</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>Unique identifier for the vehicle</td>
+                            <td>A12345</td>
+                        </tr>
+                        <tr>
+                            <td>year</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>Model year</td>
+                            <td>2023</td>
+                        </tr>
+                        <tr>
+                            <td>make</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>Vehicle manufacturer</td>
+                            <td>Honda</td>
+                        </tr>
+                        <tr>
+                            <td>model</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>Vehicle model</td>
+                            <td>Accord</td>
+                        </tr>
+                        <tr>
+                            <td>trim</td>
+                            <td><span class="label label-default">Optional</span></td>
+                            <td>Trim level</td>
+                            <td>EX-L</td>
+                        </tr>
+                        <tr>
+                            <td>new_or_used</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>New or Used</td>
+                            <td>New</td>
+                        </tr>
+                        <tr>
+                            <td>status</td>
+                            <td><span class="label label-danger">Required</span></td>
+                            <td>Availability status</td>
+                            <td>Available</td>
+                        </tr>
+                        <tr>
+                            <td>color_exterior</td>
+                            <td><span class="label label-default">Optional</span></td>
+                            <td>Exterior color</td>
+                            <td>Crystal Black Pearl</td>
+                        </tr>
+                        <tr>
+                            <td>color_interior</td>
+                            <td><span class="label label-default">Optional</span></td>
+                            <td>Interior color</td>
+                            <td>Black Leather</td>
+                        </tr>
+                        <tr>
+                            <td>mileage</td>
+                            <td><span class="label label-default">Optional</span></td>
+                            <td>Odometer reading</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>sale_price</td>
+                            <td><span class="label label-default">Optional</span></td>
+                            <td>Sale price (no $ sign)</td>
+                            <td>32995</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

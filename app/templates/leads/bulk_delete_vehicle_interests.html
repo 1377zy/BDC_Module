@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Confirm Bulk Delete</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Warning</h5>
+                    <p>You are about to delete <strong>{{ count }}</strong> vehicle interests. This action cannot be undone.</p>
+                </div>
+                
+                <h5>Filter Criteria:</h5>
+                <ul class="list-group mb-4">
+                    {% if form.make.data %}
+                    <li class="list-group-item">Make: {{ form.make.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.model.data %}
+                    <li class="list-group-item">Model: {{ form.model.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.year_min.data %}
+                    <li class="list-group-item">Year (Min): {{ form.year_min.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.year_max.data %}
+                    <li class="list-group-item">Year (Max): {{ form.year_max.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.new_or_used.data %}
+                    <li class="list-group-item">New/Used: {{ form.new_or_used.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.body_style.data %}
+                    <li class="list-group-item">Body Style: {{ form.body_style.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.date_from.data %}
+                    <li class="list-group-item">Date From: {{ form.date_from.data }}</li>
+                    {% endif %}
+                    
+                    {% if form.date_to.data %}
+                    <li class="list-group-item">Date To: {{ form.date_to.data }}</li>
+                    {% endif %}
+                </ul>
+                
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('leads.vehicle_interest_analytics') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Confirm Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

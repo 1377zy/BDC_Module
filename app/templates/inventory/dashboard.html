@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Inventory Dashboard</h1>
+        
+        <!-- Inventory Stats Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <span class="glyphicon glyphicon-tag" style="font-size: 4em;"></span>
+                            </div>
+                            <div class="col-xs-9 text-right">
+                                <div style="font-size: 2.5em;">{{ stats.total }}</div>
+                                <div>Total Vehicles</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('inventory.list_inventory') }}">
+                        <div class="panel-footer">
+                            <span class="pull-left">View All Inventory</span>
+                            <span class="pull-right"><span class="glyphicon glyphicon-arrow-right"></span></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="panel panel-success">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <span class="glyphicon glyphicon-ok-circle" style="font-size: 4em;"></span>
+                            </div>
+                            <div class="col-xs-9 text-right">
+                                <div style="font-size: 2.5em;">{{ stats.available }}</div>
+                                <div>Available</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('inventory.list_inventory', status='Available') }}">
+                        <div class="panel-footer">
+                            <span class="pull-left">View Available Vehicles</span>
+                            <span class="pull-right"><span class="glyphicon glyphicon-arrow-right"></span></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="panel panel-warning">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <span class="glyphicon glyphicon-time" style="font-size: 4em;"></span>
+                            </div>
+                            <div class="col-xs-9 text-right">
+                                <div style="font-size: 2.5em;">{{ stats.on_hold }}</div>
+                                <div>On Hold</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('inventory.list_inventory', status='On Hold') }}">
+                        <div class="panel-footer">
+                            <span class="pull-left">View On-Hold Vehicles</span>
+                            <span class="pull-right"><span class="glyphicon glyphicon-arrow-right"></span></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="panel panel-danger">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-xs-3">
+                                <span class="glyphicon glyphicon-shopping-cart" style="font-size: 4em;"></span>
+                            </div>
+                            <div class="col-xs-9 text-right">
+                                <div style="font-size: 2.5em;">{{ stats.sold }}</div>
+                                <div>Sold</div>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('inventory.list_inventory', status='Sold') }}">
+                        <div class="panel-footer">
+                            <span class="pull-left">View Sold Vehicles</span>
+                            <span class="pull-right"><span class="glyphicon glyphicon-arrow-right"></span></span>
+                            <div class="clearfix"></div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Breakdown -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">New vs. Used Breakdown</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="well text-center">
+                                    <h4>New Vehicles</h4>
+                                    <h2>{{ stats.new }}</h2>
+                                    <a href="{{ url_for('inventory.list_inventory', new_or_used='New') }}" class="btn btn-sm btn-primary">View New Inventory</a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="well text-center">
+                                    <h4>Used Vehicles</h4>
+                                    <h2>{{ stats.used }}</h2>
+                                    <a href="{{ url_for('inventory.list_inventory', new_or_used='Used') }}" class="btn btn-sm btn-primary">View Used Inventory</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Inventory Value</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="well text-center">
+                                    <h4>Total MSRP</h4>
+                                    <h2>${{ stats.total_msrp }}</h2>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="well text-center">
+                                    <h4>Total Sale Price</h4>
+                                    <h2>${{ stats.total_sale_price }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Recent Inventory Activity</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Vehicle</th>
+                            <th>Stock #</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activity %}
+                        <tr>
+                            <td>{{ activity.timestamp.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('inventory.view_inventory', inventory_id=activity.inventory_id) }}">
+                                    {{ activity.vehicle_year }} {{ activity.vehicle_make }} {{ activity.vehicle_model }}
+                                </a>
+                            </td>
+                            <td>{{ activity.stock_number }}</td>
+                            <td>{{ activity.action }}</td>
+                            <td>
+                                {% if activity.status == 'Available' %}
+                                <span class="label label-success">{{ activity.status }}</span>
+                                {% elif activity.status == 'Sold' %}
+                                <span class="label label-danger">{{ activity.status }}</span>
+                                {% elif activity.status == 'On Hold' %}
+                                <span class="label label-warning">{{ activity.status }}</span>
+                                {% else %}
+                                <span class="label label-default">{{ activity.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No recent activity</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Popular Matches -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Popular Vehicle Matches</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    {% for match in popular_matches %}
+                    <div class="col-md-4">
+                        <div class="well">
+                            <h4>
+                                <a href="{{ url_for('inventory.view_inventory', inventory_id=match.inventory_id) }}">
+                                    {{ match.vehicle_year }} {{ match.vehicle_make }} {{ match.vehicle_model }}
+                                </a>
+                            </h4>
+                            <p>Stock #: {{ match.stock_number }}</p>
+                            <p>Matched with {{ match.lead_count }} leads</p>
+                            <a href="{{ url_for('inventory.view_inventory', inventory_id=match.inventory_id) }}" class="btn btn-sm btn-primary">View Details</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <p class="text-center">No vehicle matches found</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

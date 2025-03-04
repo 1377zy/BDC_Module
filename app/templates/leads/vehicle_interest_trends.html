@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 30px;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+    }
+    .trend-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .trend-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Vehicle Interest Trends</h1>
+        <p class="lead">Analyze how vehicle interests have changed over time</p>
+        
+        <!-- Navigation -->
+        <div class="mb-4">
+            <a href="{{ url_for('leads.vehicle_interest_analytics') }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-pie"></i> Back to Analytics
+            </a>
+            <a href="{{ url_for('leads.vehicle_interest_comparison') }}" class="btn btn-outline-info">
+                <i class="fas fa-balance-scale"></i> Compare Time Periods
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Trend (Last 7 Days) -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card trend-card">
+            <div class="card-header">
+                <h5 class="mb-0">Daily Vehicle Interests (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="dailyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Trend (Last 30 Days) -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card trend-card">
+            <div class="card-header">
+                <h5 class="mb-0">Weekly Vehicle Interests (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="weeklyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trend (Last 90 Days) -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card trend-card">
+            <div class="card-header">
+                <h5 class="mb-0">Monthly Vehicle Interests (Last 90 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Make Trends Over Time -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card trend-card">
+            <div class="card-header">
+                <h5 class="mb-0">Top Makes Trend (Last 90 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="makeTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New vs Used Trend -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card trend-card">
+            <div class="card-header">
+                <h5 class="mb-0">New vs Used Vehicles (Last 90 Days)</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="newUsedTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Daily Trend Chart
+        var dailyCtx = document.getElementById('dailyTrendChart').getContext('2d');
+        var dailyTrendChart = new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ trends.daily_dates|tojson }},
+                datasets: [{
+                    label: 'Daily Vehicle Interests',
+                    data: {{ trends.daily_counts|tojson }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Weekly Trend Chart
+        var weeklyCtx = document.getElementById('weeklyTrendChart').getContext('2d');
+        var weeklyTrendChart = new Chart(weeklyCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ trends.weekly_labels|tojson }},
+                datasets: [{
+                    label: 'Weekly Vehicle Interests',
+                    data: {{ trends.weekly_counts|tojson }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Monthly Trend Chart
+        var monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+        var monthlyTrendChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ trends.monthly_labels|tojson }},
+                datasets: [{
+                    label: 'Monthly Vehicle Interests',
+                    data: {{ trends.monthly_counts|tojson }},
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Make Trend Chart
+        var makeCtx = document.getElementById('makeTrendChart').getContext('2d');
+        var makeTrendChart = new Chart(makeCtx, {
+            type: 'line',
+            data: {
+                labels: {{ trends.months|tojson }},
+                datasets: {{ trends.make_datasets|tojson }}
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // New vs Used Trend Chart
+        var newUsedCtx = document.getElementById('newUsedTrendChart').getContext('2d');
+        var newUsedTrendChart = new Chart(newUsedCtx, {
+            type: 'line',
+            data: {
+                labels: {{ trends.months|tojson }},
+                datasets: [
+                    {
+                        label: 'New Vehicles',
+                        data: {{ trends.new_data|tojson }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    },
+                    {
+                        label: 'Used Vehicles',
+                        data: {{ trends.used_data|tojson }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

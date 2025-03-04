@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3 class="panel-title">{{ inventory.year }} {{ inventory.make }} {{ inventory.model }} {{ inventory.trim }}</h3>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-default btn-sm">
+                            <span class="glyphicon glyphicon-arrow-left"></span> Back to Inventory
+                        </a>
+                        <a href="{{ url_for('inventory.edit_inventory', inventory_id=inventory.id) }}" class="btn btn-primary btn-sm">
+                            <span class="glyphicon glyphicon-pencil"></span> Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>Vehicle Information</h4>
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th>Stock Number:</th>
+                                        <td>{{ inventory.stock_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>
+                                            {% if inventory.status == 'Available' %}
+                                            <span class="label label-success">{{ inventory.status }}</span>
+                                            {% elif inventory.status == 'Sold' %}
+                                            <span class="label label-danger">{{ inventory.status }}</span>
+                                            {% elif inventory.status == 'On Hold' %}
+                                            <span class="label label-warning">{{ inventory.status }}</span>
+                                            {% else %}
+                                            <span class="label label-default">{{ inventory.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Type:</th>
+                                        <td>{{ inventory.new_or_used }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Year:</th>
+                                        <td>{{ inventory.year }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Make:</th>
+                                        <td>{{ inventory.make }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Model:</th>
+                                        <td>{{ inventory.model }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Trim:</th>
+                                        <td>{{ inventory.trim }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Body Style:</th>
+                                        <td>{{ inventory.body_style }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Exterior Color:</th>
+                                        <td>{{ inventory.color_exterior }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interior Color:</th>
+                                        <td>{{ inventory.color_interior }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Mileage:</th>
+                                        <td>{{ inventory.mileage }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Specifications</h4>
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th>Engine:</th>
+                                        <td>{{ inventory.engine }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Transmission:</th>
+                                        <td>{{ inventory.transmission }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Drivetrain:</th>
+                                        <td>{{ inventory.drivetrain }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fuel Type:</th>
+                                        <td>{{ inventory.fuel_type }}</td>
+                                    </tr>
+                                </table>
+                                
+                                <h4>Pricing</h4>
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th>Invoice Price:</th>
+                                        <td>${{ inventory.invoice_price }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>MSRP:</th>
+                                        <td>${{ inventory.msrp }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Sale Price:</th>
+                                        <td>${{ inventory.sale_price }}</td>
+                                    </tr>
+                                </table>
+                                
+                                <h4>Location</h4>
+                                <p>{{ inventory.location }}</p>
+                                
+                                <h4>Days in Inventory</h4>
+                                <p>{{ inventory.days_in_inventory }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4>Features</h4>
+                                <p>{{ inventory.features }}</p>
+                                
+                                <h4>Description</h4>
+                                <p>{{ inventory.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h4>Vehicle Images</h4>
+                        {% if inventory.image_urls %}
+                            {% for url in inventory.image_urls.split('\n') %}
+                                {% if url.strip() %}
+                                <div class="thumbnail">
+                                    <img src="{{ url.strip() }}" alt="Vehicle Image" class="img-responsive">
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div class="well text-center">
+                                <p>No images available</p>
+                            </div>
+                        {% endif %}
+                        
+                        <h4>Matched Leads</h4>
+                        <div class="list-group">
+                            {% for match in inventory.matches.all() %}
+                                <a href="{{ url_for('leads.view_lead', lead_id=match.lead_id) }}" class="list-group-item">
+                                    <h4 class="list-group-item-heading">{{ match.lead.first_name }} {{ match.lead.last_name }}</h4>
+                                    <p class="list-group-item-text">
+                                        Match Score: {{ match.match_score }}%<br>
+                                        Status: {{ match.status }}<br>
+                                        Created: {{ match.created_at.strftime('%Y-%m-%d') }}
+                                    </p>
+                                </a>
+                            {% else %}
+                                <div class="list-group-item">
+                                    <p class="text-center">No leads matched with this vehicle</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <a href="{{ url_for('inventory.create_match') }}" class="btn btn-success btn-block">
+                            <span class="glyphicon glyphicon-link"></span> Match with Lead
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

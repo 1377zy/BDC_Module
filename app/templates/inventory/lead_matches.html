@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Vehicle Matches for {{ lead.first_name }} {{ lead.last_name }}</h1>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3 class="panel-title">Matched Vehicles</h3>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="btn btn-default">
+                            <span class="glyphicon glyphicon-arrow-left"></span> Back to Lead
+                        </a>
+                        <a href="{{ url_for('inventory.create_match') }}" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-plus"></span> Add Match
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Lead Information</h4>
+                        <table class="table table-striped">
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>{{ lead.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ lead.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>{{ lead.status }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>Vehicle Interests</h4>
+                        <div class="list-group">
+                            {% for interest in lead.vehicle_interests.all() %}
+                                <div class="list-group-item">
+                                    <h4 class="list-group-item-heading">{{ interest.year }} {{ interest.make }} {{ interest.model }}</h4>
+                                    <p class="list-group-item-text">
+                                        {% if interest.trim %}Trim: {{ interest.trim }}<br>{% endif %}
+                                        Type: {{ interest.new_or_used }}<br>
+                                        {% if interest.body_style %}Body Style: {{ interest.body_style }}<br>{% endif %}
+                                        {% if interest.color_exterior %}Color: {{ interest.color_exterior }}<br>{% endif %}
+                                        {% if interest.price_min and interest.price_max %}
+                                            Price Range: ${{ interest.price_min }} - ${{ interest.price_max }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% else %}
+                                <div class="list-group-item">
+                                    <p class="text-center">No vehicle interests recorded</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Stock #</th>
+                            <th>Price</th>
+                            <th>Match Score</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in matches %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('inventory.view_inventory', inventory_id=match.inventory_id) }}">
+                                    {{ match.vehicle.year }} {{ match.vehicle.make }} {{ match.vehicle.model }} {{ match.vehicle.trim }}
+                                </a>
+                            </td>
+                            <td>{{ match.vehicle.stock_number }}</td>
+                            <td>${{ match.vehicle.sale_price }}</td>
+                            <td>{{ match.match_score }}%</td>
+                            <td>
+                                {% if match.status == 'Suggested' %}
+                                <span class="label label-default">{{ match.status }}</span>
+                                {% elif match.status == 'Presented' %}
+                                <span class="label label-primary">{{ match.status }}</span>
+                                {% elif match.status == 'Interested' %}
+                                <span class="label label-success">{{ match.status }}</span>
+                                {% elif match.status == 'Rejected' %}
+                                <span class="label label-danger">{{ match.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-xs">
+                                    <a href="{{ url_for('inventory.edit_match', match_id=match.id) }}" class="btn btn-default" title="Edit">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                    </a>
+                                    <button type="button" class="btn btn-danger" title="Delete" data-toggle="modal" data-target="#deleteModal{{ match.id }}">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{ match.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-sm">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                <h4 class="modal-title">Confirm Delete</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to delete this match?</p>
+                                                <p><strong>Vehicle:</strong> {{ match.vehicle.year }} {{ match.vehicle.make }} {{ match.vehicle.model }}</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <form action="{{ url_for('inventory.delete_match', match_id=match.id) }}" method="post">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No vehicle matches found for this lead</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
