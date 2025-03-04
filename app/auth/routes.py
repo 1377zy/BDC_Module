@@ -6,7 +6,7 @@ import secrets
 from app import db
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm, ResetPasswordRequestForm, ResetPasswordForm, ChangePasswordForm
-from app.models import User
+from app.models_main import User
 from app.auth.email import send_password_reset_email
 from app.decorators import admin_required
 
@@ -46,12 +46,7 @@ def logout():
     return redirect(url_for('main.index'))
 
 @bp.route('/register', methods=['GET', 'POST'])
-@admin_required
 def register():
-    if not current_user.is_authenticated or current_user.role != 'admin':
-        flash('You do not have permission to register new users.', 'danger')
-        return redirect(url_for('main.index'))
-        
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(

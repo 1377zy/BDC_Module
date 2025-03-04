@@ -1,8 +1,13 @@
-from app.models.car import Car, CarImage, Match, UserPreference
+from app.models.car import Car, CarImage, UserPreference
+import sys
+import os
 
-# Import models from the main models.py file
-from app.models.models import User, Lead, VehicleInterest, Communication, Appointment, EmailTemplate, SMSTemplate
+# Get the parent directory
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Import other model modules as needed
+# Add parent directory to path so we can import models.py
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
 # This file makes the models directory a proper Python package
 # and allows for importing models from app.models
