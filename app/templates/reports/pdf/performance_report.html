@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Staff Performance Report</title>
+</head>
+<body>
+    <div class="header">
+        <div class="row">
+            <div class="col">
+                <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" class="logo" alt="Dealership Logo">
+            </div>
+            <div class="col-2 text-center">
+                <h1 class="report-title">Staff Performance Report</h1>
+                <p class="report-subtitle">{{ dealership_name }}</p>
+            </div>
+            <div class="col text-right">
+                <p class="report-metadata">
+                    Generated: {{ report_generated_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    Date Range: {{ start_date.strftime('%Y-%m-%d') }} to {{ end_date.strftime('%Y-%m-%d') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Page <span class="page"></span> of <span class="topage"></span> | Auto Dealership BDC Module | Confidential</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Performance Summary</h2>
+        
+        <div class="row">
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Team Metrics</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Staff Members:</span>
+                        <span class="summary-value">{{ total_staff }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Leads Assigned:</span>
+                        <span class="summary-value">{{ total_leads_assigned }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Appointments:</span>
+                        <span class="summary-value">{{ total_appointments }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Sales:</span>
+                        <span class="summary-value">{{ total_sales }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Team Lead-to-Appointment:</span>
+                        <span class="summary-value">{{ team_lead_to_appointment|round(1) }}%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Team Appointment-to-Sale:</span>
+                        <span class="summary-value">{{ team_appointment_to_sale|round(1) }}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Top Performer</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Name:</span>
+                        <span class="summary-value">{{ top_performer.name }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Leads Assigned:</span>
+                        <span class="summary-value">{{ top_performer.leads_assigned }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Appointments:</span>
+                        <span class="summary-value">{{ top_performer.appointments_scheduled }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Sales:</span>
+                        <span class="summary-value">{{ top_performer.sales_closed }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Lead-to-Appointment:</span>
+                        <span class="summary-value">{{ top_performer.lead_to_appointment|round(1) }}%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Appointment-to-Sale:</span>
+                        <span class="summary-value">{{ top_performer.appointment_to_sale|round(1) }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if chart_images %}
+    <div class="section">
+        <h2 class="section-title">Performance Comparison</h2>
+        
+        {% if chart_images.leads_chart %}
+        <div class="chart-container">
+            <h3 class="chart-title">Leads Assigned by Staff</h3>
+            <img src="{{ chart_images.leads_chart }}" class="chart-image" alt="Leads Assigned Chart">
+        </div>
+        {% endif %}
+        
+        {% if chart_images.appointments_chart %}
+        <div class="chart-container mt-3">
+            <h3 class="chart-title">Appointments Scheduled by Staff</h3>
+            <img src="{{ chart_images.appointments_chart }}" class="chart-image" alt="Appointments Scheduled Chart">
+        </div>
+        {% endif %}
+        
+        {% if chart_images.sales_chart %}
+        <div class="chart-container mt-3">
+            <h3 class="chart-title">Sales Closed by Staff</h3>
+            <img src="{{ chart_images.sales_chart }}" class="chart-image" alt="Sales Closed Chart">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="section page-break">
+        <h2 class="section-title">Staff Performance Details</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff Member</th>
+                    <th>Leads Assigned</th>
+                    <th>Appointments</th>
+                    <th>Sales</th>
+                    <th>Lead-to-Appointment</th>
+                    <th>Appointment-to-Sale</th>
+                    <th>Lead-to-Sale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_performance %}
+                <tr>
+                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.leads_assigned }}</td>
+                    <td>{{ staff.appointments_scheduled }}</td>
+                    <td>{{ staff.sales_closed }}</td>
+                    <td>{{ staff.lead_to_appointment|round(1) }}%</td>
+                    <td>{{ staff.appointment_to_sale|round(1) }}%</td>
+                    <td>{{ staff.lead_to_sale|round(1) }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Communication Activity</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff Member</th>
+                    <th>Emails Sent</th>
+                    <th>SMS Sent</th>
+                    <th>Calls Made</th>
+                    <th>Avg. Response Time</th>
+                    <th>Avg. Communications per Lead</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in communication_activity %}
+                <tr>
+                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.emails_sent }}</td>
+                    <td>{{ staff.sms_sent }}</td>
+                    <td>{{ staff.calls_made }}</td>
+                    <td>{{ staff.avg_response_time }} hrs</td>
+                    <td>{{ staff.avg_communications_per_lead|round(1) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section page-break">
+        <h2 class="section-title">Performance Trends</h2>
+        
+        <div class="summary-box">
+            <h3 class="summary-title">Monthly Performance Trends</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Leads</th>
+                        <th>Appointments</th>
+                        <th>Sales</th>
+                        <th>Lead-to-Appointment</th>
+                        <th>Appointment-to-Sale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for month in monthly_trends %}
+                    <tr>
+                        <td>{{ month.month }}</td>
+                        <td>{{ month.leads }}</td>
+                        <td>{{ month.appointments }}</td>
+                        <td>{{ month.sales }}</td>
+                        <td>{{ month.lead_to_appointment|round(1) }}%</td>
+                        <td>{{ month.appointment_to_sale|round(1) }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Recommendations</h2>
+        
+        <div class="summary-box">
+            <h3 class="summary-title">Performance Improvement</h3>
+            <ul>
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="summary-box mt-3">
+            <h3 class="summary-title">Training Opportunities</h3>
+            <ul>
+                {% for opportunity in training_opportunities %}
+                <li>{{ opportunity }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

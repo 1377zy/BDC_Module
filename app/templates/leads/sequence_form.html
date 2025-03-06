@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}{% if sequence %}Edit Sequence{% else %}New Sequence{% endif %}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .step-card {
+        border-left: 4px solid #3498db;
+        margin-bottom: 15px;
+    }
+    .step-header {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .step-body {
+        padding: 15px;
+    }
+    .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    .step-delay {
+        background-color: #f1f1f1;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 14px;
+        margin-left: 10px;
+    }
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 15px;
+    }
+    .action-email {
+        background-color: #3498db;
+    }
+    .action-sms {
+        background-color: #9b59b6;
+    }
+    .action-task {
+        background-color: #f39c12;
+    }
+    .template-preview {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 15px;
+        margin-top: 10px;
+        background-color: #f9f9f9;
+    }
+    .drag-handle {
+        cursor: move;
+        color: #95a5a6;
+    }
+    .add-step-card {
+        border: 2px dashed #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .add-step-card:hover {
+        border-color: #3498db;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.advanced_dashboard') }}">Advanced Lead Management</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.sequences') }}">Follow-Up Sequences</a></li>
+                    <li class="breadcrumb-item active">{% if sequence %}Edit Sequence{% else %}New Sequence{% endif %}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{% if sequence %}Edit Sequence: {{ sequence.name }}{% else %}Create New Follow-Up Sequence{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    <form id="sequenceForm" method="post" action="{% if sequence %}{{ url_for('leads.edit_sequence', sequence_id=sequence.id) }}{% else %}{{ url_for('leads.new_sequence') }}{% endif %}">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="name">Sequence Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ sequence.name if sequence else '' }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3">{{ sequence.description if sequence else '' }}</textarea>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="trigger_type">Trigger Type</label>
+                                            <select class="form-control" id="trigger_type" name="trigger_type" required>
+                                                <option value="">Select Trigger</option>
+                                                <option value="lead_created" {% if sequence and sequence.trigger_type == 'lead_created' %}selected{% endif %}>Lead Created</option>
+                                                <option value="status_change" {% if sequence and sequence.trigger_type == 'status_change' %}selected{% endif %}>Status Change</option>
+                                                <option value="manual_assignment" {% if sequence and sequence.trigger_type == 'manual_assignment' %}selected{% endif %}>Manual Assignment</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="lead_source">Lead Source (Optional)</label>
+                                            <select class="form-control" id="lead_source" name="lead_source">
+                                                <option value="">Any Source</option>
+                                                <option value="website" {% if sequence and sequence.lead_source == 'website' %}selected{% endif %}>Website</option>
+                                                <option value="phone" {% if sequence and sequence.lead_source == 'phone' %}selected{% endif %}>Phone</option>
+                                                <option value="walk_in" {% if sequence and sequence.lead_source == 'walk_in' %}selected{% endif %}>Walk-In</option>
+                                                <option value="referral" {% if sequence and sequence.lead_source == 'referral' %}selected{% endif %}>Referral</option>
+                                                <option value="third_party" {% if sequence and sequence.lead_source == 'third_party' %}selected{% endif %}>Third-Party Site</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="is_active" name="is_active" {% if not sequence or sequence.is_active %}checked{% endif %}>
+                                        <label class="custom-control-label" for="is_active">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Sequence Tips</h5>
+                                        <ul>
+                                            <li>Use a clear, descriptive name for your sequence</li>
+                                            <li>Start with a welcome or introduction message</li>
+                                            <li>Space out steps appropriately (1-3 days apart)</li>
+                                            <li>Mix communication channels for better engagement</li>
+                                            <li>Include clear calls-to-action in each message</li>
+                                            <li>End with a compelling final offer or opportunity</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3">Sequence Steps</h5>
+                        <p>Define the steps that will be executed in this sequence. Each step can send an email, SMS, or create a task.</p>
+                        
+                        <div id="stepsContainer">
+                            {% if sequence and sequence.steps.count() > 0 %}
+                                {% for step in sequence.steps.order_by('step_order').all() %}
+                                    <div class="step-card" data-step-id="{{ step.id }}">
+                                        <div class="step-header">
+                                            <div class="d-flex align-items-center">
+                                                <span class="drag-handle mr-2"><i class="fas fa-grip-vertical"></i></span>
+                                                <div class="step-number">{{ loop.index }}</div>
+                                                <h6 class="mb-0">{{ step.action_type|replace('_', ' ')|title }}</h6>
+                                                <span class="step-delay">Wait: {{ step.delay_days }} day(s)</span>
+                                            </div>
+                                            <div>
+                                                <button type="button" class="btn btn-sm btn-danger delete-step" data-step-id="{{ step.id }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="step-body">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>Action Type</label>
+                                                        <select class="form-control action-type" name="steps[{{ loop.index0 }}][action_type]" required>
+                                                            <option value="send_email" {% if step.action_type == 'send_email' %}selected{% endif %}>Send Email</option>
+                                                            <option value="send_sms" {% if step.action_type == 'send_sms' %}selected{% endif %}>Send SMS</option>
+                                                            <option value="create_task" {% if step.action_type == 'create_task' %}selected{% endif %}>Create Task</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>Delay (Days)</label>
+                                                        <input type="number" class="form-control" name="steps[{{ loop.index0 }}][delay_days]" value="{{ step.delay_days }}" min="0" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>Subject/Title</label>
+                                                        <input type="text" class="form-control" name="steps[{{ loop.index0 }}][subject]" value="{{ step.subject }}" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label>Content</label>
+                                                <textarea class="form-control content-editor" name="steps[{{ loop.index0 }}][content]" rows="5" required>{{ step.content }}</textarea>
+                                                <small class="form-text text-muted">
+                                                    Available variables: {lead_first_name}, {lead_last_name}, {lead_email}, {lead_phone}, {assigned_user_name}, {dealership_name}
+                                                </small>
+                                            </div>
+                                            
+                                            <input type="hidden" name="steps[{{ loop.index0 }}][id]" value="{{ step.id }}">
+                                            <input type="hidden" name="steps[{{ loop.index0 }}][step_order]" class="step-order" value="{{ loop.index0 }}">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="add-step-card mt-3" id="addStepCard">
+                            <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
+                            <h6>Add Step</h6>
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">Save Sequence</button>
+                            <a href="{{ url_for('leads.sequences') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step Template (hidden) -->
+    <div id="stepTemplate" style="display: none;">
+        <div class="step-card">
+            <div class="step-header">
+                <div class="d-flex align-items-center">
+                    <span class="drag-handle mr-2"><i class="fas fa-grip-vertical"></i></span>
+                    <div class="step-number">1</div>
+                    <h6 class="mb-0">Send Email</h6>
+                    <span class="step-delay">Wait: 1 day(s)</span>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-danger delete-step">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="step-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Action Type</label>
+                            <select class="form-control action-type" name="steps[INDEX][action_type]" required>
+                                <option value="send_email">Send Email</option>
+                                <option value="send_sms">Send SMS</option>
+                                <option value="create_task">Create Task</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Delay (Days)</label>
+                            <input type="number" class="form-control" name="steps[INDEX][delay_days]" value="1" min="0" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Subject/Title</label>
+                            <input type="text" class="form-control" name="steps[INDEX][subject]" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea class="form-control content-editor" name="steps[INDEX][content]" rows="5" required></textarea>
+                    <small class="form-text text-muted">
+                        Available variables: {lead_first_name}, {lead_last_name}, {lead_email}, {lead_phone}, {assigned_user_name}, {dealership_name}
+                    </small>
+                </div>
+                
+                <input type="hidden" name="steps[INDEX][id]" value="">
+                <input type="hidden" name="steps[INDEX][step_order]" class="step-order" value="INDEX">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Initialize Sortable for drag-and-drop reordering
+        var stepsContainer = document.getElementById('stepsContainer');
+        var sortable = Sortable.create(stepsContainer, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: function() {
+                updateStepNumbers();
+            }
+        });
+        
+        // Add new step
+        $('#addStepCard').click(function() {
+            var stepCount = $('.step-card').length;
+            var newStep = $('#stepTemplate').html();
+            newStep = newStep.replace(/INDEX/g, stepCount);
+            
+            $('#stepsContainer').append(newStep);
+            updateStepNumbers();
+        });
+        
+        // Delete step
+        $(document).on('click', '.delete-step', function() {
+            $(this).closest('.step-card').remove();
+            updateStepNumbers();
+        });
+        
+        // Update action type display
+        $(document).on('change', '.action-type', function() {
+            var actionType = $(this).val();
+            var stepHeader = $(this).closest('.step-card').find('.step-header h6');
+            stepHeader.text(actionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+        });
+        
+        // Update step numbers and order values
+        function updateStepNumbers() {
+            $('.step-card').each(function(index) {
+                $(this).find('.step-number').text(index + 1);
+                $(this).find('.step-order').val(index);
+                
+                // Update name attributes
+                $(this).find('[name^="steps["]').each(function() {
+                    var name = $(this).attr('name');
+                    var newName = name.replace(/steps\[\d+\]/, 'steps[' + index + ']');
+                    $(this).attr('name', newName);
+                });
+            });
+        }
+        
+        // Form submission
+        $('#sequenceForm').submit(function() {
+            updateStepNumbers();
+            return true;
+        });
+        
+        // If no steps exist, add one by default for new sequences
+        {% if not sequence or sequence.steps.count() == 0 %}
+            $('#addStepCard').click();
+        {% endif %}
+    });
+</script>
+{% endblock %}

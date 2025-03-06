@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Lead Nurturing Workflows - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3 mb-0 text-gray-800">Lead Nurturing Workflows</h1>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="{{ url_for('create_workflow') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Create New Workflow
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Available Workflows</h6>
+            </div>
+            <div class="card-body">
+                {% if workflows %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Trigger Status</th>
+                                <th>Auto Apply</th>
+                                <th>Steps</th>
+                                <th>Active Leads</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for workflow in workflows %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('view_workflow', workflow_id=workflow.id) }}">
+                                        {{ workflow.name }}
+                                    </a>
+                                    <div class="small text-muted">{{ workflow.description }}</div>
+                                </td>
+                                <td>
+                                    {% if workflow.trigger_status %}
+                                        <span class="badge bg-info">{{ workflow.trigger_status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if workflow.auto_apply %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ workflow.steps|length }}</td>
+                                <td>{{ workflow.active_leads_count }}</td>
+                                <td>{{ workflow.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('view_workflow', workflow_id=workflow.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View Workflow">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('edit_workflow', workflow_id=workflow.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit Workflow">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('duplicate_workflow', workflow_id=workflow.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Duplicate Workflow">
+                                            <i class="fas fa-copy"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-workflow" data-workflow-id="{{ workflow.id }}" data-bs-toggle="tooltip" title="Delete Workflow">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-sitemap fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No workflows created yet</h5>
+                    <p class="text-muted">Create your first lead nurturing workflow to automate follow-ups and increase conversions.</p>
+                    <a href="{{ url_for('create_workflow') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Workflow
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Workflow Confirmation Modal -->
+<div class="modal fade" id="deleteWorkflowModal" tabindex="-1" aria-labelledby="deleteWorkflowModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteWorkflowModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this workflow? This action cannot be undone.</p>
+                <p class="text-danger"><strong>Warning:</strong> Deleting this workflow will also stop any active workflows for leads.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirm-delete-workflow" class="btn btn-danger">Delete Workflow</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup delete workflow confirmation
+        const deleteButtons = document.querySelectorAll('.delete-workflow');
+        const confirmDeleteButton = document.getElementById('confirm-delete-workflow');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteWorkflowModal'));
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const workflowId = this.getAttribute('data-workflow-id');
+                confirmDeleteButton.href = "{{ url_for('delete_workflow') }}?id=" + workflowId;
+                deleteModal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

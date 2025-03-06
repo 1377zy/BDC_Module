@@ -1,0 +1,37 @@
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Lead Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('update_lead_status') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="lead_id" id="status-lead-id" value="{{ lead.id }}">
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">New Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="">Select a status...</option>
+                            <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+                            <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                            <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                            <option value="Appointment" {% if lead.status == 'Appointment' %}selected{% endif %}>Appointment</option>
+                            <option value="Sold" {% if lead.status == 'Sold' %}selected{% endif %}>Sold</option>
+                            <option value="Lost" {% if lead.status == 'Lost' %}selected{% endif %}>Lost</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Changing the lead status may trigger automated workflows if they are configured for the new status.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

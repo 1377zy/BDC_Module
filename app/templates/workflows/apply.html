@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply Workflow to Leads - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3 mb-0 text-gray-800">Apply Workflow to Leads</h1>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="{{ url_for('view_workflow', workflow_id=workflow.id) if workflow else url_for('workflows') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Select Workflow and Leads</h6>
+            </div>
+            <div class="card-body">
+                <form id="apply-workflow-form" method="post" action="{{ url_for('apply_workflow') }}">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="workflow-select" class="form-label">Select Workflow</label>
+                            <select class="form-select" id="workflow-select" name="workflow_id" required {% if workflow %}disabled{% endif %}>
+                                <option value="">Choose a workflow...</option>
+                                {% for wf in workflows %}
+                                <option value="{{ wf.id }}" {% if workflow and workflow.id == wf.id %}selected{% endif %}>{{ wf.name }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if workflow %}
+                            <input type="hidden" name="workflow_id" value="{{ workflow.id }}">
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h5>Filter Leads</h5>
+                            <p class="text-muted">Select leads to apply this workflow to. You can filter by various criteria.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="lead-status" class="form-label">Lead Status</label>
+                            <select class="form-select" id="lead-status" name="status">
+                                <option value="">Any Status</option>
+                                <option value="New" {% if workflow and workflow.trigger_status == 'New' %}selected{% endif %}>New</option>
+                                <option value="Contacted" {% if workflow and workflow.trigger_status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                <option value="Qualified" {% if workflow and workflow.trigger_status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                <option value="Appointment" {% if workflow and workflow.trigger_status == 'Appointment' %}selected{% endif %}>Appointment</option>
+                                <option value="Sold" {% if workflow and workflow.trigger_status == 'Sold' %}selected{% endif %}>Sold</option>
+                                <option value="Lost" {% if workflow and workflow.trigger_status == 'Lost' %}selected{% endif %}>Lost</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="lead-source" class="form-label">Lead Source</label>
+                            <select class="form-select" id="lead-source" name="source">
+                                <option value="">Any Source</option>
+                                <option value="Website">Website</option>
+                                <option value="Phone">Phone</option>
+                                <option value="Walk-in">Walk-in</option>
+                                <option value="Referral">Referral</option>
+                                <option value="Third-party">Third-party</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="assigned-to" class="form-label">Assigned To</label>
+                            <select class="form-select" id="assigned-to" name="assigned_to">
+                                <option value="">Any User</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="created-after" class="form-label">Created After</label>
+                            <input type="date" class="form-control" id="created-after" name="created_after">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="created-before" class="form-label">Created Before</label>
+                            <input type="date" class="form-control" id="created-before" name="created_before">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <button type="button" id="filter-leads-btn" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter Leads
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4" id="leads-results-card" style="display: none;">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Filtered Leads</h6>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="select-all-leads">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselect-all-leads">Deselect All</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="leads-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading leads...</p>
+                </div>
+                
+                <div id="leads-results" style="display: none;">
+                    <form id="apply-to-leads-form" method="post" action="{{ url_for('apply_workflow_to_leads') }}">
+                        <input type="hidden" name="workflow_id" id="selected-workflow-id" value="{{ workflow.id if workflow else '' }}">
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="leads-table">
+                                <thead>
+                                    <tr>
+                                        <th width="40px">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="select-all-checkbox">
+                                            </div>
+                                        </th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Source</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leads-table-body">
+                                    <!-- Will be populated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <button type="submit" class="btn btn-success" id="apply-workflow-btn" disabled>
+                                <i class="fas fa-play"></i> Apply Workflow to Selected Leads
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="no-leads-found" class="text-center py-5" style="display: none;">
+                    <div class="mb-3">
+                        <i class="fas fa-search fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No leads match your filter criteria</h5>
+                    <p class="text-muted">Try adjusting your filters to find leads for this workflow.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterForm = document.getElementById('apply-workflow-form');
+        const filterButton = document.getElementById('filter-leads-btn');
+        const resultsCard = document.getElementById('leads-results-card');
+        const leadsLoading = document.getElementById('leads-loading');
+        const leadsResults = document.getElementById('leads-results');
+        const noLeadsFound = document.getElementById('no-leads-found');
+        const leadsTableBody = document.getElementById('leads-table-body');
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const selectAllBtn = document.getElementById('select-all-leads');
+        const deselectAllBtn = document.getElementById('deselect-all-leads');
+        const applyWorkflowBtn = document.getElementById('apply-workflow-btn');
+        const selectedWorkflowId = document.getElementById('selected-workflow-id');
+        const workflowSelect = document.getElementById('workflow-select');
+        
+        // Update the selected workflow ID when the workflow select changes
+        if (workflowSelect) {
+            workflowSelect.addEventListener('change', function() {
+                selectedWorkflowId.value = this.value;
+            });
+        }
+        
+        // Filter leads button click
+        filterButton.addEventListener('click', function() {
+            // Validate workflow selection
+            if (!selectedWorkflowId.value) {
+                alert('Please select a workflow first.');
+                return;
+            }
+            
+            // Show the results card and loading indicator
+            resultsCard.style.display = 'block';
+            leadsLoading.style.display = 'block';
+            leadsResults.style.display = 'none';
+            noLeadsFound.style.display = 'none';
+            
+            // Get form data
+            const formData = new FormData(filterForm);
+            
+            // Make AJAX request to get filtered leads
+            fetch('{{ url_for("filter_leads_for_workflow") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                leadsLoading.style.display = 'none';
+                
+                if (data.leads && data.leads.length > 0) {
+                    // Show results
+                    leadsResults.style.display = 'block';
+                    
+                    // Clear table body
+                    leadsTableBody.innerHTML = '';
+                    
+                    // Populate table with leads
+                    data.leads.forEach(lead => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input lead-checkbox" type="checkbox" name="lead_ids[]" value="${lead.id}">
+                                </div>
+                            </td>
+                            <td>${lead.first_name} ${lead.last_name}</td>
+                            <td>${lead.email}</td>
+                            <td>${lead.phone}</td>
+                            <td><span class="badge bg-${lead.status.toLowerCase()}">${lead.status}</span></td>
+                            <td>${lead.source}</td>
+                            <td>${new Date(lead.created_at).toLocaleDateString()}</td>
+                        `;
+                        leadsTableBody.appendChild(row);
+                    });
+                    
+                    // Reset select all checkbox
+                    selectAllCheckbox.checked = false;
+                    
+                    // Setup lead checkboxes
+                    setupLeadCheckboxes();
+                } else {
+                    // Show no leads found message
+                    noLeadsFound.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                leadsLoading.style.display = 'none';
+                alert('An error occurred while fetching leads. Please try again.');
+            });
+        });
+        
+        // Select all checkbox
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateApplyButtonState();
+        });
+        
+        // Select all button
+        selectAllBtn.addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            selectAllCheckbox.checked = true;
+            updateApplyButtonState();
+        });
+        
+        // Deselect all button
+        deselectAllBtn.addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            selectAllCheckbox.checked = false;
+            updateApplyButtonState();
+        });
+        
+        // Setup lead checkboxes
+        function setupLeadCheckboxes() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectAllCheckbox();
+                    updateApplyButtonState();
+                });
+            });
+        }
+        
+        // Update select all checkbox state
+        function updateSelectAllCheckbox() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            const checkedCheckboxes = document.querySelectorAll('.lead-checkbox:checked');
+            
+            if (checkboxes.length === checkedCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCheckboxes.length === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+        
+        // Update apply button state
+        function updateApplyButtonState() {
+            const checkedCheckboxes = document.querySelectorAll('.lead-checkbox:checked');
+            applyWorkflowBtn.disabled = checkedCheckboxes.length === 0;
+        }
+    });
+</script>
+{% endblock %}

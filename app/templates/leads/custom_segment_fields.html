@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Segment Fields{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Custom Segment Fields</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('leads') }}">Leads</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('segmentation.lead_segmentation') }}">Segmentation</a></li>
+        <li class="breadcrumb-item active">Custom Fields</li>
+    </ol>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-list-alt me-1"></i>
+                        Custom Segment Fields
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                            <i class="fas fa-plus"></i> Add Field
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if custom_fields %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="customFieldsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Display Name</th>
+                                    <th>Field Type</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for field in custom_fields %}
+                                <tr>
+                                    <td>{{ field.name }}</td>
+                                    <td>{{ field.display_name }}</td>
+                                    <td>{{ field.field_type }}</td>
+                                    <td>{{ field.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-danger delete-field" data-bs-toggle="modal" data-bs-target="#deleteFieldModal" data-field-id="{{ field.id }}" data-field-name="{{ field.display_name }}">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No custom fields have been created yet. Click the "Add Field" button to create your first custom field.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <h5>About Custom Fields</h5>
+                        <p>Custom fields allow you to define additional attributes for leads that can be used for segmentation. For example, you might want to track a lead's preferred contact method, vehicle color preference, or any other information specific to your dealership.</p>
+                        <p>Once you create a custom field, you can add values for individual leads from their edit page, and then use these fields to create segments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Field Modal -->
+<div class="modal fade" id="addFieldModal" tabindex="-1" aria-labelledby="addFieldModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFieldModalLabel">Add Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('segmentation.add_custom_field') }}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fieldName" class="form-label">Field Name</label>
+                        <input type="text" class="form-control" id="fieldName" name="name" required pattern="[a-z0-9_]+" title="Use only lowercase letters, numbers, and underscores">
+                        <div class="form-text">Use only lowercase letters, numbers, and underscores (e.g., preferred_color)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="displayName" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="displayName" name="display_name" required>
+                        <div class="form-text">How the field will be displayed to users (e.g., Preferred Color)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fieldType" class="form-label">Field Type</label>
+                        <select class="form-select" id="fieldType" name="field_type" required>
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="date">Date</option>
+                            <option value="boolean">Yes/No</option>
+                            <option value="select">Selection</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Field</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Field Modal -->
+<div class="modal fade" id="deleteFieldModal" tabindex="-1" aria-labelledby="deleteFieldModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteFieldModalLabel">Delete Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the custom field "<span id="deleteFieldName"></span>"?</p>
+                <p class="text-danger">This will also delete all values stored for this field across all leads. This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteField" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        $('#customFieldsTable').DataTable({
+            order: [[3, 'desc']] // Sort by created date by default
+        });
+        
+        // Set up delete field modal
+        $('.delete-field').click(function() {
+            var fieldId = $(this).data('field-id');
+            var fieldName = $(this).data('field-name');
+            
+            $('#deleteFieldName').text(fieldName);
+            $('#confirmDeleteField').attr('href', "{{ url_for('segmentation.delete_custom_field', field_id='') }}" + fieldId);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Deal{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Create New Deal</h1>
+            <p class="lead">Add a new deal to your sales pipeline</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ url_for('pipeline.view_pipeline', pipeline_id=request.args.get('pipeline_id', '')) }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Pipeline
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('pipeline.create_deal') }}" id="dealForm">
+                        {{ form.csrf_token }}
+                        
+                        <div class="form-group row">
+                            <label for="title" class="col-sm-3 col-form-label">Deal Title *</label>
+                            <div class="col-sm-9">
+                                {{ form.title(class="form-control", placeholder="Enter deal title") }}
+                                {% if form.title.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.title.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="pipeline_id" class="col-sm-3 col-form-label">Pipeline *</label>
+                            <div class="col-sm-9">
+                                {{ form.pipeline_id(class="form-control") }}
+                                {% if form.pipeline_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.pipeline_id.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="stage_id" class="col-sm-3 col-form-label">Stage *</label>
+                            <div class="col-sm-9">
+                                {{ form.stage_id(class="form-control") }}
+                                {% if form.stage_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.stage_id.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="lead_id" class="col-sm-3 col-form-label">Associated Lead</label>
+                            <div class="col-sm-9">
+                                {{ form.lead_id(class="form-control") }}
+                                {% if form.lead_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.lead_id.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="value" class="col-sm-3 col-form-label">Deal Value</label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    {{ form.value(class="form-control", placeholder="0.00") }}
+                                </div>
+                                {% if form.value.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.value.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="probability" class="col-sm-3 col-form-label">Probability (%)</label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    {{ form.probability(class="form-control", placeholder="50") }}
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                {% if form.probability.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.probability.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="expected_close_date" class="col-sm-3 col-form-label">Expected Close Date</label>
+                            <div class="col-sm-9">
+                                {{ form.expected_close_date(class="form-control", type="date") }}
+                                {% if form.expected_close_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.expected_close_date.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="description" class="col-sm-3 col-form-label">Description</label>
+                            <div class="col-sm-9">
+                                {{ form.description(class="form-control", rows=4, placeholder="Enter deal description") }}
+                                {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <label for="tags" class="col-sm-3 col-form-label">Tags</label>
+                            <div class="col-sm-9">
+                                {{ form.tags(class="form-control", placeholder="Enter tags separated by commas") }}
+                                <small class="form-text text-muted">Separate tags with commas (e.g., "urgent, follow-up, high-value")</small>
+                                {% if form.tags.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.tags.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group row">
+                            <div class="col-sm-9 offset-sm-3">
+                                <button type="submit" class="btn btn-primary">Create Deal</button>
+                                <a href="{{ url_for('pipeline.view_pipeline', pipeline_id=request.args.get('pipeline_id', '')) }}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Deal Creation Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="tips-list">
+                        <li><strong>Deal Title:</strong> Be specific and include the client name or project identifier.</li>
+                        <li><strong>Pipeline Stage:</strong> Choose the appropriate stage based on your current progress with this deal.</li>
+                        <li><strong>Deal Value:</strong> Enter the expected total value of the deal.</li>
+                        <li><strong>Probability:</strong> Estimate the likelihood of closing this deal successfully.</li>
+                        <li><strong>Expected Close Date:</strong> Set a realistic target date for closing the deal.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('lead.create_lead') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-plus"></i> Create New Lead
+                        </a>
+                        <a href="{{ url_for('pipeline.create_pipeline') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-project-diagram"></i> Create New Pipeline
+                        </a>
+                        <a href="{{ url_for('pipeline.view_deals') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-list"></i> View All Deals
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/deal.js') }}"></script>
+{% endblock %}

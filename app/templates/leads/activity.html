@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Lead Activity - {{ lead.first_name }} {{ lead.last_name }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #ddd;
+        left: 31px;
+        margin-left: -1.5px;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 30px;
+    }
+    .timeline-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 22px;
+        color: #fff;
+        position: absolute;
+        left: 5px;
+        top: 0;
+    }
+    .timeline-icon.email {
+        background-color: #3498db;
+    }
+    .timeline-icon.call {
+        background-color: #2ecc71;
+    }
+    .timeline-icon.sms {
+        background-color: #9b59b6;
+    }
+    .timeline-icon.note {
+        background-color: #f39c12;
+    }
+    .timeline-icon.status {
+        background-color: #e74c3c;
+    }
+    .timeline-icon.appointment {
+        background-color: #1abc9c;
+    }
+    .timeline-icon.task {
+        background-color: #34495e;
+    }
+    .timeline-icon.sequence {
+        background-color: #8e44ad;
+    }
+    .timeline-content {
+        position: relative;
+        margin-left: 70px;
+        background-color: #fff;
+        border-radius: 4px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    }
+    .timeline-content::after {
+        content: '';
+        position: absolute;
+        border-style: solid;
+        border-width: 10px 10px 10px 0;
+        border-color: transparent #fff transparent transparent;
+        left: -10px;
+        top: 15px;
+    }
+    .timeline-date {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .lead-score {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    .score-high {
+        background-color: #27ae60;
+    }
+    .score-medium {
+        background-color: #f39c12;
+    }
+    .score-low {
+        background-color: #e74c3c;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.index') }}">Leads</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.view', lead_id=lead.id) }}">{{ lead.first_name }} {{ lead.last_name }}</a></li>
+                    <li class="breadcrumb-item active">Activity Timeline</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Lead Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                            {{ lead.score }}
+                        </div>
+                        <h4 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h4>
+                    </div>
+                    
+                    <p><strong>Email:</strong> {{ lead.email or 'Not provided' }}</p>
+                    <p><strong>Phone:</strong> {{ lead.phone or 'Not provided' }}</p>
+                    <p><strong>Source:</strong> {{ lead.source }}</p>
+                    <p><strong>Status:</strong> {{ lead.status }}</p>
+                    <p><strong>Lifecycle Stage:</strong> <span class="badge badge-primary">{{ lead.lifecycle_stage }}</span></p>
+                    <p><strong>Created:</strong> {{ lead.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>Last Activity:</strong> {% if lead.last_activity_date %}{{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}{% else %}Never{% endif %}</p>
+                    
+                    {% if lead.assigned_to %}
+                    <p><strong>Assigned To:</strong> {{ lead.assigned_to.get_full_name() }}</p>
+                    {% endif %}
+                    
+                    {% if lead.follow_up_date %}
+                    <p><strong>Next Follow-up:</strong> {{ lead.follow_up_date.strftime('%Y-%m-%d %H:%M') }} ({{ lead.follow_up_type }})</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-primary btn-sm">View Lead Details</a>
+                    <a href="{{ url_for('leads.lead_score_details', lead_id=lead.id) }}" class="btn btn-info btn-sm">Score Details</a>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Add Activity</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('leads.add_lead_activity', lead_id=lead.id) }}" method="post">
+                        <div class="form-group">
+                            <label for="activity_type">Activity Type</label>
+                            <select class="form-control" id="activity_type" name="activity_type" required>
+                                <option value="">Select Activity Type</option>
+                                <option value="note">Note</option>
+                                <option value="call">Phone Call</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="email">Email</option>
+                                <option value="sms">SMS</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Activity</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Follow-Up Sequences</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Active Sequences</h6>
+                    {% if lead.sequence_assignments.filter_by(is_active=True).count() > 0 %}
+                        <ul class="list-group mb-3">
+                            {% for assignment in lead.sequence_assignments.filter_by(is_active=True).all() %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ assignment.sequence.name }}
+                                    <span class="badge badge-primary badge-pill">Step {{ assignment.current_step }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No active sequences.</p>
+                    {% endif %}
+                    
+                    <h6>Assign to Sequence</h6>
+                    <form action="{{ url_for('leads.assign_sequence', lead_id=lead.id) }}" method="post">
+                        <div class="form-group">
+                            <select class="form-control" name="sequence_id" required>
+                                <option value="">Select Sequence</option>
+                                {% for sequence in sequences %}
+                                    <option value="{{ sequence.id }}">{{ sequence.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-info btn-sm">Assign</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Activity Timeline</h5>
+                </div>
+                <div class="card-body">
+                    {% if activities %}
+                        <div class="timeline">
+                            {% for activity in activities %}
+                                <div class="timeline-item">
+                                    {% set icon_class = 'note' %}
+                                    {% set icon = 'fa-sticky-note' %}
+                                    
+                                    {% if activity.activity_type == 'email_sent' or activity.activity_type == 'email_received' %}
+                                        {% set icon_class = 'email' %}
+                                        {% set icon = 'fa-envelope' %}
+                                    {% elif activity.activity_type == 'call' %}
+                                        {% set icon_class = 'call' %}
+                                        {% set icon = 'fa-phone' %}
+                                    {% elif activity.activity_type == 'sms_sent' or activity.activity_type == 'sms_received' %}
+                                        {% set icon_class = 'sms' %}
+                                        {% set icon = 'fa-comment-alt' %}
+                                    {% elif activity.activity_type == 'status_change' %}
+                                        {% set icon_class = 'status' %}
+                                        {% set icon = 'fa-exchange-alt' %}
+                                    {% elif activity.activity_type == 'appointment_set' or activity.activity_type == 'appointment_confirmed' %}
+                                        {% set icon_class = 'appointment' %}
+                                        {% set icon = 'fa-calendar-check' %}
+                                    {% elif activity.activity_type == 'task_created' or activity.activity_type == 'task_completed' %}
+                                        {% set icon_class = 'task' %}
+                                        {% set icon = 'fa-tasks' %}
+                                    {% elif activity.activity_type == 'sequence_assigned' or activity.activity_type == 'sequence_completed' %}
+                                        {% set icon_class = 'sequence' %}
+                                        {% set icon = 'fa-sync' %}
+                                    {% endif %}
+                                    
+                                    <div class="timeline-icon {{ icon_class }}">
+                                        <i class="fas {{ icon }}"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>{{ activity.activity_type|replace('_', ' ')|title }}</h6>
+                                        <p>{{ activity.description }}</p>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="timeline-date">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                            {% if activity.performed_by %}
+                                                <span>By: {{ activity.performed_by.get_full_name() }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if activity.related_entity %}
+                                            <div class="mt-2 p-2 bg-light rounded">
+                                                {% if activity.related_entity_type == 'communication' %}
+                                                    <strong>{{ activity.related_entity.type|title }}:</strong>
+                                                    <p>{{ activity.related_entity.content }}</p>
+                                                {% elif activity.related_entity_type == 'appointment' %}
+                                                    <strong>Appointment:</strong>
+                                                    <p>{{ activity.related_entity.date.strftime('%Y-%m-%d') }} at {{ activity.related_entity.time.strftime('%H:%M') }}</p>
+                                                    <p>Purpose: {{ activity.related_entity.purpose }}</p>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No activities recorded for this lead.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Enable tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

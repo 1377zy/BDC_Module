@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Performance Metrics</h1>
+        <div>
+            <a href="{{ url_for('analytics.export_report', report_type='performance', format='csv') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-download fa-sm text-white-50"></i> Export CSV
+            </a>
+            <a href="{{ url_for('analytics.export_report', report_type='performance', format='excel') }}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm ml-2">
+                <i class="fas fa-download fa-sm text-white-50"></i> Export Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Date Range</h6>
+        </div>
+        <div class="card-body">
+            <form id="dateRangeForm" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="startDate" class="col-form-label">From</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="startDate" name="start_date" class="form-control" value="{{ start_date }}">
+                </div>
+                <div class="col-auto">
+                    <label for="endDate" class="col-form-label">To</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="endDate" name="end_date" class="form-control" value="{{ end_date }}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" id="resetDates" class="btn btn-outline-secondary">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="row">
+        <!-- Lead Conversion Rate -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Lead Conversion Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.1f"|format(conversion_rate) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exchange-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Response Time -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avg. Response Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_response_time }} min</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Kept Rate -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Appointments Kept Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "%.1f"|format(appointments_kept_rate) }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Per Lead -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 kpi-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Cost Per Lead</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ "%.2f"|format(cost_per_lead) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics Charts -->
+    <div class="row">
+        <!-- Conversion Funnel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Conversion Funnel</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="conversionFunnelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lead Source Performance -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Lead Source Performance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar pt-4 pb-2">
+                        <canvas id="leadSourcePerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Response Time Trends -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Response Time Trends</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="responseTimeTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Outcomes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Appointment Outcomes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="appointmentOutcomesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Team Performance</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">View Options:</div>
+                            <a class="dropdown-item team-metric-option" data-metric="leads" href="#">Leads</a>
+                            <a class="dropdown-item team-metric-option" data-metric="appointments" href="#">Appointments</a>
+                            <a class="dropdown-item team-metric-option" data-metric="conversions" href="#">Conversions</a>
+                            <a class="dropdown-item team-metric-option" data-metric="response_time" href="#">Response Time</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="teamPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Performance Metrics Table -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Detailed Performance Metrics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered performance-table" id="performanceTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Leads</th>
+                                    <th>Appointments</th>
+                                    <th>Kept Appointments</th>
+                                    <th>Conversions</th>
+                                    <th>Conversion Rate</th>
+                                    <th>Avg. Response Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in user_performance_detailed %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.leads }}</td>
+                                    <td>{{ user.appointments }}</td>
+                                    <td>{{ user.kept_appointments }}</td>
+                                    <td>{{ user.conversions }}</td>
+                                    <td>{{ "%.1f"|format(user.conversion_rate) }}%</td>
+                                    <td>{{ user.avg_response_time }} min</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Conversion Funnel Chart
+        fetch('{{ url_for("analytics.chart_data", chart_type="conversion_funnel") }}?start_date={{ start_date }}&end_date={{ end_date }}')
+            .then(response => response.json())
+            .then(data => {
+                var ctx = document.getElementById('conversionFunnelChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Count',
+                            data: data.values,
+                            backgroundColor: [
+                                'rgba(78, 115, 223, 0.8)',
+                                'rgba(28, 200, 138, 0.8)',
+                                'rgba(54, 185, 204, 0.8)',
+                                'rgba(246, 194, 62, 0.8)',
+                                'rgba(231, 74, 59, 0.8)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Lead Source Performance Chart
+        fetch('{{ url_for("analytics.chart_data", chart_type="lead_source_performance") }}?start_date={{ start_date }}&end_date={{ end_date }}')
+            .then(response => response.json())
+            .then(data => {
+                var ctx = document.getElementById('leadSourcePerformanceChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Conversion Rate (%)',
+                            data: data.values,
+                            backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Response Time Trend Chart
+        fetch('{{ url_for("analytics.chart_data", chart_type="response_time_trend") }}?start_date={{ start_date }}&end_date={{ end_date }}')
+            .then(response => response.json())
+            .then(data => {
+                var ctx = document.getElementById('responseTimeTrendChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Average Response Time (min)',
+                            data: data.values,
+                            borderColor: 'rgba(78, 115, 223, 1)',
+                            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Appointment Outcomes Chart
+        fetch('{{ url_for("analytics.chart_data", chart_type="appointment_outcomes") }}?start_date={{ start_date }}&end_date={{ end_date }}')
+            .then(response => response.json())
+            .then(data => {
+                var ctx = document.getElementById('appointmentOutcomesChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            data: data.values,
+                            backgroundColor: [
+                                'rgba(28, 200, 138, 0.8)',
+                                'rgba(246, 194, 62, 0.8)',
+                                'rgba(231, 74, 59, 0.8)',
+                                'rgba(54, 185, 204, 0.8)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false
+                    }
+                });
+            });
+
+        // Team Performance Chart (default to leads)
+        loadTeamPerformanceChart('leads');
+
+        // Team Performance Metric Selection
+        document.querySelectorAll('.team-metric-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const metric = this.getAttribute('data-metric');
+                loadTeamPerformanceChart(metric);
+            });
+        });
+
+        // Date Range Form
+        document.getElementById('dateRangeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.location.href = `{{ url_for('analytics.performance_metrics') }}?start_date=${startDate}&end_date=${endDate}`;
+        });
+
+        // Reset Dates Button
+        document.getElementById('resetDates').addEventListener('click', function() {
+            window.location.href = "{{ url_for('analytics.performance_metrics') }}";
+        });
+    });
+
+    function loadTeamPerformanceChart(metric) {
+        fetch(`{{ url_for("analytics.chart_data", chart_type="team_performance") }}?metric=${metric}&start_date={{ start_date }}&end_date={{ end_date }}`)
+            .then(response => response.json())
+            .then(data => {
+                // Destroy existing chart if it exists
+                if (window.teamChart) {
+                    window.teamChart.destroy();
+                }
+
+                var ctx = document.getElementById('teamPerformanceChart').getContext('2d');
+                window.teamChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: data.metric_label,
+                            data: data.values,
+                            backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+    }
+</script>
+{% endblock %}

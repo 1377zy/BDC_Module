@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Leads Report</title>
+</head>
+<body>
+    <div class="header">
+        <div class="row">
+            <div class="col">
+                <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" class="logo" alt="Dealership Logo">
+            </div>
+            <div class="col-2 text-center">
+                <h1 class="report-title">Leads Report</h1>
+                <p class="report-subtitle">{{ dealership_name }}</p>
+            </div>
+            <div class="col text-right">
+                <p class="report-metadata">
+                    Generated: {{ report_generated_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    Date Range: {{ start_date.strftime('%Y-%m-%d') }} to {{ end_date.strftime('%Y-%m-%d') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Page <span class="page"></span> of <span class="topage"></span> | Auto Dealership BDC Module | Confidential</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Lead Generation Summary</h2>
+        
+        <div class="row">
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Key Metrics</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Leads:</span>
+                        <span class="summary-value">{{ total_leads }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">New Leads:</span>
+                        <span class="summary-value">{{ new_leads }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average Leads per Day:</span>
+                        <span class="summary-value">{{ avg_leads_per_day|round(1) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Appointment Rate:</span>
+                        <span class="summary-value">{{ appointment_rate|round(1) }}%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Conversion Rate:</span>
+                        <span class="summary-value">{{ conversion_rate|round(1) }}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Lead Status</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">New:</span>
+                        <span class="summary-value">{{ status_counts.get('New', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Contacted:</span>
+                        <span class="summary-value">{{ status_counts.get('Contacted', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Appointment Set:</span>
+                        <span class="summary-value">{{ status_counts.get('Appointment Set', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Sold:</span>
+                        <span class="summary-value">{{ status_counts.get('Sold', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Lost:</span>
+                        <span class="summary-value">{{ status_counts.get('Lost', 0) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if chart_images %}
+    <div class="section">
+        <h2 class="section-title">Lead Analysis</h2>
+        
+        <div class="row">
+            {% if chart_images.source_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">Lead Sources</h3>
+                    <img src="{{ chart_images.source_chart }}" class="chart-image" alt="Lead Sources Chart">
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if chart_images.status_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">Lead Status Distribution</h3>
+                    <img src="{{ chart_images.status_chart }}" class="chart-image" alt="Lead Status Chart">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if chart_images.daily_chart %}
+        <div class="chart-container mt-3">
+            <h3 class="chart-title">Daily Lead Generation</h3>
+            <img src="{{ chart_images.daily_chart }}" class="chart-image" alt="Daily Lead Generation Chart">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="section page-break">
+        <h2 class="section-title">Lead Source Analysis</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                    <th>Appointment Rate</th>
+                    <th>Conversion Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for source in source_analysis %}
+                <tr>
+                    <td>{{ source.name }}</td>
+                    <td>{{ source.count }}</td>
+                    <td>{{ source.percentage }}%</td>
+                    <td>{{ source.appointment_rate }}%</td>
+                    <td>{{ source.conversion_rate }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Recent Leads</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lead in recent_leads %}
+                <tr>
+                    <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+                    <td>{{ lead.email }}</td>
+                    <td>{{ lead.phone }}</td>
+                    <td>{{ lead.source }}</td>
+                    <td>{{ lead.status }}</td>
+                    <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ lead.updated_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section page-break">
+        <h2 class="section-title">Recommendations</h2>
+        
+        <div class="summary-box">
+            <h3 class="summary-title">Lead Generation Optimization</h3>
+            <ul>
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

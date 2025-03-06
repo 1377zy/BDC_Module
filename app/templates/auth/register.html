@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1 class="text-primary text-center mb-4">Register</h1>
+    <form method="post" action="{{ url_for('auth.register') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label for="username" class="form-label">{{ form.username.label }}</label>
+            {{ form.username(class="form-control", id="username", placeholder="Choose a username") }}
+            {% for error in form.username.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">{{ form.email.label }}</label>
+            {{ form.email(class="form-control", id="email", placeholder="Enter your email") }}
+            {% for error in form.email.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="first_name" class="form-label">{{ form.first_name.label }}</label>
+            {{ form.first_name(class="form-control", id="first_name", placeholder="Enter your first name") }}
+            {% for error in form.first_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="last_name" class="form-label">{{ form.last_name.label }}</label>
+            {{ form.last_name(class="form-control", id="last_name", placeholder="Enter your last name") }}
+            {% for error in form.last_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">{{ form.phone.label }}</label>
+            {{ form.phone(class="form-control", id="phone", placeholder="Enter your phone number") }}
+            {% for error in form.phone.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="role" class="form-label">{{ form.role.label }}</label>
+            {{ form.role(class="form-select", id="role") }}
+            {% for error in form.role.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">{{ form.password.label }}</label>
+            {{ form.password(class="form-control", id="password", placeholder="Choose a password") }}
+            {% for error in form.password.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="password2" class="form-label">{{ form.password2.label }}</label>
+            {{ form.password2(class="form-control", id="password2", placeholder="Confirm your password") }}
+            {% for error in form.password2.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="d-grid gap-2">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+    <hr class="my-4">
+    <p class="text-center">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in here</a></p>
+</div>
+{% endblock %}

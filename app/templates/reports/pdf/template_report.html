@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ data.title }}</title>
+    <style>
+        @page {
+            margin: 1cm;
+            @top-center {
+                content: {% if template.include_page_numbers %}"{{ data.title }}"{% else %}""{% endif %};
+                font-size: 9pt;
+                color: #666;
+            }
+            @bottom-right {
+                content: {% if template.include_page_numbers %}"Page " counter(page) " of " counter(pages){% else %}""{% endif %};
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        h1 {
+            font-size: 18pt;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 14pt;
+            color: #444;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 12pt;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin: 0 0 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .header {
+            margin-bottom: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            font-size: 9pt;
+            color: #666;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .logo img {
+            max-height: 60px;
+        }
+        .timestamp {
+            font-size: 9pt;
+            color: #666;
+            text-align: right;
+        }
+        .chart {
+            text-align: center;
+            margin: 15px 0;
+        }
+        .chart img {
+            max-width: 100%;
+            height: auto;
+        }
+        .summary-box {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .summary-box h3 {
+            margin-top: 0;
+        }
+        .kpi {
+            display: inline-block;
+            width: 30%;
+            text-align: center;
+            margin: 10px 1.5%;
+            padding: 15px 0;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .kpi-value {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+        .kpi-label {
+            font-size: 10pt;
+            color: #666;
+        }
+        .clearfix {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        {% if template.include_logo %}
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" alt="Dealership Logo">
+        </div>
+        {% endif %}
+        
+        <h1>{{ data.title }}</h1>
+        <p>{{ data.date_range }}</p>
+        
+        {% if template.include_timestamp %}
+        <div class="timestamp">
+            Generated: {{ data.report_generated_at.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+            By: {{ data.generated_by if data.generated_by else 'System' }}
+        </div>
+        {% endif %}
+        
+        {% if template.header_html %}
+        <div class="custom-header">
+            {{ template.header_html|safe }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Report Body - This will vary based on report type -->
+    {% if data.report_type == 'inventory' %}
+        <!-- Inventory Report Content -->
+        <div class="summary-box">
+            <h3>Inventory Summary</h3>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.total_vehicles }}</div>
+                <div class="kpi-label">Total Vehicles</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.avg_days_in_stock }}</div>
+                <div class="kpi-label">Avg. Days in Stock</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">${{ data.avg_price|int }}</div>
+                <div class="kpi-label">Avg. Price</div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        
+        {% if data.chart_images and data.chart_images.status_distribution %}
+        <h2>Vehicle Status Distribution</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.status_distribution }}" alt="Vehicle Status Distribution">
+        </div>
+        {% endif %}
+        
+        {% if data.chart_images and data.chart_images.age_distribution %}
+        <h2>Inventory Age Distribution</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.age_distribution }}" alt="Inventory Age Distribution">
+        </div>
+        {% endif %}
+        
+        <h2>Top Selling Models</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Count</th>
+                    <th>Avg. Days in Stock</th>
+                    <th>Avg. Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for model in data.top_models %}
+                <tr>
+                    <td>{{ model.make }}</td>
+                    <td>{{ model.model }}</td>
+                    <td>{{ model.count }}</td>
+                    <td>{{ model.avg_days }}</td>
+                    <td>${{ model.avg_price|int }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    {% elif data.report_type == 'leads' %}
+        <!-- Leads Report Content -->
+        <div class="summary-box">
+            <h3>Lead Generation Summary</h3>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.total_leads }}</div>
+                <div class="kpi-label">Total Leads</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.conversion_rate }}%</div>
+                <div class="kpi-label">Conversion Rate</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.avg_response_time }}</div>
+                <div class="kpi-label">Avg. Response Time</div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        
+        {% if data.chart_images and data.chart_images.source_distribution %}
+        <h2>Lead Sources</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.source_distribution }}" alt="Lead Source Distribution">
+        </div>
+        {% endif %}
+        
+        {% if data.chart_images and data.chart_images.status_distribution %}
+        <h2>Lead Status</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.status_distribution }}" alt="Lead Status Distribution">
+        </div>
+        {% endif %}
+        
+        <h2>Lead Conversion Rates</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Total Leads</th>
+                    <th>Appointments</th>
+                    <th>Test Drives</th>
+                    <th>Sales</th>
+                    <th>Conversion Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for source in data.source_metrics %}
+                <tr>
+                    <td>{{ source.name }}</td>
+                    <td>{{ source.total }}</td>
+                    <td>{{ source.appointments }}</td>
+                    <td>{{ source.test_drives }}</td>
+                    <td>{{ source.sales }}</td>
+                    <td>{{ source.conversion_rate }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    {% elif data.report_type == 'sales' %}
+        <!-- Sales Report Content -->
+        <div class="summary-box">
+            <h3>Sales Performance Summary</h3>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.total_sales }}</div>
+                <div class="kpi-label">Total Sales</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">${{ data.total_revenue|int }}</div>
+                <div class="kpi-label">Total Revenue</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">${{ data.avg_sale_price|int }}</div>
+                <div class="kpi-label">Avg. Sale Price</div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        
+        {% if data.chart_images and data.chart_images.monthly_trend %}
+        <h2>Monthly Sales Trend</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.monthly_trend }}" alt="Monthly Sales Trend">
+        </div>
+        {% endif %}
+        
+        {% if data.chart_images and data.chart_images.vehicle_type_distribution %}
+        <h2>Sales by Vehicle Type</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.vehicle_type_distribution }}" alt="Sales by Vehicle Type">
+        </div>
+        {% endif %}
+        
+        <h2>Top Selling Vehicles</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Units Sold</th>
+                    <th>Revenue</th>
+                    <th>Avg. Sale Price</th>
+                    <th>Avg. Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in data.top_vehicles %}
+                <tr>
+                    <td>{{ vehicle.make }}</td>
+                    <td>{{ vehicle.model }}</td>
+                    <td>{{ vehicle.units }}</td>
+                    <td>${{ vehicle.revenue|int }}</td>
+                    <td>${{ vehicle.avg_price|int }}</td>
+                    <td>${{ vehicle.avg_profit|int }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    {% elif data.report_type == 'performance' %}
+        <!-- Performance Report Content -->
+        <div class="summary-box">
+            <h3>Staff Performance Summary</h3>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.total_staff }}</div>
+                <div class="kpi-label">Total Staff</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.avg_conversion_rate }}%</div>
+                <div class="kpi-label">Avg. Conversion Rate</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">{{ data.avg_sales_per_staff }}</div>
+                <div class="kpi-label">Avg. Sales per Staff</div>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        
+        {% if data.chart_images and data.chart_images.sales_by_staff %}
+        <h2>Sales by Staff Member</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.sales_by_staff }}" alt="Sales by Staff Member">
+        </div>
+        {% endif %}
+        
+        {% if data.chart_images and data.chart_images.conversion_by_staff %}
+        <h2>Conversion Rates by Staff</h2>
+        <div class="chart">
+            <img src="data:image/png;base64,{{ data.chart_images.conversion_by_staff }}" alt="Conversion Rates by Staff">
+        </div>
+        {% endif %}
+        
+        <h2>Individual Performance Metrics</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff Member</th>
+                    <th>Leads Assigned</th>
+                    <th>Appointments</th>
+                    <th>Test Drives</th>
+                    <th>Sales</th>
+                    <th>Conversion Rate</th>
+                    <th>Avg. Sale Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in data.staff_metrics %}
+                <tr>
+                    <td>{{ staff.name }}</td>
+                    <td>{{ staff.leads }}</td>
+                    <td>{{ staff.appointments }}</td>
+                    <td>{{ staff.test_drives }}</td>
+                    <td>{{ staff.sales }}</td>
+                    <td>{{ staff.conversion_rate }}%</td>
+                    <td>${{ staff.avg_sale_value|int }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    
+    <!-- Footer -->
+    <div class="footer">
+        {% if template.footer_html %}
+        <div class="custom-footer">
+            {{ template.footer_html|safe }}
+        </div>
+        {% endif %}
+        
+        <p>Auto Dealership BDC Module &copy; {{ data.report_generated_at.strftime('%Y') }}</p>
+    </div>
+</body>
+</html>

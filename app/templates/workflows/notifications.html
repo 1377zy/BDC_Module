@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Workflow Notifications - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="h3 mb-0 text-gray-800">Workflow Notifications</h1>
+        <p class="text-muted">Stay informed about your lead nurturing activities</p>
+    </div>
+</div>
+
+<!-- Notification Settings Card -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Notification Settings</h6>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{{ url_for('update_workflow_notifications') }}">
+            <div class="form-group mb-3">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="emailNotifications" name="email_notifications" {% if notification_settings.email_notifications %}checked{% endif %}>
+                    <label class="custom-control-label" for="emailNotifications">Email Notifications</label>
+                    <small class="form-text text-muted">Receive daily email summaries of upcoming workflow tasks</small>
+                </div>
+            </div>
+            
+            <div class="form-group mb-3">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="browserNotifications" name="browser_notifications" {% if notification_settings.browser_notifications %}checked{% endif %}>
+                    <label class="custom-control-label" for="browserNotifications">Browser Notifications</label>
+                    <small class="form-text text-muted">Show browser notifications when new tasks are due</small>
+                </div>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="notificationTime">Daily Notification Time</label>
+                <input type="time" class="form-control" id="notificationTime" name="notification_time" value="{{ notification_settings.notification_time or '08:00' }}">
+                <small class="form-text text-muted">When should we send your daily notification summary?</small>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label for="advanceNotice">Advance Notice</label>
+                <select class="form-control" id="advanceNotice" name="advance_notice">
+                    <option value="0" {% if notification_settings.advance_notice == 0 %}selected{% endif %}>Same day only</option>
+                    <option value="1" {% if notification_settings.advance_notice == 1 %}selected{% endif %}>1 day before</option>
+                    <option value="2" {% if notification_settings.advance_notice == 2 %}selected{% endif %}>2 days before</option>
+                    <option value="3" {% if notification_settings.advance_notice == 3 %}selected{% endif %}>3 days before</option>
+                    <option value="7" {% if notification_settings.advance_notice == 7 %}selected{% endif %}>1 week before</option>
+                </select>
+                <small class="form-text text-muted">How far in advance should we notify you about upcoming tasks?</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Notification Settings</button>
+        </form>
+    </div>
+</div>
+
+<!-- Recent Notifications Card -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Recent Notifications</h6>
+    </div>
+    <div class="card-body">
+        {% if notifications %}
+            <div class="list-group">
+                {% for notification in notifications %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ notification.title }}</h5>
+                        <small>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <p class="mb-1">{{ notification.message }}</p>
+                    {% if notification.link %}
+                    <a href="{{ notification.link }}" class="btn btn-sm btn-primary mt-2">View Details</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                <p>No notifications yet. They will appear here when workflows are automatically applied or tasks are due.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upcoming Tasks Preview -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Today's Tasks Preview</h6>
+        <a href="{{ url_for('upcoming_workflow_steps') }}" class="btn btn-sm btn-primary">View All Tasks</a>
+    </div>
+    <div class="card-body">
+        {% if today_tasks %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Lead</th>
+                            <th>Task Type</th>
+                            <th>Workflow</th>
+                            <th>Due</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in today_tasks %}
+                        <tr>
+                            <td>{{ task.lead_name }}</td>
+                            <td>
+                                {% if task.step_type == 'Email' %}
+                                <span class="badge bg-success">Email</span>
+                                {% elif task.step_type == 'Call' %}
+                                <span class="badge bg-info">Call</span>
+                                {% elif task.step_type == 'SMS' %}
+                                <span class="badge bg-warning">SMS</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Task</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ task.workflow_name }}</td>
+                            <td>{{ task.scheduled_date.strftime('%H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('execute_workflow_step', lead_workflow_step_id=task.lead_step_id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a href="{{ url_for('skip_workflow_step', lead_workflow_step_id=task.lead_step_id) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-forward"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <p>No tasks scheduled for today. You're all caught up!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

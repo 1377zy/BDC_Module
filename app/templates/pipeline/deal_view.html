@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ deal.title }} - Deal Details{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Deal Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('pipeline.index') }}">Pipelines</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('pipeline.view_pipeline', pipeline_id=deal.pipeline_id) }}">{{ deal.pipeline.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ deal.title }}</li>
+                </ol>
+            </nav>
+            <h1 class="deal-title">{{ deal.title }}</h1>
+            <div class="deal-meta">
+                <span class="badge" style="background-color: {{ deal.stage.color }};">{{ deal.stage.name }}</span>
+                <span class="deal-value">${{ deal.value|format_currency }}</span>
+                {% if deal.probability %}
+                <span class="deal-probability">{{ deal.probability }}% probability</span>
+                {% endif %}
+                {% if deal.expected_close_date %}
+                <span class="deal-close-date">Expected close: {{ deal.expected_close_date|format_date }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 text-right">
+            <div class="btn-group">
+                <a href="{{ url_for('pipeline.edit_deal', deal_id=deal.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Deal
+                </a>
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item" href="{{ url_for('pipeline.add_activity', deal_id=deal.id) }}">
+                        <i class="fas fa-plus-circle"></i> Add Activity
+                    </a>
+                    <a class="dropdown-item" href="{{ url_for('pipeline.move_deal', deal_id=deal.id) }}">
+                        <i class="fas fa-exchange-alt"></i> Move to Stage
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#deleteDealModal">
+                        <i class="fas fa-trash-alt"></i> Delete Deal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deal Content -->
+    <div class="row">
+        <!-- Left Column - Deal Details -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Deal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Created</dt>
+                                <dd class="col-sm-8">{{ deal.created_at|format_datetime }}</dd>
+                                
+                                <dt class="col-sm-4">Created By</dt>
+                                <dd class="col-sm-8">{{ deal.creator.name }}</dd>
+                                
+                                <dt class="col-sm-4">Assigned To</dt>
+                                <dd class="col-sm-8">
+                                    {% if deal.assigned_to %}
+                                    {{ deal.assigned_to.name }}
+                                    {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </dd>
+                                
+                                <dt class="col-sm-4">Lead</dt>
+                                <dd class="col-sm-8">
+                                    {% if deal.lead %}
+                                    <a href="{{ url_for('lead.view', lead_id=deal.lead_id) }}">
+                                        {{ deal.lead.first_name }} {{ deal.lead.last_name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">No lead attached</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Days in Pipeline</dt>
+                                <dd class="col-sm-8">{{ deal.days_in_pipeline }}</dd>
+                                
+                                <dt class="col-sm-4">Current Stage</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge" style="background-color: {{ deal.stage.color }};">
+                                        {{ deal.stage.name }}
+                                    </span>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Days in Stage</dt>
+                                <dd class="col-sm-8">{{ deal.days_in_current_stage }}</dd>
+                                
+                                <dt class="col-sm-4">Status</dt>
+                                <dd class="col-sm-8">
+                                    {% if deal.is_won %}
+                                    <span class="badge badge-success">Won</span>
+                                    {% elif deal.is_lost %}
+                                    <span class="badge badge-danger">Lost</span>
+                                    {% else %}
+                                    <span class="badge badge-primary">Active</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    {% if deal.description %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Description</h6>
+                            <p>{{ deal.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Activities Timeline -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-history"></i> Activity Timeline</h5>
+                    <a href="{{ url_for('pipeline.add_activity', deal_id=deal.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Add Activity
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timeline">
+                        {% if deal.activities %}
+                            {% for activity in deal.activities|sort(attribute='created_at', reverse=True) %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker 
+                                    {% if activity.activity_type == 'call' %}bg-primary{% endif %}
+                                    {% if activity.activity_type == 'email' %}bg-info{% endif %}
+                                    {% if activity.activity_type == 'meeting' %}bg-success{% endif %}
+                                    {% if activity.activity_type == 'note' %}bg-warning{% endif %}
+                                    {% if activity.activity_type == 'task' %}bg-secondary{% endif %}
+                                ">
+                                    <i class="fas 
+                                        {% if activity.activity_type == 'call' %}fa-phone{% endif %}
+                                        {% if activity.activity_type == 'email' %}fa-envelope{% endif %}
+                                        {% if activity.activity_type == 'meeting' %}fa-users{% endif %}
+                                        {% if activity.activity_type == 'note' %}fa-sticky-note{% endif %}
+                                        {% if activity.activity_type == 'task' %}fa-tasks{% endif %}
+                                    "></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="timeline-title">{{ activity.title }}</h6>
+                                        <span class="timeline-date">{{ activity.created_at|format_datetime }}</span>
+                                    </div>
+                                    {% if activity.description %}
+                                    <p>{{ activity.description }}</p>
+                                    {% endif %}
+                                    <div class="timeline-footer">
+                                        <span class="badge 
+                                            {% if activity.activity_type == 'call' %}badge-primary{% endif %}
+                                            {% if activity.activity_type == 'email' %}badge-info{% endif %}
+                                            {% if activity.activity_type == 'meeting' %}badge-success{% endif %}
+                                            {% if activity.activity_type == 'note' %}badge-warning{% endif %}
+                                            {% if activity.activity_type == 'task' %}badge-secondary{% endif %}
+                                        ">
+                                            {{ activity.activity_type|capitalize }}
+                                        </span>
+                                        <span class="timeline-user">by {{ activity.creator.name }}</span>
+                                        {% if activity.is_completed %}
+                                        <span class="badge badge-success">Completed</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">No activities recorded yet</p>
+                            <a href="{{ url_for('pipeline.add_activity', deal_id=deal.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus"></i> Add First Activity
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage Transitions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-exchange-alt"></i> Stage Transitions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="timeline">
+                        {% if deal.transitions %}
+                            {% for transition in deal.transitions|sort(attribute='created_at', reverse=True) %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-info">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="timeline-title">Stage Change</h6>
+                                        <span class="timeline-date">{{ transition.created_at|format_datetime }}</span>
+                                    </div>
+                                    <p>
+                                        Moved from 
+                                        <span class="badge" style="background-color: {{ transition.from_stage.color }};">
+                                            {{ transition.from_stage.name }}
+                                        </span>
+                                        to
+                                        <span class="badge" style="background-color: {{ transition.to_stage.color }};">
+                                            {{ transition.to_stage.name }}
+                                        </span>
+                                    </p>
+                                    {% if transition.notes %}
+                                    <p><strong>Notes:</strong> {{ transition.notes }}</p>
+                                    {% endif %}
+                                    <div class="timeline-footer">
+                                        <span class="timeline-user">by {{ transition.creator.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">No stage transitions recorded yet</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="col-md-4">
+            <!-- Next Steps -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-tasks"></i> Next Steps</h5>
+                    <a href="{{ url_for('pipeline.add_activity', deal_id=deal.id, activity_type='task') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Add Task
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% set pending_tasks = deal.activities|selectattr('activity_type', 'equalto', 'task')|selectattr('is_completed', 'equalto', false)|list %}
+                    {% if pending_tasks %}
+                        <ul class="list-group task-list">
+                            {% for task in pending_tasks|sort(attribute='scheduled_date') %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ task.title }}</h6>
+                                        {% if task.scheduled_date %}
+                                        <small class="text-muted">Due: {{ task.scheduled_date|format_date }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('pipeline.complete_activity', activity_id=task.id) }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted text-center">No pending tasks</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Related Information -->
+            {% if deal.lead %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Lead Information</h5>
+                </div>
+                <div class="card-body">
+                    <h6>{{ deal.lead.first_name }} {{ deal.lead.last_name }}</h6>
+                    <p>
+                        {% if deal.lead.email %}
+                        <i class="fas fa-envelope"></i> {{ deal.lead.email }}<br>
+                        {% endif %}
+                        {% if deal.lead.phone %}
+                        <i class="fas fa-phone"></i> {{ deal.lead.phone }}<br>
+                        {% endif %}
+                        {% if deal.lead.company %}
+                        <i class="fas fa-building"></i> {{ deal.lead.company }}
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('lead.view', lead_id=deal.lead_id) }}" class="btn btn-sm btn-outline-primary btn-block">
+                        <i class="fas fa-external-link-alt"></i> View Lead Profile
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Stage Recommendations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-lightbulb"></i> Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% if deal.days_in_current_stage > 14 and not deal.is_won and not deal.is_lost %}
+                        <li class="list-group-item list-group-item-warning">
+                            <i class="fas fa-exclamation-triangle"></i> This deal has been in the current stage for {{ deal.days_in_current_stage }} days, which is longer than average.
+                        </li>
+                        {% endif %}
+                        
+                        {% if not deal.activities or deal.activities|length < 2 %}
+                        <li class="list-group-item list-group-item-info">
+                            <i class="fas fa-info-circle"></i> Add more activities to track your progress with this deal.
+                        </li>
+                        {% endif %}
+                        
+                        {% if not deal.expected_close_date and not deal.is_won and not deal.is_lost %}
+                        <li class="list-group-item list-group-item-info">
+                            <i class="fas fa-calendar-alt"></i> Set an expected close date to better track this deal.
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Deal Modal -->
+    <div class="modal fade" id="deleteDealModal" tabindex="-1" role="dialog" aria-labelledby="deleteDealModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteDealModalLabel">Delete Deal</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the deal <strong>{{ deal.title }}</strong>?</p>
+                    <p class="text-danger">This action cannot be undone. All activities and stage transitions associated with this deal will also be deleted.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form action="{{ url_for('pipeline.delete_deal', deal_id=deal.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete Deal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/deal.js') }}"></script>
+{% endblock %}

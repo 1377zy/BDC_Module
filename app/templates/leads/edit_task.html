@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.advanced_dashboard') }}">Advanced Lead Management</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.tasks') }}">Tasks</a></li>
+                    <li class="breadcrumb-item active">Edit Task</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit Task</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('leads.edit_task', task_id=task.id) }}" method="POST">
+                        <div class="form-group mb-3">
+                            <label for="title">Task Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ task.title }}" required>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="description">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ task.description }}</textarea>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="priority">Priority</label>
+                            <select class="form-control" id="priority" name="priority">
+                                <option value="low" {% if task.priority == 'low' %}selected{% endif %}>Low</option>
+                                <option value="medium" {% if task.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="high" {% if task.priority == 'high' %}selected{% endif %}>High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="due_date">Due Date</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="assigned_to_id">Assigned To</label>
+                            <select class="form-control" id="assigned_to_id" name="assigned_to_id">
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if task.assigned_to_id == user.id %}selected{% endif %}>{{ user.get_full_name() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        {% if task.related_entity_type == 'lead' and task.related_entity_id %}
+                        <div class="form-group mb-3">
+                            <label>Related Lead</label>
+                            <div class="input-group">
+                                <select class="form-control" id="related_entity_id" name="related_entity_id">
+                                    <option value="">None</option>
+                                    {% for lead in leads %}
+                                    <option value="{{ lead.id }}" {% if task.related_entity_id == lead.id %}selected{% endif %}>{{ lead.get_full_name() }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="hidden" name="related_entity_type" value="lead">
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="form-group text-end mt-4">
+                            <a href="{{ url_for('leads.tasks') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Initialize any select2 dropdowns if needed
+        if ($.fn.select2) {
+            $('#assigned_to_id').select2({
+                placeholder: "Select a user",
+                allowClear: true
+            });
+            
+            $('#related_entity_id').select2({
+                placeholder: "Select a lead",
+                allowClear: true
+            });
+        }
+    });
+</script>
+{% endblock %}

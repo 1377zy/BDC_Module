@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}Template Analytics{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .analytics-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .analytics-card:hover {
+        transform: translateY(-5px);
+    }
+    .usage-count {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .chart-container {
+        height: 300px;
+    }
+    .template-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .template-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .template-item:last-child {
+        border-bottom: none;
+    }
+    .badge-usage {
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Template Analytics</h1>
+        <div>
+            <a href="{{ url_for('reports.templates') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Templates
+            </a>
+        </div>
+    </div>
+
+    <!-- Usage Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card analytics-card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Inventory Templates</h5>
+                    <p class="usage-count">{{ inventory_usage }}</p>
+                    <p class="card-text">Total Uses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card analytics-card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Leads Templates</h5>
+                    <p class="usage-count">{{ leads_usage }}</p>
+                    <p class="card-text">Total Uses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card analytics-card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Sales Templates</h5>
+                    <p class="usage-count">{{ sales_usage }}</p>
+                    <p class="card-text">Total Uses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card analytics-card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Performance Templates</h5>
+                    <p class="usage-count">{{ performance_usage }}</p>
+                    <p class="card-text">Total Uses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Most Used Templates -->
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Most Used Templates</h5>
+                </div>
+                <div class="card-body template-list">
+                    {% if most_used_templates %}
+                        {% for template in most_used_templates %}
+                            <div class="template-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ template.name }}</h6>
+                                    <small class="text-muted">{{ template.report_type|capitalize }} Template</small>
+                                </div>
+                                <span class="badge bg-primary badge-usage">{{ template.usage_count }} uses</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-muted">No templates have been used yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Unused Templates -->
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Unused Templates</h5>
+                </div>
+                <div class="card-body template-list">
+                    {% if unused_templates %}
+                        {% for template in unused_templates %}
+                            <div class="template-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ template.name }}</h6>
+                                    <small class="text-muted">{{ template.report_type|capitalize }} Template</small>
+                                </div>
+                                <a href="{{ url_for('reports.preview_template', template_id=template.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Preview
+                                </a>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-muted">All templates have been used at least once</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Recently Created Templates -->
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Recently Created Templates (Last 30 Days)</h5>
+                </div>
+                <div class="card-body template-list">
+                    {% if recent_templates %}
+                        {% for template in recent_templates %}
+                            <div class="template-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ template.name }}</h6>
+                                    <small class="text-muted">Created {{ template.created_at.strftime('%Y-%m-%d') }}</small>
+                                </div>
+                                <span class="badge {% if template.usage_count > 0 %}bg-success{% else %}bg-secondary{% endif %} badge-usage">
+                                    {{ template.usage_count }} uses
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-muted">No templates created in the last 30 days</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Usage by Type -->
+        <div class="col-md-6">
+            <div class="card analytics-card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Template Usage by Type</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="templateUsageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Usage Details by Type -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card analytics-card">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs" id="templateTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab" aria-controls="inventory" aria-selected="true">Inventory</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="leads-tab" data-bs-toggle="tab" data-bs-target="#leads" type="button" role="tab" aria-controls="leads" aria-selected="false">Leads</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales" type="button" role="tab" aria-controls="sales" aria-selected="false">Sales</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab" aria-controls="performance" aria-selected="false">Performance</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="templateTabsContent">
+                        <div class="tab-pane fade show active" id="inventory" role="tabpanel" aria-labelledby="inventory-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Template Name</th>
+                                            <th>Created By</th>
+                                            <th>Created Date</th>
+                                            <th>Is Default</th>
+                                            <th>Usage Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in inventory_templates %}
+                                            <tr>
+                                                <td>{{ template.name }}</td>
+                                                <td>{{ template.created_by.get_full_name() if template.created_by else 'System' }}</td>
+                                                <td>{{ template.created_at.strftime('%Y-%m-%d') }}</td>
+                                                <td>{% if template.is_default %}<span class="badge bg-success">Default</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                                <td>{{ template.usage_count }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="leads" role="tabpanel" aria-labelledby="leads-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Template Name</th>
+                                            <th>Created By</th>
+                                            <th>Created Date</th>
+                                            <th>Is Default</th>
+                                            <th>Usage Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in leads_templates %}
+                                            <tr>
+                                                <td>{{ template.name }}</td>
+                                                <td>{{ template.created_by.get_full_name() if template.created_by else 'System' }}</td>
+                                                <td>{{ template.created_at.strftime('%Y-%m-%d') }}</td>
+                                                <td>{% if template.is_default %}<span class="badge bg-success">Default</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                                <td>{{ template.usage_count }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="sales" role="tabpanel" aria-labelledby="sales-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Template Name</th>
+                                            <th>Created By</th>
+                                            <th>Created Date</th>
+                                            <th>Is Default</th>
+                                            <th>Usage Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in sales_templates %}
+                                            <tr>
+                                                <td>{{ template.name }}</td>
+                                                <td>{{ template.created_by.get_full_name() if template.created_by else 'System' }}</td>
+                                                <td>{{ template.created_at.strftime('%Y-%m-%d') }}</td>
+                                                <td>{% if template.is_default %}<span class="badge bg-success">Default</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                                <td>{{ template.usage_count }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="performance" role="tabpanel" aria-labelledby="performance-tab">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Template Name</th>
+                                            <th>Created By</th>
+                                            <th>Created Date</th>
+                                            <th>Is Default</th>
+                                            <th>Usage Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in performance_templates %}
+                                            <tr>
+                                                <td>{{ template.name }}</td>
+                                                <td>{{ template.created_by.get_full_name() if template.created_by else 'System' }}</td>
+                                                <td>{{ template.created_at.strftime('%Y-%m-%d') }}</td>
+                                                <td>{% if template.is_default %}<span class="badge bg-success">Default</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                                <td>{{ template.usage_count }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Template usage by type chart
+        const ctx = document.getElementById('templateUsageChart').getContext('2d');
+        const templateUsageChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Inventory', 'Leads', 'Sales', 'Performance'],
+                datasets: [{
+                    data: [
+                        {{ inventory_usage }}, 
+                        {{ leads_usage }}, 
+                        {{ sales_usage }}, 
+                        {{ performance_usage }}
+                    ],
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.8)',
+                        'rgba(25, 135, 84, 0.8)',
+                        'rgba(13, 202, 240, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(13, 110, 253, 1)',
+                        'rgba(25, 135, 84, 1)',
+                        'rgba(13, 202, 240, 1)',
+                        'rgba(255, 193, 7, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

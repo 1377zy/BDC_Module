@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Performance Report - Auto Dealership BDC{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .bg-random1 { background-color: #007bff; }
+    .bg-random2 { background-color: #28a745; }
+    .bg-random3 { background-color: #17a2b8; }
+    .bg-random4 { background-color: #6610f2; }
+    .bg-random5 { background-color: #e83e8c; }
+    .bg-random6 { background-color: #fd7e14; }
+    .bg-random7 { background-color: #20c997; }
+    .bg-random8 { background-color: #6c757d; }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Staff Performance Report</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-user-tie"></i> Staff Performance Report</h1>
+            <button class="btn btn-outline-primary print-report-btn">
+                <i class="fas fa-print me-2"></i> Print Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Date Range Selection
+            </div>
+            <div class="card-body">
+                <form id="dateRangeForm" method="get" action="{{ url_for('reports.performance_report') }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3 d-flex align-items-end h-100">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-2"></i> Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-trophy me-2"></i> Staff Performance Summary
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Staff Member</th>
+                                <th class="text-center">Leads Assigned</th>
+                                <th class="text-center">Appointments</th>
+                                <th class="text-center">Communications</th>
+                                <th class="text-center">Sales Closed</th>
+                                <th class="text-center">Conversion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for data in performance_data %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar me-2 bg-{{ loop.index | random_bg }} text-white">
+                                            {{ data.user.first_name[0] }}{{ data.user.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            {{ data.user.first_name }} {{ data.user.last_name }}
+                                            <small class="d-block text-muted">{{ data.user.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">{{ data.leads_assigned }}</td>
+                                <td class="text-center">{{ data.appointments_scheduled }}</td>
+                                <td class="text-center">{{ data.communications_sent }}</td>
+                                <td class="text-center">{{ data.sales_closed }}</td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ 'success' if data.conversion_rate > 30 else 'warning' if data.conversion_rate > 15 else 'danger' }}" 
+                                             role="progressbar" 
+                                             style="width: {{ data.conversion_rate }}%;" 
+                                             aria-valuenow="{{ data.conversion_rate }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ data.conversion_rate }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chart-bar me-2"></i> Leads Assigned
+            </div>
+            <div class="card-body">
+                <canvas id="leadsAssignedChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-bar me-2"></i> Sales Closed
+            </div>
+            <div class="card-body">
+                <canvas id="salesClosedChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-line me-2"></i> Conversion Rate Comparison
+            </div>
+            <div class="card-body">
+                <canvas id="conversionRateChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-bar me-2"></i> Staff Performance Metrics
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('reports.chart_staff_performance') }}?start_date={{ start_date }}&end_date={{ end_date }}" alt="Staff Performance Chart" class="img-fluid">
+                <p class="text-muted mt-3">
+                    <small>This chart shows a comprehensive view of staff performance metrics including leads assigned, appointments scheduled, sales closed, and conversion rates.</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-2"></i> Performance Insights
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i> Performance Analysis</h5>
+                    <p>This report shows staff performance metrics for the selected date range. The conversion rate represents the percentage of leads that resulted in a sale.</p>
+                    <hr>
+                    <p class="mb-0">Staff members with higher conversion rates are more effective at closing sales. Consider analyzing their techniques and sharing best practices with the team.</p>
+                </div>
+                
+                <div class="alert alert-success">
+                    <h5 class="alert-heading"><i class="fas fa-trophy me-2"></i> Top Performers</h5>
+                    <p>
+                        {% set top_performers = performance_data|sort(attribute='conversion_rate', reverse=True)[:3] %}
+                        {% if top_performers %}
+                            {% for performer in top_performers %}
+                                {% if performer.conversion_rate > 0 %}
+                                <span class="badge bg-success me-2">{{ performer.user.first_name }} {{ performer.user.last_name }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            No top performers identified in the selected date range.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('reports.export_performance') }}?start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-primary export-btn">
+                        <i class="fas fa-file-csv me-2"></i> Export Performance Data to CSV
+                    </a>
+                    <p class="text-muted mt-2">
+                        <small>Export includes detailed metrics for each staff member including leads assigned, appointments scheduled, communications sent, sales closed, conversion rates, and average time to appointment.</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/print-reports.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Leads Assigned Chart
+        const leadsCtx = document.getElementById('leadsAssignedChart').getContext('2d');
+        const leadsLabels = [{% for data in performance_data %}'{{ data.user.first_name }} {{ data.user.last_name }}',{% endfor %}];
+        const leadsData = [{% for data in performance_data %}{{ data.leads_assigned }},{% endfor %}];
+        
+        new Chart(leadsCtx, {
+            type: 'bar',
+            data: {
+                labels: leadsLabels,
+                datasets: [{
+                    label: 'Leads Assigned',
+                    data: leadsData,
+                    backgroundColor: '#17a2b8',
+                    borderColor: '#138496',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Leads Assigned by Staff Member'
+                    }
+                }
+            }
+        });
+        
+        // Sales Closed Chart
+        const salesCtx = document.getElementById('salesClosedChart').getContext('2d');
+        const salesLabels = [{% for data in performance_data %}'{{ data.user.first_name }} {{ data.user.last_name }}',{% endfor %}];
+        const salesData = [{% for data in performance_data %}{{ data.sales_closed }},{% endfor %}];
+        
+        new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: salesLabels,
+                datasets: [{
+                    label: 'Sales Closed',
+                    data: salesData,
+                    backgroundColor: '#28a745',
+                    borderColor: '#218838',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Sales Closed by Staff Member'
+                    }
+                }
+            }
+        });
+        
+        // Conversion Rate Chart
+        const conversionCtx = document.getElementById('conversionRateChart').getContext('2d');
+        const conversionLabels = [{% for data in performance_data %}'{{ data.user.first_name }} {{ data.user.last_name }}',{% endfor %}];
+        const conversionData = [{% for data in performance_data %}{{ data.conversion_rate }},{% endfor %}];
+        
+        new Chart(conversionCtx, {
+            type: 'bar',
+            data: {
+                labels: conversionLabels,
+                datasets: [{
+                    label: 'Conversion Rate (%)',
+                    data: conversionData,
+                    backgroundColor: function(context) {
+                        const value = context.dataset.data[context.dataIndex];
+                        return value > 30 ? '#28a745' : value > 15 ? '#ffc107' : '#dc3545';
+                    },
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Lead to Sale Conversion Rate by Staff Member'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+Implement Scheduled Reports Feature
+
+This commit adds a comprehensive scheduled reports feature to the BDC Module, allowing for automated report generation and email delivery.
+
+Key components:
+- ScheduledReport model for storing report configurations
+- ReportScheduler utility for generating and sending reports
+- PDF generator using WeasyPrint for creating professional reports
+- Email templates for report delivery
+- CLI commands for checking and sending reports
+- Task scheduler integration scripts for Windows and Unix systems
+- Comprehensive documentation
+
+The feature allows users to:
+- Schedule reports to be generated daily, weekly, or monthly
+- Customize recipients, date ranges, and report types
+- Send reports immediately on-demand
+- Toggle reports on/off
+- Manage all scheduled reports through a dedicated UI
+
+This implementation addresses the future enhancement opportunity mentioned in the reporting system documentation.

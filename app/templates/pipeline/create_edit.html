@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}{% if pipeline %}Edit Pipeline{% else %}Create Pipeline{% endif %}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1>{% if pipeline %}Edit Pipeline{% else %}Create Pipeline{% endif %}</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('pipeline') }}">Pipeline</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% if pipeline %}Edit{% else %}Create{% endif %}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <form method="POST" id="pipelineForm">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Pipeline Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="name">Pipeline Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" required 
+                           value="{{ pipeline.name if pipeline else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ pipeline.description if pipeline else '' }}</textarea>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                           {% if not pipeline or pipeline.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Pipeline Stages</h5>
+                <button type="button" class="btn btn-sm btn-primary" id="addStageBtn">
+                    <i class="fas fa-plus"></i> Add Stage
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Drag and drop stages to reorder them. At least one stage is required.
+                </div>
+                <div id="stagesContainer" class="sortable-stages">
+                    {% if pipeline and pipeline.stages %}
+                        {% for stage in pipeline.stages %}
+                        <div class="card mb-3 stage-card" data-stage-id="{{ stage.id }}">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: {{ stage.color }};">
+                                <h6 class="mb-0 text-white">Stage {{ loop.index }}</h6>
+                                <button type="button" class="btn btn-sm btn-light remove-stage-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="stage_ids[]" value="{{ stage.id }}">
+                                <div class="form-group">
+                                    <label>Stage Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control stage-name" name="stage_names[]" required value="{{ stage.name }}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" name="stage_descriptions[]" rows="2">{{ stage.description }}</textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Color</label>
+                                        <input type="text" class="form-control color-picker" name="stage_colors[]" value="{{ stage.color }}">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Probability (%)</label>
+                                        <input type="number" class="form-control" name="stage_probabilities[]" min="0" max="100" value="{{ stage.probability }}">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_won[]" value="{{ loop.index0 }}" 
+                                                   {% if stage.is_won %}checked{% endif %}>
+                                            <label class="form-check-label">Won Stage</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_lost[]" value="{{ loop.index0 }}" 
+                                                   {% if stage.is_lost %}checked{% endif %}>
+                                            <label class="form-check-label">Lost Stage</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default stages for new pipeline -->
+                        <div class="card mb-3 stage-card">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #3498db;">
+                                <h6 class="mb-0 text-white">Stage 1</h6>
+                                <button type="button" class="btn btn-sm btn-light remove-stage-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="stage_ids[]" value="">
+                                <div class="form-group">
+                                    <label>Stage Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control stage-name" name="stage_names[]" required value="Qualification">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" name="stage_descriptions[]" rows="2">Initial qualification of leads</textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Color</label>
+                                        <input type="text" class="form-control color-picker" name="stage_colors[]" value="#3498db">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Probability (%)</label>
+                                        <input type="number" class="form-control" name="stage_probabilities[]" min="0" max="100" value="10">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_won[]" value="0">
+                                            <label class="form-check-label">Won Stage</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_lost[]" value="0">
+                                            <label class="form-check-label">Lost Stage</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3 stage-card">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #2ecc71;">
+                                <h6 class="mb-0 text-white">Stage 2</h6>
+                                <button type="button" class="btn btn-sm btn-light remove-stage-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="stage_ids[]" value="">
+                                <div class="form-group">
+                                    <label>Stage Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control stage-name" name="stage_names[]" required value="Proposal">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" name="stage_descriptions[]" rows="2">Proposal sent to customer</textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Color</label>
+                                        <input type="text" class="form-control color-picker" name="stage_colors[]" value="#2ecc71">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Probability (%)</label>
+                                        <input type="number" class="form-control" name="stage_probabilities[]" min="0" max="100" value="50">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_won[]" value="1">
+                                            <label class="form-check-label">Won Stage</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_lost[]" value="1">
+                                            <label class="form-check-label">Lost Stage</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3 stage-card">
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #e74c3c;">
+                                <h6 class="mb-0 text-white">Stage 3</h6>
+                                <button type="button" class="btn btn-sm btn-light remove-stage-btn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="stage_ids[]" value="">
+                                <div class="form-group">
+                                    <label>Stage Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control stage-name" name="stage_names[]" required value="Closed Won">
+                                </div>
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea class="form-control" name="stage_descriptions[]" rows="2">Deal successfully closed</textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label>Color</label>
+                                        <input type="text" class="form-control color-picker" name="stage_colors[]" value="#e74c3c">
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Probability (%)</label>
+                                        <input type="number" class="form-control" name="stage_probabilities[]" min="0" max="100" value="100">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_won[]" value="2" checked>
+                                            <label class="form-check-label">Won Stage</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="stage_is_lost[]" value="2">
+                                            <label class="form-check-label">Lost Stage</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group text-right">
+            <a href="{{ url_for('pipeline') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Pipeline</button>
+        </div>
+    </form>
+
+    <!-- Stage Template (hidden) -->
+    <div id="stageTemplate" class="d-none">
+        <div class="card mb-3 stage-card">
+            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #3498db;">
+                <h6 class="mb-0 text-white">New Stage</h6>
+                <button type="button" class="btn btn-sm btn-light remove-stage-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <input type="hidden" name="stage_ids[]" value="">
+                <div class="form-group">
+                    <label>Stage Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control stage-name" name="stage_names[]" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" name="stage_descriptions[]" rows="2"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Color</label>
+                        <input type="text" class="form-control color-picker" name="stage_colors[]" value="#3498db">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Probability (%)</label>
+                        <input type="number" class="form-control" name="stage_probabilities[]" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input stage-is-won" name="stage_is_won[]">
+                            <label class="form-check-label">Won Stage</label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input stage-is-lost" name="stage_is_lost[]">
+                            <label class="form-check-label">Lost Stage</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script>
+<script src="{{ url_for('static', filename='js/pipeline_form.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Lead Score Details - {{ lead.first_name }} {{ lead.last_name }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .score-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .score-header {
+        padding: 20px;
+        color: white;
+        text-align: center;
+    }
+    .score-header h1 {
+        font-size: 72px;
+        margin: 0;
+        font-weight: bold;
+    }
+    .score-header p {
+        margin: 0;
+        font-size: 18px;
+    }
+    .score-high {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+    .score-medium {
+        background: linear-gradient(135deg, #f39c12, #f1c40f);
+    }
+    .score-low {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+    }
+    .score-component {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .score-component:last-child {
+        border-bottom: none;
+    }
+    .component-name {
+        font-weight: bold;
+    }
+    .component-value {
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .score-bar {
+        height: 8px;
+        background-color: #f1f1f1;
+        border-radius: 4px;
+        margin-top: 5px;
+        overflow: hidden;
+    }
+    .score-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+    .score-explanation {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .score-actions {
+        margin-top: 20px;
+    }
+    .score-category {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.index') }}">Leads</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.view', lead_id=lead.id) }}">{{ lead.first_name }} {{ lead.last_name }}</a></li>
+                    <li class="breadcrumb-item active">Score Details</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="score-card">
+                <div class="score-header {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                    <h1>{{ lead.score }}</h1>
+                    <p>
+                        {% if lead.score >= 70 %}
+                            High Priority Lead
+                        {% elif lead.score >= 40 %}
+                            Medium Priority Lead
+                        {% else %}
+                            Low Priority Lead
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="score-category {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                            {% if lead.score >= 70 %}
+                                Hot Lead
+                            {% elif lead.score >= 40 %}
+                                Warm Lead
+                            {% else %}
+                                Cold Lead
+                            {% endif %}
+                        </div>
+                        <h5>{{ lead.first_name }} {{ lead.last_name }}</h5>
+                        <p>{{ lead.email }} | {{ lead.phone }}</p>
+                        <p>Source: {{ lead.source }} | Status: {{ lead.status }}</p>
+                        <p>Lifecycle Stage: {{ lead.lifecycle_stage }}</p>
+                    </div>
+                    
+                    <h5>Score Components</h5>
+                    {% for component, value in score_components.items() %}
+                        <div class="score-component">
+                            <div style="flex-grow: 1;">
+                                <div class="component-name">{{ component }}</div>
+                                <div class="score-bar">
+                                    <div class="score-bar-fill {% if lead.score >= 70 %}bg-success{% elif lead.score >= 40 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ (value / total_score * 100) if total_score > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                            <div class="component-value">{{ value }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="score-explanation">
+                <h5>How Lead Scores Are Calculated</h5>
+                <p>Lead scores are calculated based on various factors that indicate how likely a lead is to convert:</p>
+                <ul>
+                    <li><strong>Source:</strong> Different lead sources have different conversion rates. Walk-ins (40 points) and referrals (30 points) score higher than website leads (10 points).</li>
+                    <li><strong>Contact Info:</strong> Leads with complete contact information (email and phone) score higher (up to 20 points).</li>
+                    <li><strong>Vehicle Interests:</strong> Leads with specific vehicle interests score higher (5 points per interest, up to 15 points).</li>
+                    <li><strong>Communications:</strong> More communications indicate higher engagement (2 points per communication, up to 20 points).</li>
+                    <li><strong>Appointments:</strong> Scheduled appointments are strong indicators of interest (10 points per appointment, up to 30 points).</li>
+                    <li><strong>Recency:</strong> Recent activity indicates higher engagement (up to 15 points for activity within 24 hours).</li>
+                </ul>
+                <p>The maximum possible score is 100 points. Leads with scores above 70 are considered high priority.</p>
+            </div>
+            
+            <div class="score-actions">
+                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-primary">Back to Lead Details</a>
+                <a href="{{ url_for('leads.lead_activity', lead_id=lead.id) }}" class="btn btn-info">View Activity Timeline</a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <h6>How to Improve This Lead's Score</h6>
+                    <ul class="list-group list-group-flush">
+                        {% if 'Vehicle Interests' in score_components and score_components['Vehicle Interests'] < 15 %}
+                            <li class="list-group-item">
+                                <i class="fas fa-car text-primary mr-2"></i>
+                                Discuss and record more vehicle interests
+                            </li>
+                        {% endif %}
+                        
+                        {% if 'Communications' in score_components and score_components['Communications'] < 20 %}
+                            <li class="list-group-item">
+                                <i class="fas fa-comments text-primary mr-2"></i>
+                                Increase communication frequency
+                            </li>
+                        {% endif %}
+                        
+                        {% if 'Appointments' in score_components and score_components['Appointments'] < 30 %}
+                            <li class="list-group-item">
+                                <i class="fas fa-calendar-check text-primary mr-2"></i>
+                                Schedule a test drive or showroom visit
+                            </li>
+                        {% endif %}
+                        
+                        {% if 'Recency' in score_components and score_components['Recency'] < 15 %}
+                            <li class="list-group-item">
+                                <i class="fas fa-clock text-primary mr-2"></i>
+                                Follow up with the lead today
+                            </li>
+                        {% endif %}
+                        
+                        {% if 'Contact Info' in score_components and score_components['Contact Info'] < 20 %}
+                            <li class="list-group-item">
+                                <i class="fas fa-address-card text-primary mr-2"></i>
+                                Complete missing contact information
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Next Steps</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% if lead.score >= 70 %}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Schedule Appointment</h5>
+                                    <small class="text-success">High Priority</small>
+                                </div>
+                                <p class="mb-1">This lead is ready for a test drive or showroom visit.</p>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Send Vehicle Options</h5>
+                                    <small class="text-success">Recommended</small>
+                                </div>
+                                <p class="mb-1">Send personalized vehicle recommendations based on interests.</p>
+                            </a>
+                        {% elif lead.score >= 40 %}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Follow Up Call</h5>
+                                    <small class="text-warning">Medium Priority</small>
+                                </div>
+                                <p class="mb-1">Schedule a follow-up call to discuss vehicle interests.</p>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Send More Information</h5>
+                                    <small class="text-warning">Recommended</small>
+                                </div>
+                                <p class="mb-1">Send additional information about vehicles of interest.</p>
+                            </a>
+                        {% else %}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Initial Contact</h5>
+                                    <small class="text-danger">Low Priority</small>
+                                </div>
+                                <p class="mb-1">Make initial contact to gauge interest level.</p>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">Add to Nurture Sequence</h5>
+                                    <small class="text-danger">Recommended</small>
+                                </div>
+                                <p class="mb-1">Add to an automated follow-up sequence.</p>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Enable tooltips
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

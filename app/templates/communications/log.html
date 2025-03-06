@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Communication - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-edit"></i> Log Communication
+            {% if lead %}
+            with {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">{{ form.lead_id.label }}</label>
+                        {{ form.lead_id(class="form-select") }}
+                        {% for error in form.lead_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">{{ form.type.label }}</label>
+                            {{ form.type(class="form-select", id="communication-type") }}
+                            {% for error in form.type.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="direction" class="form-label">{{ form.direction.label }}</label>
+                            {{ form.direction(class="form-select") }}
+                            {% for error in form.direction.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div id="email-fields" class="d-none">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">{{ form.subject.label }}</label>
+                            {{ form.subject(class="form-control", placeholder="Email Subject") }}
+                            {% for error in form.subject.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div id="call-fields" class="d-none">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="duration" class="form-label">{{ form.duration.label }}</label>
+                                <div class="input-group">
+                                    {{ form.duration(class="form-control", placeholder="Duration in minutes") }}
+                                    <span class="input-group-text">minutes</span>
+                                </div>
+                                {% for error in form.duration.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="call_result" class="form-label">{{ form.call_result.label }}</label>
+                                {{ form.call_result(class="form-select") }}
+                                {% for error in form.call_result.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">{{ form.content.label }}</label>
+                        {{ form.content(class="form-control", rows=5, placeholder="Communication content") }}
+                        {% for error in form.content.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="timestamp" class="form-label">{{ form.timestamp.label }}</label>
+                        <div class="input-group">
+                            {{ form.timestamp_date(class="form-control datepicker", placeholder="YYYY-MM-DD") }}
+                            {{ form.timestamp_time(class="form-control", placeholder="HH:MM") }}
+                        </div>
+                        {% for error in form.timestamp_date.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        {% for error in form.timestamp_time.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.follow_up_required(class="form-check-input", id="follow-up-check") }}
+                        <label class="form-check-label" for="follow_up_required">{{ form.follow_up_required.label }}</label>
+                    </div>
+                    
+                    <div id="follow-up-fields" class="d-none">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="follow_up_date" class="form-label">{{ form.follow_up_date.label }}</label>
+                                {{ form.follow_up_date(class="form-control datepicker", placeholder="YYYY-MM-DD") }}
+                                {% for error in form.follow_up_date.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="follow_up_type" class="form-label">{{ form.follow_up_type.label }}</label>
+                                {{ form.follow_up_type(class="form-select") }}
+                                {% for error in form.follow_up_type.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="follow_up_notes" class="form-label">{{ form.follow_up_notes.label }}</label>
+                            {{ form.follow_up_notes(class="form-control", rows=3, placeholder="Notes for follow-up") }}
+                            {% for error in form.follow_up_notes.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Log Communication
+                        </button>
+                        <a href="{% if lead %}{{ url_for('leads.view_lead', lead_id=lead.id) }}{% else %}{{ url_for('communications.list_communications') }}{% endif %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Communication Information
+            </div>
+            <div class="card-body">
+                <h5>Communication Types</h5>
+                <ul>
+                    <li><strong>Email:</strong> Log emails sent or received outside the system</li>
+                    <li><strong>SMS:</strong> Log text messages sent or received outside the system</li>
+                    <li><strong>Call:</strong> Log phone conversations with leads</li>
+                    <li><strong>Note:</strong> Log any other interactions or notes about the lead</li>
+                </ul>
+                
+                <h5>Best Practices</h5>
+                <ul>
+                    <li>Be detailed in your communication logs</li>
+                    <li>Set follow-ups for any pending actions</li>
+                    <li>For call logs, include key points discussed</li>
+                    <li>Include any vehicle interests mentioned during communication</li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if lead %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user me-1"></i> Lead Information
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ lead.first_name }} {{ lead.last_name }}</h5>
+                <p class="mb-2">
+                    {% if lead.email %}
+                    <i class="fas fa-envelope me-1"></i> <a href="mailto:{{ lead.email }}">{{ lead.email }}</a><br>
+                    {% endif %}
+                    {% if lead.phone %}
+                    <i class="fas fa-phone me-1"></i> <a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>
+                    {% endif %}
+                </p>
+                <p class="mb-1"><strong>Status:</strong> {{ lead.status }}</p>
+                <p class="mb-1"><strong>Source:</strong> {{ lead.source }}</p>
+                
+                {% if lead.vehicle_interests %}
+                <hr>
+                <h6 class="card-subtitle mb-2">Vehicle Interests</h6>
+                <ul class="list-unstyled">
+                    {% for interest in lead.vehicle_interests %}
+                    <li><i class="fas fa-car me-1"></i> {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-1"></i> Recent Communications
+            </div>
+            <div class="card-body">
+                {% if previous_communications %}
+                <div class="list-group">
+                    {% for comm in previous_communications %}
+                    <a href="{{ url_for('communications.view_communication', communication_id=comm.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if comm.type == 'Email' %}
+                                <i class="fas fa-envelope me-1"></i>
+                                {% elif comm.type == 'SMS' %}
+                                <i class="fas fa-sms me-1"></i>
+                                {% elif comm.type == 'Call' %}
+                                <i class="fas fa-phone me-1"></i>
+                                {% else %}
+                                <i class="fas fa-sticky-note me-1"></i>
+                                {% endif %}
+                                {{ comm.type }} - {{ comm.direction }}
+                            </h6>
+                            <small>{{ comm.timestamp.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        {% if comm.type == 'Email' and comm.subject %}
+                        <p class="mb-1 small"><strong>{{ comm.subject }}</strong></p>
+                        {% endif %}
+                        <p class="mb-0 small text-truncate">{{ comm.content|truncate(100) }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No previous communications with this lead.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize date pickers
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+        
+        // Set current date and time
+        const now = new Date();
+        $('#timestamp_date').val(now.getFullYear() + '-' + 
+            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(now.getDate()).padStart(2, '0'));
+        
+        $('#timestamp_time').val(String(now.getHours()).padStart(2, '0') + ':' + 
+            String(now.getMinutes()).padStart(2, '0'));
+        
+        // Handle communication type change
+        $('#communication-type').change(function() {
+            const type = $(this).val();
+            
+            // Hide all conditional fields first
+            $('#email-fields, #call-fields').addClass('d-none');
+            
+            // Show fields based on selection
+            if (type === 'Email') {
+                $('#email-fields').removeClass('d-none');
+            } else if (type === 'Call') {
+                $('#call-fields').removeClass('d-none');
+            }
+        });
+        
+        // Trigger on initial load
+        $('#communication-type').trigger('change');
+        
+        // Handle follow-up checkbox
+        $('#follow-up-check').change(function() {
+            if ($(this).prop('checked')) {
+                $('#follow-up-fields').removeClass('d-none');
+            } else {
+                $('#follow-up-fields').addClass('d-none');
+            }
+        });
+        
+        // Trigger on initial load
+        $('#follow-up-check').trigger('change');
+    });
+</script>
+{% endblock %}

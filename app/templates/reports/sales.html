@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Report - Auto Dealership BDC{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Sales Report</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-dollar-sign"></i> Sales Report</h1>
+            <button class="btn btn-outline-primary print-report-btn">
+                <i class="fas fa-print me-2"></i> Print Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Date Range Selection
+            </div>
+            <div class="card-body">
+                <form id="dateRangeForm" method="get" action="{{ url_for('reports.sales_report') }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3 d-flex align-items-end h-100">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-2"></i> Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Sales</h5>
+                <h2 class="display-4">{{ total_sales }}</h2>
+                <p class="card-text">Vehicles sold from {{ start_date }} to {{ end_date }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Revenue</h5>
+                <h2 class="display-4">${{ "{:,.2f}".format(total_revenue) }}</h2>
+                <p class="card-text">Average: ${{ "{:,.2f}".format(total_revenue / total_sales) if total_sales else 0 }} per vehicle</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">New vs. Used</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <h4>{{ new_sales }}</h4>
+                        <p class="text-muted">New</p>
+                    </div>
+                    <div class="col-6">
+                        <h4>{{ used_sales }}</h4>
+                        <p class="text-muted">Used</p>
+                    </div>
+                </div>
+                <div class="progress mt-2">
+                    {% set new_percent = (new_sales / total_sales * 100)|round|int if total_sales else 0 %}
+                    {% set used_percent = (used_sales / total_sales * 100)|round|int if total_sales else 0 %}
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ new_percent }}%" aria-valuenow="{{ new_percent }}" aria-valuemin="0" aria-valuemax="100">New ({{ new_percent }}%)</div>
+                    <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ used_percent }}%" aria-valuenow="{{ used_percent }}" aria-valuemin="0" aria-valuemax="100">Used ({{ used_percent }}%)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-line me-2"></i> Daily Sales & Revenue Trend
+            </div>
+            <div class="card-body">
+                <canvas id="dailySalesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chart-bar me-2"></i> Sales by Make
+            </div>
+            <div class="card-body">
+                <canvas id="salesByMakeChart" height="250"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Make</th>
+                                <th class="text-center">Units Sold</th>
+                                <th class="text-end">Revenue</th>
+                                <th class="text-center">% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for make, count, revenue in sales_by_make %}
+                            <tr>
+                                <td>{{ make }}</td>
+                                <td class="text-center">{{ count }}</td>
+                                <td class="text-end">${{ "{:,.2f}".format(revenue) }}</td>
+                                <td class="text-center">{{ (count / total_sales * 100)|round|int if total_sales else 0 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-pie me-2"></i> Revenue Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="revenueDistributionChart" height="250"></canvas>
+                <div class="mt-3">
+                    <p class="text-center">
+                        <strong>Average Sale Price: ${{ "{:,.2f}".format(total_revenue / total_sales) if total_sales else 0 }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-export me-2"></i> Export Options
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('reports.export_sales') }}?start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-primary export-btn">
+                        <i class="fas fa-file-csv me-2"></i> Export Sales Data to CSV
+                    </a>
+                    <a href="{{ url_for('inventory.list_cars') }}?status=Sold" class="btn btn-outline-primary">
+                        <i class="fas fa-car me-2"></i> View Sold Vehicles
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/print-reports.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Daily Sales Chart
+        const dailyCtx = document.getElementById('dailySalesChart').getContext('2d');
+        const dailyLabels = [{% for day in daily_sales %}'{{ day.date }}',{% endfor %}];
+        const dailySalesData = [{% for day in daily_sales %}{{ day.count }},{% endfor %}];
+        const dailyRevenueData = [{% for day in daily_sales %}{{ day.revenue }},{% endfor %}];
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyLabels,
+                datasets: [
+                    {
+                        label: 'Units Sold',
+                        data: dailySalesData,
+                        fill: false,
+                        backgroundColor: '#28a745',
+                        borderColor: '#28a745',
+                        yAxisID: 'y',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Revenue ($)',
+                        data: dailyRevenueData,
+                        fill: false,
+                        backgroundColor: '#007bff',
+                        borderColor: '#007bff',
+                        yAxisID: 'y1',
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Units Sold'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Daily Sales & Revenue Trend'
+                    }
+                }
+            }
+        });
+        
+        // Sales by Make Chart
+        const makeCtx = document.getElementById('salesByMakeChart').getContext('2d');
+        const makeLabels = [{% for make, count, revenue in sales_by_make %}'{{ make }}',{% endfor %}];
+        const makeData = [{% for make, count, revenue in sales_by_make %}{{ count }},{% endfor %}];
+        
+        new Chart(makeCtx, {
+            type: 'bar',
+            data: {
+                labels: makeLabels,
+                datasets: [{
+                    label: 'Units Sold',
+                    data: makeData,
+                    backgroundColor: '#17a2b8',
+                    borderColor: '#138496',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Sales by Make'
+                    }
+                }
+            }
+        });
+        
+        // Revenue Distribution Chart
+        const revenueCtx = document.getElementById('revenueDistributionChart').getContext('2d');
+        const revenueLabels = [{% for make, count, revenue in sales_by_make %}'{{ make }}',{% endfor %}];
+        const revenueData = [{% for make, count, revenue in sales_by_make %}{{ revenue }},{% endfor %}];
+        
+        new Chart(revenueCtx, {
+            type: 'pie',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    data: revenueData,
+                    backgroundColor: [
+                        '#007bff', '#28a745', '#17a2b8', '#ffc107', '#dc3545',
+                        '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Revenue Distribution by Make'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                const value = context.raw;
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Save Search{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Save Search</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('search.save_search') }}">
+                        {{ form.csrf_token }}
+                        
+                        <div class="form-group">
+                            {{ form.name.label }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Give your search a descriptive name so you can easily find it later.</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            {{ form.description.label }}
+                            {{ form.description(class="form-control", rows=3) }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Optional description of what this search is for.</small>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            {{ form.is_default(class="form-check-input") }}
+                            {{ form.is_default.label(class="form-check-label") }}
+                            <small class="form-text text-muted">If checked, this search will be loaded by default when you open the search page.</small>
+                        </div>
+                        
+                        <div class="form-group text-center">
+                            <a href="{{ url_for('search.advanced_search') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

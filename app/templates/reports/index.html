@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold mb-4"><i class="fas fa-chart-bar"></i> Reports & Analytics</h1>
+        <p class="lead">Generate comprehensive reports to analyze your dealership's performance, inventory, leads, and sales data.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-car fa-4x text-secondary mb-3"></i>
+                <h5 class="card-title">Inventory Reports</h5>
+                <p class="card-text">Analyze your current inventory, including vehicle status, age, and distribution by make, model, and price range.</p>
+                <a href="{{ url_for('reports.inventory_report') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-4x text-primary mb-3"></i>
+                <h5 class="card-title">Lead Reports</h5>
+                <p class="card-text">Track lead generation, sources, conversion rates, and status distribution over time.</p>
+                <a href="{{ url_for('reports.leads_report') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-4x text-success mb-3"></i>
+                <h5 class="card-title">Sales Reports</h5>
+                <p class="card-text">Analyze sales performance, revenue, and trends by vehicle type, make, and time period.</p>
+                <a href="{{ url_for('reports.sales_report') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tie fa-4x text-info mb-3"></i>
+                <h5 class="card-title">Staff Performance</h5>
+                <p class="card-text">Evaluate staff performance metrics including leads handled, appointments set, and sales closed.</p>
+                <a href="{{ url_for('reports.performance_report') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-4x text-warning mb-3"></i>
+                <h5 class="card-title">Task Reports</h5>
+                <p class="card-text">Track task management metrics, completion rates, and user assignments across your team.</p>
+                <a href="{{ url_for('reports.task_report') }}" class="btn btn-primary">View Report</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-export me-2"></i> Export Data
+            </div>
+            <div class="card-body">
+                <p>Export your dealership data for further analysis or record-keeping.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.export_inventory') }}" class="btn btn-outline-primary mb-3">
+                                <i class="fas fa-file-csv me-2"></i> Export Inventory Data
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.export_leads') }}" class="btn btn-outline-primary mb-3">
+                                <i class="fas fa-file-csv me-2"></i> Export Lead Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.export_sales') }}" class="btn btn-outline-primary mb-3">
+                                <i class="fas fa-file-csv me-2"></i> Export Sales Data
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.task_report_csv') }}" class="btn btn-outline-primary mb-3">
+                                <i class="fas fa-file-csv me-2"></i> Export Task Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% if current_user.role in ['manager', 'admin'] %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.scheduled_reports') }}" class="btn btn-outline-success">
+                                <i class="fas fa-clock me-2"></i> Manage Scheduled Reports
+                            </a>
+                        </div>
+                        <p class="small text-muted mt-2">Set up automated reports to be delivered to your email on a schedule.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-chart-pie me-2"></i> Inventory Status
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('reports.chart_inventory_status') }}" alt="Inventory Status Chart" class="img-fluid">
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-bar me-2"></i> Lead Sources
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('reports.chart_lead_sources') }}" alt="Lead Sources Chart" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

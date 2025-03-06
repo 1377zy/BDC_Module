@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>{{ 'Edit' if match else 'Create' }} Lead-Vehicle Match</h1>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Match Details</h3>
+            </div>
+            <div class="panel-body">
+                <form method="post" class="form">
+                    {{ form.hidden_tag() }}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.lead_id.label }}
+                                {{ form.lead_id(class="form-control") }}
+                                {% for error in form.lead_id.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.inventory_id.label }}
+                                {{ form.inventory_id(class="form-control") }}
+                                {% for error in form.inventory_id.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.match_score.label }}
+                                <div class="input-group">
+                                    {{ form.match_score(class="form-control") }}
+                                    <span class="input-group-addon">%</span>
+                                </div>
+                                <small class="text-muted">Enter a value from 0-100 indicating how well this vehicle matches the lead's preferences</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form.status.label }}
+                                {{ form.status(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {{ form.notes.label }}
+                                {{ form.notes(class="form-control", rows=3) }}
+                                <small class="text-muted">Enter any notes about this match, such as customer feedback or follow-up actions</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <a href="{{ url_for('inventory.list_matches') }}" class="btn btn-default">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

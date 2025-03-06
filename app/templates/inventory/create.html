@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Vehicle - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold"><i class="fas fa-plus-circle"></i> Add New Vehicle</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-car me-2"></i> Vehicle Information
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="make" class="form-label">Make <span class="text-danger">*</span></label>
+                            {{ form.make(class="form-control" + (" is-invalid" if form.make.errors else "")) }}
+                            {% for error in form.make.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="model" class="form-label">Model <span class="text-danger">*</span></label>
+                            {{ form.model(class="form-control" + (" is-invalid" if form.model.errors else "")) }}
+                            {% for error in form.model.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="year" class="form-label">Year <span class="text-danger">*</span></label>
+                            {{ form.year(class="form-control" + (" is-invalid" if form.year.errors else "")) }}
+                            {% for error in form.year.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="trim" class="form-label">Trim</label>
+                            {{ form.trim(class="form-control" + (" is-invalid" if form.trim.errors else "")) }}
+                            {% for error in form.trim.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="color" class="form-label">Color</label>
+                            {{ form.color(class="form-control" + (" is-invalid" if form.color.errors else "")) }}
+                            {% for error in form.color.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="vin" class="form-label">VIN <span class="text-danger">*</span></label>
+                            {{ form.vin(class="form-control" + (" is-invalid" if form.vin.errors else "")) }}
+                            {% for error in form.vin.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="price" class="form-label">Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.price(class="form-control" + (" is-invalid" if form.price.errors else "")) }}
+                                {% for error in form.price.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="mileage" class="form-label">Mileage <span class="text-danger">*</span></label>
+                            {{ form.mileage(class="form-control" + (" is-invalid" if form.mileage.errors else "")) }}
+                            {% for error in form.mileage.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                            {% for error in form.status.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="new_or_used" class="form-label">New or Used <span class="text-danger">*</span></label>
+                            {{ form.new_or_used(class="form-select" + (" is-invalid" if form.new_or_used.errors else "")) }}
+                            {% for error in form.new_or_used.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="body_style" class="form-label">Body Style <span class="text-danger">*</span></label>
+                            {{ form.body_style(class="form-select" + (" is-invalid" if form.body_style.errors else "")) }}
+                            {% for error in form.body_style.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="transmission" class="form-label">Transmission <span class="text-danger">*</span></label>
+                            {{ form.transmission(class="form-select" + (" is-invalid" if form.transmission.errors else "")) }}
+                            {% for error in form.transmission.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="fuel_type" class="form-label">Fuel Type <span class="text-danger">*</span></label>
+                            {{ form.fuel_type(class="form-select" + (" is-invalid" if form.fuel_type.errors else "")) }}
+                            {% for error in form.fuel_type.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-8">
+                            <label for="images" class="form-label">Images</label>
+                            {{ form.images(class="form-control" + (" is-invalid" if form.images.errors else "")) }}
+                            <div class="form-text">Select multiple images. You can add more later.</div>
+                            {% for error in form.images.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=5) }}
+                        {% for error in form.description.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="features" class="form-label">Features</label>
+                        {{ form.features(class="form-control" + (" is-invalid" if form.features.errors else ""), rows=3) }}
+                        <div class="form-text">Enter features separated by commas (e.g., "Leather Seats, Sunroof, Navigation")</div>
+                        {% for error in form.features.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('inventory.list_cars') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Inventory
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

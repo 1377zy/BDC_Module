@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Report - Auto Dealership BDC{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/print-reports.js') }}"></script>
+<script>
+    // Add any JavaScript needed for charts or interactivity
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Inventory Report</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-car"></i> Inventory Report</h1>
+            <button class="btn btn-outline-primary print-report-btn">
+                <i class="fas fa-print me-2"></i> Print Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Vehicles</h5>
+                <h2 class="display-4">{{ total_vehicles }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-success">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Available</h5>
+                <h2 class="display-4 text-success">{{ available_vehicles }}</h2>
+                <p class="card-text">{{ (available_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}% of inventory</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-warning">
+            <div class="card-body">
+                <h5 class="card-title text-muted">On Hold</h5>
+                <h2 class="display-4 text-warning">{{ on_hold_vehicles }}</h2>
+                <p class="card-text">{{ (on_hold_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}% of inventory</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100 border-danger">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Sold</h5>
+                <h2 class="display-4 text-danger">{{ sold_vehicles }}</h2>
+                <p class="card-text">{{ (sold_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}% of inventory</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-pie me-2"></i> New vs. Used Vehicles
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-muted">New Vehicles</h5>
+                                <h2 class="display-4">{{ new_vehicles }}</h2>
+                                <p class="card-text">{{ (new_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}% of inventory</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-muted">Used Vehicles</h5>
+                                <h2 class="display-4">{{ used_vehicles }}</h2>
+                                <p class="card-text">{{ (used_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}% of inventory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 30px;">
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                         style="width: {{ (new_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}%" 
+                         aria-valuenow="{{ (new_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        New ({{ (new_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}%)
+                    </div>
+                    <div class="progress-bar bg-secondary" role="progressbar" 
+                         style="width: {{ (used_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}%" 
+                         aria-valuenow="{{ (used_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        Used ({{ (used_vehicles / total_vehicles * 100)|round|int if total_vehicles else 0 }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-clock me-2"></i> Inventory Age (Available Vehicles)
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card text-center h-100 border-success">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted">< 30 Days</h6>
+                                <h3>{{ inventory_age.under_30_days }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card text-center h-100 border-info">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted">30-60 Days</h6>
+                                <h3>{{ inventory_age.30_to_60_days }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card text-center h-100 border-warning">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted">60-90 Days</h6>
+                                <h3>{{ inventory_age.60_to_90_days }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card text-center h-100 border-danger">
+                            <div class="card-body">
+                                <h6 class="card-title text-muted">> 90 Days</h6>
+                                <h3>{{ inventory_age.over_90_days }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 30px;">
+                    {% set total_available = inventory_age.under_30_days + inventory_age.30_to_60_days + inventory_age.60_to_90_days + inventory_age.over_90_days %}
+                    {% set under_30_percent = (inventory_age.under_30_days / total_available * 100)|round|int if total_available else 0 %}
+                    {% set to_60_percent = (inventory_age.30_to_60_days / total_available * 100)|round|int if total_available else 0 %}
+                    {% set to_90_percent = (inventory_age.60_to_90_days / total_available * 100)|round|int if total_available else 0 %}
+                    {% set over_90_percent = (inventory_age.over_90_days / total_available * 100)|round|int if total_available else 0 %}
+                    
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ under_30_percent }}%" 
+                         aria-valuenow="{{ under_30_percent }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        < 30 Days ({{ under_30_percent }}%)
+                    </div>
+                    <div class="progress-bar bg-info" role="progressbar" 
+                         style="width: {{ to_60_percent }}%" 
+                         aria-valuenow="{{ to_60_percent }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        30-60 Days ({{ to_60_percent }}%)
+                    </div>
+                    <div class="progress-bar bg-warning" role="progressbar" 
+                         style="width: {{ to_90_percent }}%" 
+                         aria-valuenow="{{ to_90_percent }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        60-90 Days ({{ to_90_percent }}%)
+                    </div>
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {{ over_90_percent }}%" 
+                         aria-valuenow="{{ over_90_percent }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                        > 90 Days ({{ over_90_percent }}%)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-tag me-2"></i> Price Range Distribution
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Price Range</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for range in price_ranges %}
+                            <tr>
+                                <td>{{ range.label }}</td>
+                                <td class="text-center">{{ range.count }}</td>
+                                <td class="text-center">{{ (range.count / total_vehicles * 100)|round|int if total_vehicles else 0 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <div class="progress mb-3" style="height: 30px;">
+                        {% for range in price_ranges %}
+                        {% set percent = (range.count / total_vehicles * 100)|round|int if total_vehicles else 0 %}
+                        <div class="progress-bar bg-{{ loop.index | random_color }}" role="progressbar" 
+                             style="width: {{ percent }}%" 
+                             aria-valuenow="{{ percent }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                            {{ range.label }} ({{ percent }}%)
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-car-side me-2"></i> Make Distribution
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Make</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for make, count in make_distribution %}
+                            <tr>
+                                <td>{{ make }}</td>
+                                <td class="text-center">{{ count }}</td>
+                                <td class="text-center">{{ (count / total_vehicles * 100)|round|int if total_vehicles else 0 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-export me-2"></i> Export Options
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('reports.export_inventory') }}" class="btn btn-primary">
+                        <i class="fas fa-file-csv me-2"></i> Export Inventory to CSV
+                    </a>
+                    <a href="{{ url_for('inventory.list_cars') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-car me-2"></i> View Inventory
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

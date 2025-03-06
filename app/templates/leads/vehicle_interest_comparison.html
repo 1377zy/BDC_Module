@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 30px;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+    }
+    .comparison-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .comparison-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    .change-positive {
+        color: #28a745;
+    }
+    .change-negative {
+        color: #dc3545;
+    }
+    .change-neutral {
+        color: #6c757d;
+    }
+    .stat-card {
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .stat-card h2 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    .stat-card p {
+        font-size: 1.2rem;
+        margin-bottom: 0;
+    }
+    .current-period {
+        background-color: #e3f2fd;
+    }
+    .comparison-period {
+        background-color: #f8f9fa;
+    }
+    .date-form .form-group {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block app_content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Vehicle Interest Comparison</h1>
+        <p class="lead">Compare vehicle interests between different time periods</p>
+        
+        <!-- Navigation -->
+        <div class="mb-4">
+            <a href="{{ url_for('leads.vehicle_interest_analytics') }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-pie"></i> Back to Analytics
+            </a>
+            <a href="{{ url_for('leads.vehicle_interest_trends') }}" class="btn btn-outline-info">
+                <i class="fas fa-chart-line"></i> View Trends
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Date Range Selector -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Select Time Periods to Compare</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" action="{{ url_for('leads.vehicle_interest_comparison') }}" class="date-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Current Period</h6>
+                            <div class="row">
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="start_date">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                                </div>
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="end_date">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">Comparison Period</h6>
+                            <div class="row">
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="compare_start_date">Start Date</label>
+                                    <input type="date" class="form-control" id="compare_start_date" name="compare_start_date" value="{{ compare_start_date }}">
+                                </div>
+                                <div class="col-md-6 form-group mb-3">
+                                    <label for="compare_end_date">End Date</label>
+                                    <input type="date" class="form-control" id="compare_end_date" name="compare_end_date" value="{{ compare_end_date }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Update Comparison
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card comparison-card">
+            <div class="card-body">
+                <div class="stat-card current-period">
+                    <h2>{{ current_total }}</h2>
+                    <p>Current Period Interests</p>
+                    <small>{{ start_date }} to {{ end_date }}</small>
+                </div>
+                <div class="stat-card comparison-period">
+                    <h2>{{ comparison_total }}</h2>
+                    <p>Comparison Period Interests</p>
+                    <small>{{ compare_start_date }} to {{ compare_end_date }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card comparison-card">
+            <div class="card-body text-center">
+                <h3>Overall Change</h3>
+                <div class="mt-4 mb-4">
+                    <h1 class="{% if total_change > 0 %}change-positive{% elif total_change < 0 %}change-negative{% else %}change-neutral{% endif %}">
+                        {% if total_change > 0 %}+{% endif %}{{ total_change }}%
+                    </h1>
+                </div>
+                <p>
+                    {% if total_change > 0 %}
+                        <i class="fas fa-arrow-up change-positive"></i> Increase in vehicle interests
+                    {% elif total_change < 0 %}
+                        <i class="fas fa-arrow-down change-negative"></i> Decrease in vehicle interests
+                    {% else %}
+                        <i class="fas fa-equals change-neutral"></i> No change in vehicle interests
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card comparison-card">
+            <div class="card-body">
+                <h5 class="text-center mb-4">New vs Used Comparison</h5>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h6>Current Period</h6>
+                        <div class="mb-3">
+                            <span class="badge bg-primary p-2">New: {{ current_new }}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-secondary p-2">Used: {{ current_used }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h6>Comparison Period</h6>
+                        <div class="mb-3">
+                            <span class="badge bg-primary p-2">New: {{ comparison_new }}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-secondary p-2">Used: {{ comparison_used }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Make Comparison Chart -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card comparison-card">
+            <div class="card-header">
+                <h5 class="mb-0">Make Comparison</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="makeComparisonChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Percentage Change Table -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card comparison-card">
+            <div class="card-header">
+                <h5 class="mb-0">Percentage Change by Make</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Make</th>
+                                <th>Current Period</th>
+                                <th>Comparison Period</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(chart_makes|length) %}
+                            <tr>
+                                <td>{{ chart_makes[i] }}</td>
+                                <td>{{ current_data[i] }}</td>
+                                <td>{{ comparison_data[i] }}</td>
+                                <td class="{% if percentage_changes[i] > 0 %}change-positive{% elif percentage_changes[i] < 0 %}change-negative{% else %}change-neutral{% endif %}">
+                                    {% if percentage_changes[i] > 0 %}+{% endif %}{{ percentage_changes[i] }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make Comparison Chart
+        var makeCtx = document.getElementById('makeComparisonChart').getContext('2d');
+        var makeComparisonChart = new Chart(makeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_makes|tojson }},
+                datasets: [
+                    {
+                        label: 'Current Period',
+                        data: {{ current_data|tojson }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Comparison Period',
+                        data: {{ comparison_data|tojson }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

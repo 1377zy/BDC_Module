@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Lead Management{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .card-counter {
+        box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        padding: 20px;
+        transition: transform 0.3s ease;
+        border-radius: 5px;
+        color: #FFF;
+    }
+    .card-counter:hover {
+        transform: translateY(-5px);
+    }
+    .card-counter i {
+        font-size: 5em;
+        opacity: 0.4;
+    }
+    .card-counter .count-numbers {
+        position: absolute;
+        right: 35px;
+        top: 20px;
+        font-size: 32px;
+        display: block;
+    }
+    .card-counter .count-name {
+        position: absolute;
+        right: 35px;
+        top: 65px;
+        font-style: italic;
+        text-transform: capitalize;
+        opacity: 0.8;
+        display: block;
+        font-size: 18px;
+    }
+    .card-counter.new {
+        background: #00c0ef;
+    }
+    .card-counter.engaged {
+        background: #3498db;
+    }
+    .card-counter.qualified {
+        background: #9b59b6;
+    }
+    .card-counter.opportunity {
+        background: #f39c12;
+    }
+    .card-counter.customer {
+        background: #2ecc71;
+    }
+    .card-counter.closed {
+        background: #95a5a6;
+    }
+    .priority-lead {
+        border-left: 4px solid #e74c3c;
+    }
+    .follow-up-lead {
+        border-left: 4px solid #f39c12;
+    }
+    .sequence-card {
+        border-left: 4px solid #3498db;
+    }
+    .lead-score {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+    .score-high {
+        background-color: #27ae60;
+    }
+    .score-medium {
+        background-color: #f39c12;
+    }
+    .score-low {
+        background-color: #e74c3c;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4 mb-4">Advanced Lead Management</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Lead Pipeline Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="card-counter new">
+                                <i class="fa fa-user-plus"></i>
+                                <span class="count-numbers">{{ new_leads }}</span>
+                                <span class="count-name">New</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card-counter engaged">
+                                <i class="fa fa-comments"></i>
+                                <span class="count-numbers">{{ engaged_leads }}</span>
+                                <span class="count-name">Engaged</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card-counter qualified">
+                                <i class="fa fa-check-circle"></i>
+                                <span class="count-numbers">{{ qualified_leads }}</span>
+                                <span class="count-name">Qualified</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card-counter opportunity">
+                                <i class="fa fa-calendar-check"></i>
+                                <span class="count-numbers">{{ opportunity_leads }}</span>
+                                <span class="count-name">Opportunity</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card-counter customer">
+                                <i class="fa fa-handshake"></i>
+                                <span class="count-numbers">{{ customer_leads }}</span>
+                                <span class="count-name">Customer</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card-counter closed">
+                                <i class="fa fa-times-circle"></i>
+                                <span class="count-numbers">{{ closed_leads }}</span>
+                                <span class="count-name">Closed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">High Priority Leads</h5>
+                </div>
+                <div class="card-body">
+                    {% if high_priority_leads %}
+                        <div class="list-group">
+                            {% for lead in high_priority_leads %}
+                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="list-group-item list-group-item-action priority-lead">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h5>
+                                        <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                            {{ lead.score }}
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">{{ lead.source }} | {{ lead.status }}</p>
+                                    <small>Last activity: {% if lead.last_activity_date %}{{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}{% else %}Never{% endif %}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No high priority leads at this time.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Follow-Up Sequences</h5>
+                    <a href="{{ url_for('leads.follow_up_sequences') }}" class="btn btn-sm btn-light">Manage Sequences</a>
+                </div>
+                <div class="card-body">
+                    {% if active_sequences %}
+                        <div class="list-group">
+                            {% for sequence in active_sequences %}
+                                <div class="list-group-item sequence-card">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ sequence.name }}</h5>
+                                        <span class="badge badge-primary">{{ sequence.lead_assignments.filter_by(is_active=True).count() }} active leads</span>
+                                    </div>
+                                    <p class="mb-1">{{ sequence.description }}</p>
+                                    <small>Trigger: {{ sequence.trigger_type }} {% if sequence.lead_source %}| Source: {{ sequence.lead_source }}{% endif %}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('leads.process_sequences') }}" class="btn btn-primary">Process Due Sequences Now</a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No active sequences. <a href="{{ url_for('leads.new_sequence') }}">Create one</a>.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">Today's Follow-Ups</h5>
+                </div>
+                <div class="card-body">
+                    {% if follow_up_leads %}
+                        <div class="list-group">
+                            {% for lead in follow_up_leads %}
+                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="list-group-item list-group-item-action follow-up-lead">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h5>
+                                        <span class="badge badge-warning">{{ lead.follow_up_type }}</span>
+                                    </div>
+                                    <p class="mb-1">{{ lead.source }} | {{ lead.status }}</p>
+                                    <small>Follow-up time: {{ lead.follow_up_date.strftime('%H:%M') }}</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No follow-ups scheduled for today.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Lead Management Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('leads.follow_up_sequences') }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100">
+                                <div class="mr-3">
+                                    <i class="fa fa-sync fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Follow-Up Sequences</h5>
+                                    <p class="mb-1">Create and manage automated follow-up sequences for leads</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" onclick="updateAllLeadScores(); return false;">
+                            <div class="d-flex w-100">
+                                <div class="mr-3">
+                                    <i class="fa fa-chart-line fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Update All Lead Scores</h5>
+                                    <p class="mb-1">Recalculate scores for all leads in the system</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" onclick="updateAllLifecycleStages(); return false;">
+                            <div class="d-flex w-100">
+                                <div class="mr-3">
+                                    <i class="fa fa-sitemap fa-2x text-warning"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Update All Lifecycle Stages</h5>
+                                    <p class="mb-1">Recalculate lifecycle stages for all leads</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function updateAllLeadScores() {
+        if (confirm('This will update scores for all leads in the system. Continue?')) {
+            // Show loading indicator
+            const loadingToast = showToast('Updating lead scores...', 'info');
+            
+            // Make AJAX request to update scores
+            fetch('/api/leads/update-scores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                hideToast(loadingToast);
+                
+                // Show success message
+                showToast(`Updated scores for ${data.count} leads`, 'success');
+                
+                // Reload the page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            })
+            .catch(error => {
+                // Hide loading indicator
+                hideToast(loadingToast);
+                
+                // Show error message
+                showToast('Error updating lead scores', 'danger');
+                console.error('Error:', error);
+            });
+        }
+    }
+    
+    function updateAllLifecycleStages() {
+        if (confirm('This will update lifecycle stages for all leads in the system. Continue?')) {
+            // Show loading indicator
+            const loadingToast = showToast('Updating lifecycle stages...', 'info');
+            
+            // Make AJAX request to update lifecycle stages
+            fetch('/api/leads/update-lifecycle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                hideToast(loadingToast);
+                
+                // Show success message
+                showToast(`Updated lifecycle stages for ${data.count} leads`, 'success');
+                
+                // Reload the page after a short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            })
+            .catch(error => {
+                // Hide loading indicator
+                hideToast(loadingToast);
+                
+                // Show error message
+                showToast('Error updating lifecycle stages', 'danger');
+                console.error('Error:', error);
+            });
+        }
+    }
+    
+    function showToast(message, type) {
+        const toastId = 'toast-' + Math.random().toString(36).substr(2, 9);
+        const toast = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="5000">
+                <div class="toast-header bg-${type} text-white">
+                    <strong class="mr-auto">BDC Module</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        // Add toast to container
+        if (!document.getElementById('toast-container')) {
+            const toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.style.position = 'fixed';
+            toastContainer.style.top = '20px';
+            toastContainer.style.right = '20px';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        document.getElementById('toast-container').innerHTML += toast;
+        
+        // Show the toast
+        $(`#${toastId}`).toast('show');
+        
+        return toastId;
+    }
+    
+    function hideToast(toastId) {
+        $(`#${toastId}`).toast('hide');
+    }
+</script>
+{% endblock %}

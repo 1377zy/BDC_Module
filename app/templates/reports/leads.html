@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+
+{% block title %}Leads Report - Auto Dealership BDC{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Leads Report</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-users"></i> Leads Report</h1>
+            <button class="btn btn-outline-primary print-report-btn">
+                <i class="fas fa-print me-2"></i> Print Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Date Range Selection
+            </div>
+            <div class="card-body">
+                <form id="dateRangeForm" method="get" action="{{ url_for('reports.leads_report') }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3 d-flex align-items-end h-100">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-2"></i> Apply Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Leads</h5>
+                <h2 class="display-4">{{ total_leads }}</h2>
+                <p class="card-text">{{ start_date }} to {{ end_date }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-line me-2"></i> Daily Lead Trend
+            </div>
+            <div class="card-body">
+                <canvas id="dailyLeadsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chart-pie me-2"></i> Lead Status Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="leadStatusChart" height="250"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in lead_status_counts.items() %}
+                            <tr>
+                                <td><span class="badge bg-{{ status|lower }}">{{ status }}</span></td>
+                                <td class="text-center">{{ count }}</td>
+                                <td class="text-center">{{ (count / total_leads * 100)|round|int if total_leads else 0 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-chart-bar me-2"></i> Lead Sources
+            </div>
+            <div class="card-body">
+                <canvas id="leadSourcesChart" height="250"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th class="text-center">Count</th>
+                                <th class="text-center">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source, count in lead_sources %}
+                            <tr>
+                                <td>{{ source }}</td>
+                                <td class="text-center">{{ count }}</td>
+                                <td class="text-center">{{ (count / total_leads * 100)|round|int if total_leads else 0 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-export me-2"></i> Export Options
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{{ url_for('reports.export_leads', start_date=start_date, end_date=end_date) }}" class="btn btn-primary">
+                        <i class="fas fa-file-csv me-2"></i> Export Leads to CSV
+                    </a>
+                    <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-users me-2"></i> View All Leads
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/print-reports.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Lead Status Chart
+        const statusCtx = document.getElementById('leadStatusChart').getContext('2d');
+        const statusLabels = [{% for status, count in lead_status_counts.items() %}'{{ status }}',{% endfor %}];
+        const statusData = [{% for status, count in lead_status_counts.items() %}{{ count }},{% endfor %}];
+        const statusColors = [
+            '#dc3545', // New - Red
+            '#ffc107', // Contacted - Yellow
+            '#17a2b8', // Qualified - Cyan
+            '#007bff', // Appointment Set - Blue
+            '#28a745', // Sold - Green
+            '#6c757d'  // Lost - Gray
+        ];
+        
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: statusColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Lead Status Distribution'
+                    }
+                }
+            }
+        });
+        
+        // Lead Sources Chart
+        const sourcesCtx = document.getElementById('leadSourcesChart').getContext('2d');
+        const sourceLabels = [{% for source, count in lead_sources %}'{{ source }}',{% endfor %}];
+        const sourceData = [{% for source, count in lead_sources %}{{ count }},{% endfor %}];
+        
+        new Chart(sourcesCtx, {
+            type: 'bar',
+            data: {
+                labels: sourceLabels,
+                datasets: [{
+                    label: 'Number of Leads',
+                    data: sourceData,
+                    backgroundColor: '#007bff',
+                    borderColor: '#0056b3',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Lead Sources'
+                    }
+                }
+            }
+        });
+        
+        // Daily Lead Trend Chart
+        const dailyCtx = document.getElementById('dailyLeadsChart').getContext('2d');
+        const dailyLabels = [{% for day in daily_leads %}'{{ day.date }}',{% endfor %}];
+        const dailyData = [{% for day in daily_leads %}{{ day.count }},{% endfor %}];
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Daily Leads',
+                    data: dailyData,
+                    fill: false,
+                    backgroundColor: '#28a745',
+                    borderColor: '#28a745',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Daily Lead Trend'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

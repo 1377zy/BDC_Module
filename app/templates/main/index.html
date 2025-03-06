@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold mb-4"><i class="fas fa-tachometer-alt"></i> BDC Dashboard</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <i class="fas fa-users fa-3x"></i>
+            <div class="stat-number">{{ stats.total_leads }}</div>
+            <div class="stat-label">Total Leads</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <i class="fas fa-calendar-check fa-3x"></i>
+            <div class="stat-number">{{ stats.total_appointments }}</div>
+            <div class="stat-label">Total Appointments</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-dark">
+            <i class="fas fa-calendar-day fa-3x"></i>
+            <div class="stat-number">{{ stats.todays_appointments }}</div>
+            <div class="stat-label">Today's Appointments</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-info text-white">
+            <i class="fas fa-comments fa-3x"></i>
+            <div class="stat-number">{{ stats.total_communications }}</div>
+            <div class="stat-label">Total Communications</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-secondary text-white">
+            <i class="fas fa-car fa-3x"></i>
+            <div class="stat-number">{{ stats.total_vehicles }}</div>
+            <div class="stat-label">Total Vehicles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <i class="fas fa-check-circle fa-3x"></i>
+            <div class="stat-number">{{ stats.available_vehicles }}</div>
+            <div class="stat-label">Available Vehicles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-dark">
+            <i class="fas fa-pause-circle fa-3x"></i>
+            <div class="stat-number">{{ stats.on_hold_vehicles }}</div>
+            <div class="stat-label">On Hold Vehicles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-danger text-white">
+            <i class="fas fa-tags fa-3x"></i>
+            <div class="stat-number">{{ stats.sold_vehicles }}</div>
+            <div class="stat-label">Sold Vehicles</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-bar me-2"></i> Reports & Analytics
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.inventory_report') }}" class="text-decoration-none">
+                            <div class="card h-100 text-center report-card">
+                                <div class="card-body">
+                                    <i class="fas fa-car fa-3x mb-3 text-secondary"></i>
+                                    <h5 class="card-title">Inventory Report</h5>
+                                    <p class="card-text text-muted">Analyze vehicle inventory status, age, and distribution</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.leads_report') }}" class="text-decoration-none">
+                            <div class="card h-100 text-center report-card">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Leads Report</h5>
+                                    <p class="card-text text-muted">Track lead sources, status distribution, and trends</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.sales_report') }}" class="text-decoration-none">
+                            <div class="card h-100 text-center report-card">
+                                <div class="card-body">
+                                    <i class="fas fa-dollar-sign fa-3x mb-3 text-success"></i>
+                                    <h5 class="card-title">Sales Report</h5>
+                                    <p class="card-text text-muted">Monitor sales performance, revenue, and trends</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('reports.performance_report') }}" class="text-decoration-none">
+                            <div class="card h-100 text-center report-card">
+                                <div class="card-body">
+                                    <i class="fas fa-user-tie fa-3x mb-3 text-info"></i>
+                                    <h5 class="card-title">Staff Performance</h5>
+                                    <p class="card-text text-muted">Evaluate staff productivity and conversion rates</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Today's Appointments
+            </div>
+            <div class="card-body">
+                {% if today_appointments %}
+                <div class="list-group">
+                    {% for appointment in today_appointments %}
+                    <a href="{{ url_for('appointments.view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</h5>
+                            <p class="mb-1"><i class="far fa-clock me-1"></i> {{ appointment.time.strftime('%I:%M %p') }}</p>
+                            {% if appointment.vehicle_interest %}
+                            <small><i class="fas fa-car me-1"></i> {{ appointment.vehicle_interest }}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-{{ appointment.status|lower }} rounded-pill">{{ appointment.status }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No appointments scheduled for today.
+                </div>
+                {% endif %}
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('appointments.today_appointments') }}" class="btn btn-outline-primary">View All Today's Appointments</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-user-clock me-2"></i> Recent Leads
+            </div>
+            <div class="card-body">
+                {% if recent_leads %}
+                <div class="list-group">
+                    {% for lead in recent_leads %}
+                    <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h5>
+                            <p class="mb-1">
+                                {% if lead.phone %}
+                                <i class="fas fa-phone me-1"></i> {{ lead.phone }}
+                                {% endif %}
+                                {% if lead.email %}
+                                <i class="fas fa-envelope ms-2 me-1"></i> {{ lead.email }}
+                                {% endif %}
+                            </p>
+                            {% if lead.vehicle_interests %}
+                            <small><i class="fas fa-car me-1"></i> 
+                                {% for interest in lead.vehicle_interests[:1] %}
+                                {{ interest.make }} {{ interest.model }}
+                                {% endfor %}
+                                {% if lead.vehicle_interests|length > 1 %}
+                                and {{ lead.vehicle_interests|length - 1 }} more
+                                {% endif %}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-{{ lead.status|lower }} rounded-pill">{{ lead.status }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No recent leads available.
+                </div>
+                {% endif %}
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('leads.list_leads') }}" class="btn btn-outline-success">View All Leads</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-tasks me-2"></i> Tasks & Followups
+            </div>
+            <div class="card-body">
+                {% if follow_ups %}
+                <div class="list-group">
+                    {% for follow_up in follow_ups %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ follow_up.lead.first_name }} {{ follow_up.lead.last_name }}</h5>
+                            <small>{{ follow_up.follow_up_date.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <p class="mb-1">{{ follow_up.notes }}</p>
+                        <div class="btn-group mt-2" role="group">
+                            <a href="{{ url_for('leads.view_lead', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">View Lead</a>
+                            <a href="{{ url_for('communications.send_email', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">Send Email</a>
+                            <a href="{{ url_for('communications.send_sms', lead_id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-primary">Send SMS</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No follow-ups scheduled for today.
+                </div>
+                {% endif %}
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('leads.follow_ups') }}" class="btn btn-outline-warning">View All Follow-ups</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chart-line me-2"></i> Performance Summary
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted">Conversion Rate</h6>
+                                <h2 class="display-4">{{ stats.conversion_rate }}%</h2>
+                                <p class="card-text small">Leads to Appointments</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted">Response Time</h6>
+                                <h2 class="display-4">{{ stats.avg_response_time }}</h2>
+                                <p class="card-text small">Average (hours)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Lead Status Breakdown</h5>
+                        <div class="progress" style="height: 30px;">
+                            {% for status, percent in stats.lead_status_breakdown.items() %}
+                            <div class="progress-bar bg-{{ status|lower }}" role="progressbar" 
+                                 style="width: {{ percent }}%" 
+                                 aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ status }} ({{ percent }}%)
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-car-side me-2"></i> Recent Inventory Additions
+            </div>
+            <div class="card-body">
+                {% if recent_vehicles %}
+                <div class="list-group">
+                    {% for car in recent_vehicles %}
+                    <a href="{{ url_for('inventory.view_car', car_id=car.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ car.year }} {{ car.make }} {{ car.model }}</h5>
+                            <p class="mb-1">
+                                <i class="fas fa-tag me-1"></i> ${{ "{:,.2f}".format(car.price) }}
+                                <i class="fas fa-tachometer-alt ms-2 me-1"></i> {{ "{:,}".format(car.mileage) }} miles
+                            </p>
+                            <small><i class="fas fa-calendar-alt me-1"></i> Added {{ car.created_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'success' if car.status == 'Available' else 'warning' if car.status == 'On Hold' else 'danger' }} rounded-pill">{{ car.status }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i> No recent inventory additions.
+                </div>
+                {% endif %}
+                <div class="d-grid mt-3">
+                    <a href="{{ url_for('inventory.list_cars') }}" class="btn btn-outline-secondary">View All Inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card dashboard-card">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-chart-pie me-2"></i> Inventory Overview
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted">New Vehicles</h6>
+                                <h2 class="display-4">{{ stats.new_vehicles }}</h2>
+                                <p class="card-text small">{{ (stats.new_vehicles / stats.total_vehicles * 100)|round|int if stats.total_vehicles else 0 }}% of Inventory</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted">Used Vehicles</h6>
+                                <h2 class="display-4">{{ stats.used_vehicles }}</h2>
+                                <p class="card-text small">{{ (stats.used_vehicles / stats.total_vehicles * 100)|round|int if stats.total_vehicles else 0 }}% of Inventory</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="card-title">Popular Makes</h5>
+                {% if popular_makes %}
+                <div class="list-group">
+                    {% for make, count in popular_makes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ make }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ count }} leads interested</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No vehicle interest data available.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card dashboard-card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-calendar-week me-2"></i> This Week's Appointments
+            </div>
+            <div class="card-body">
+                <div id="appointmentCalendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('appointmentCalendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'timeGridWeek,timeGridDay'
+            },
+            events: [
+                // This would be populated with actual appointment data
+                // For now, we'll leave it empty
+            ]
+        });
+        calendar.render();
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+<style>
+    .stat-card {
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .stat-label {
+        font-size: 1rem;
+        text-transform: uppercase;
+    }
+    .dashboard-card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    #appointmentCalendar {
+        height: 500px;
+    }
+    .report-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        border-color: #007bff;
+    }
+</style>
+{% endblock %}

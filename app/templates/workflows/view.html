@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ workflow.name }} - Workflow Details - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3 mb-0 text-gray-800">Workflow Details</h1>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="{{ url_for('workflows') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Workflows
+        </a>
+        <a href="{{ url_for('edit_workflow', workflow_id=workflow.id) }}" class="btn btn-primary btn-sm ml-2">
+            <i class="fas fa-edit"></i> Edit Workflow
+        </a>
+        <a href="{{ url_for('apply_workflow') }}?workflow_id={{ workflow.id }}" class="btn btn-success btn-sm ml-2">
+            <i class="fas fa-play"></i> Apply to Leads
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Workflow Information</h6>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ workflow.name }}</h5>
+                <p class="card-text">{{ workflow.description }}</p>
+                
+                <div class="mb-3">
+                    <strong>Trigger Status:</strong>
+                    <span class="badge bg-{{ workflow.trigger_status|lower }} ml-2">{{ workflow.trigger_status }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Created:</strong>
+                    <span class="ml-2">{{ workflow.created_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Last Updated:</strong>
+                    <span class="ml-2">{{ workflow.updated_at.strftime('%Y-%m-%d') }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Total Steps:</strong>
+                    <span class="ml-2">{{ workflow.steps|length }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Active Leads:</strong>
+                    <span class="ml-2">{{ active_leads_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Workflow Details</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Name</dt>
+                    <dd class="col-sm-8">{{ workflow.name }}</dd>
+                    
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8">{{ workflow.description }}</dd>
+                    
+                    <dt class="col-sm-4">Trigger Status</dt>
+                    <dd class="col-sm-8">
+                        {% if workflow.trigger_status %}
+                            <span class="badge bg-info">{{ workflow.trigger_status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">None</span>
+                        {% endif %}
+                    </dd>
+                    
+                    <dt class="col-sm-4">Auto Apply</dt>
+                    <dd class="col-sm-8">
+                        {% if workflow.auto_apply %}
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Yes</span>
+                            <small class="text-muted d-block mt-1">This workflow will be automatically applied to leads when they reach the trigger status.</small>
+                        {% else %}
+                            <span class="badge bg-secondary">No</span>
+                        {% endif %}
+                    </dd>
+                    
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">{{ workflow.created_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    
+                    <dt class="col-sm-4">Last Updated</dt>
+                    <dd class="col-sm-8">{{ workflow.updated_at.strftime('%Y-%m-%d %H:%M') }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Workflow Steps</h6>
+            </div>
+            <div class="card-body">
+                <div class="workflow-steps-timeline">
+                    {% for step in workflow.steps|sort(attribute='step_order') %}
+                    <div class="workflow-step-item">
+                        <div class="timeline-marker">
+                            <div class="step-number">{{ step.step_order + 1 }}</div>
+                            <div class="step-line" {% if loop.last %}style="display: none;"{% endif %}></div>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-primary me-2">{{ step.step_type }}</span>
+                                        {% if step.delay_days > 0 %}
+                                        <span class="badge bg-secondary">Day {{ step.delay_days }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Immediate</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {% if step.step_type in ['Email', 'Task'] and step.subject %}
+                                    <h6 class="card-subtitle mb-2 text-muted">{{ step.subject }}</h6>
+                                    {% endif %}
+                                    
+                                    {% if step.template_id %}
+                                    <div class="mb-2">
+                                        <strong>Template:</strong>
+                                        {% if step.step_type == 'Email' %}
+                                            {% for template in email_templates %}
+                                                {% if template.id == step.template_id %}
+                                                    {{ template.name }}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% elif step.step_type == 'SMS' %}
+                                            {% for template in sms_templates %}
+                                                {% if template.id == step.template_id %}
+                                                    {{ template.name }}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <p class="card-text">{{ step.content }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Active Leads in This Workflow</h6>
+                <div>
+                    <a href="{{ url_for('apply_workflow') }}?workflow_id={{ workflow.id }}" class="btn btn-sm btn-success">
+                        <i class="fas fa-plus"></i> Add Leads to Workflow
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if active_leads %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Lead</th>
+                                <th>Current Step</th>
+                                <th>Next Action</th>
+                                <th>Started</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead_workflow in active_leads %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('view_lead', lead_id=lead_workflow.lead.id) }}">
+                                        {{ lead_workflow.lead.first_name }} {{ lead_workflow.lead.last_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% set current_step = lead_workflow.current_step %}
+                                    {% if current_step %}
+                                        Step {{ current_step.workflow_step.step_order + 1 }}: {{ current_step.workflow_step.step_type }}
+                                    {% else %}
+                                        Not started
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lead_workflow.next_step_date %}
+                                        {{ lead_workflow.next_step_date.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        Complete
+                                    {% endif %}
+                                </td>
+                                <td>{{ lead_workflow.start_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <span class="badge badge-{{ status_badges[lead_workflow.status] }}">
+                                        {{ lead_workflow.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('view_lead_workflow', lead_workflow_id=lead_workflow.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    
+                                    {% if lead_workflow.status == 'active' %}
+                                    <a href="{{ url_for('pause_lead_workflow', id=lead_workflow.id) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-pause"></i> Pause
+                                    </a>
+                                    {% elif lead_workflow.status == 'paused' %}
+                                    <a href="{{ url_for('resume_lead_workflow', id=lead_workflow.id) }}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-play"></i> Resume
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if lead_workflow.status in ['active', 'paused'] %}
+                                    <a href="{{ url_for('cancel_lead_workflow', id=lead_workflow.id) }}" class="btn btn-sm btn-danger" 
+                                       onclick="return confirm('Are you sure you want to cancel this workflow?');">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-users fa-4x text-muted"></i>
+                    </div>
+                    <h5 class="text-muted">No active leads in this workflow</h5>
+                    <p class="text-muted">Apply this workflow to leads to start nurturing them automatically.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Workflow Action Confirmation Modal -->
+<div class="modal fade" id="workflowActionModal" tabindex="-1" aria-labelledby="workflowActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="workflowActionModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="workflow-action-message">
+                Are you sure you want to perform this action?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirm-workflow-action" class="btn btn-primary">Confirm</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .workflow-steps-timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .workflow-step-item {
+        display: flex;
+        margin-bottom: 30px;
+    }
+    
+    .timeline-marker {
+        position: relative;
+        width: 60px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .step-number {
+        width: 36px;
+        height: 36px;
+        background-color: #4e73df;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        z-index: 2;
+    }
+    
+    .step-line {
+        position: absolute;
+        top: 36px;
+        width: 2px;
+        height: calc(100% + 30px);
+        background-color: #e3e6f0;
+        z-index: 1;
+    }
+    
+    .timeline-content {
+        flex-grow: 1;
+        padding-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const actionModal = new bootstrap.Modal(document.getElementById('workflowActionModal'));
+        const actionMessage = document.getElementById('workflow-action-message');
+        const confirmButton = document.getElementById('confirm-workflow-action');
+        
+        // Pause workflow
+        document.querySelectorAll('.pause-workflow').forEach(button => {
+            button.addEventListener('click', function() {
+                const leadWorkflowId = this.getAttribute('data-lead-workflow-id');
+                actionMessage.textContent = 'Are you sure you want to pause this workflow? No actions will be executed until resumed.';
+                confirmButton.href = "{{ url_for('pause_lead_workflow') }}?id=" + leadWorkflowId;
+                confirmButton.className = 'btn btn-warning';
+                actionModal.show();
+            });
+        });
+        
+        // Resume workflow
+        document.querySelectorAll('.resume-workflow').forEach(button => {
+            button.addEventListener('click', function() {
+                const leadWorkflowId = this.getAttribute('data-lead-workflow-id');
+                actionMessage.textContent = 'Are you sure you want to resume this workflow? Actions will continue to be executed according to schedule.';
+                confirmButton.href = "{{ url_for('resume_lead_workflow') }}?id=" + leadWorkflowId;
+                confirmButton.className = 'btn btn-success';
+                actionModal.show();
+            });
+        });
+        
+        // Cancel workflow
+        document.querySelectorAll('.cancel-workflow').forEach(button => {
+            button.addEventListener('click', function() {
+                const leadWorkflowId = this.getAttribute('data-lead-workflow-id');
+                actionMessage.textContent = 'Are you sure you want to cancel this workflow? This action cannot be undone and all pending steps will be cancelled.';
+                confirmButton.href = "{{ url_for('cancel_lead_workflow') }}?id=" + leadWorkflowId;
+                confirmButton.className = 'btn btn-danger';
+                actionModal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

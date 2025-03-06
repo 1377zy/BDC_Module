@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if segment %}Edit Segment: {{ segment.name }}{% else %}Create New Segment{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">
+        {% if segment %}Edit Segment: {{ segment.name }}{% else %}Create New Segment{% endif %}
+    </h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('leads') }}">Leads</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('lead_segmentation') }}">Segmentation</a></li>
+        <li class="breadcrumb-item active">
+            {% if segment %}Edit Segment{% else %}Create Segment{% endif %}
+        </li>
+    </ol>
+    
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-layer-group me-1"></i>
+                    {% if segment %}Edit Segment Details{% else %}Segment Details{% endif %}
+                </div>
+                <div class="card-body">
+                    <form id="segmentForm" action="{{ url_for('save_segment', segment_id=segment.id if segment else 'new') }}" method="post">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="segmentName" class="form-label">Segment Name</label>
+                                <input type="text" class="form-control" id="segmentName" name="name" value="{{ segment.name if segment else '' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="segmentType" class="form-label">Segment Type</label>
+                                <select class="form-select" id="segmentType" name="segment_type" {% if segment %}disabled{% endif %}>
+                                    <option value="interest" {% if segment_type == 'interest' %}selected{% endif %}>Interest-Based</option>
+                                    <option value="budget" {% if segment_type == 'budget' %}selected{% endif %}>Budget-Based</option>
+                                    <option value="timeline" {% if segment_type == 'timeline' %}selected{% endif %}>Timeline-Based</option>
+                                    <option value="custom" {% if segment_type == 'custom' %}selected{% endif %}>Custom</option>
+                                </select>
+                                {% if segment %}
+                                <input type="hidden" name="segment_type" value="{{ segment_type }}">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="segmentDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="segmentDescription" name="description" rows="3">{{ segment.description if segment else '' }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isDynamic" name="is_dynamic" value="1" {% if not segment or segment.is_dynamic %}checked{% endif %}>
+                                <label class="form-check-label" for="isDynamic">
+                                    Dynamic Segment (automatically updates based on criteria)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h4>Segment Criteria</h4>
+                        <p class="text-muted">Define the criteria for this segment. Leads that match these criteria will be included in the segment.</p>
+                        
+                        <div id="criteriaContainer">
+                            {% if criteria %}
+                                {% for criterion in criteria %}
+                                <div class="criterion-row row mb-3">
+                                    <div class="col-md-4">
+                                        <select class="form-select criterion-field" name="criteria[{{ loop.index0 }}][field]" required>
+                                            {% include "leads/segment_field_options.html" with context %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select criterion-operator" name="criteria[{{ loop.index0 }}][operator]" required>
+                                            <option value="equals" {% if criterion.operator == 'equals' %}selected{% endif %}>Equals</option>
+                                            <option value="not_equals" {% if criterion.operator == 'not_equals' %}selected{% endif %}>Does Not Equal</option>
+                                            <option value="contains" {% if criterion.operator == 'contains' %}selected{% endif %}>Contains</option>
+                                            <option value="starts_with" {% if criterion.operator == 'starts_with' %}selected{% endif %}>Starts With</option>
+                                            <option value="ends_with" {% if criterion.operator == 'ends_with' %}selected{% endif %}>Ends With</option>
+                                            <option value="greater_than" {% if criterion.operator == 'greater_than' %}selected{% endif %}>Greater Than</option>
+                                            <option value="less_than" {% if criterion.operator == 'less_than' %}selected{% endif %}>Less Than</option>
+                                            <option value="between" {% if criterion.operator == 'between' %}selected{% endif %}>Between</option>
+                                            <option value="in_list" {% if criterion.operator == 'in_list' %}selected{% endif %}>In List</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control criterion-value" name="criteria[{{ loop.index0 }}][value]" value="{{ criterion.value }}" required>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-danger remove-criterion"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="criterion-row row mb-3">
+                                    <div class="col-md-4">
+                                        <select class="form-select criterion-field" name="criteria[0][field]" required>
+                                            {% include "leads/segment_field_options.html" with context %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select criterion-operator" name="criteria[0][operator]" required>
+                                            <option value="equals">Equals</option>
+                                            <option value="not_equals">Does Not Equal</option>
+                                            <option value="contains">Contains</option>
+                                            <option value="starts_with">Starts With</option>
+                                            <option value="ends_with">Ends With</option>
+                                            <option value="greater_than">Greater Than</option>
+                                            <option value="less_than">Less Than</option>
+                                            <option value="between">Between</option>
+                                            <option value="in_list">In List</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control criterion-value" name="criteria[0][value]" required>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <button type="button" class="btn btn-danger remove-criterion"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" id="addCriterion" class="btn btn-outline-primary">
+                                <i class="fas fa-plus"></i> Add Criterion
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Criteria Logic</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="criteria_logic" id="logicAnd" value="and" {% if not criteria_logic or criteria_logic == 'and' %}checked{% endif %}>
+                                <label class="form-check-label" for="logicAnd">
+                                    Match ALL criteria (AND)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="criteria_logic" id="logicOr" value="or" {% if criteria_logic == 'or' %}checked{% endif %}>
+                                <label class="form-check-label" for="logicOr">
+                                    Match ANY criteria (OR)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('lead_segmentation') }}" class="btn btn-secondary">Cancel</a>
+                            <div>
+                                {% if segment %}
+                                <button type="button" id="previewSegment" class="btn btn-info me-2">Preview Segment</button>
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary">Save Segment</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if segment %}
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-users me-1"></i>
+                        Leads in Segment
+                    </div>
+                    <div>
+                        <button type="button" id="refreshSegmentLeads" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                        <a href="{{ url_for('export_segment_leads', segment_id=segment.id) }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-file-export"></i> Export
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="segmentLeadsContainer">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading segment leads...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Preview Segment Modal -->
+<div class="modal fade" id="previewSegmentModal" tabindex="-1" aria-labelledby="previewSegmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewSegmentModalLabel">Segment Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewLeadsContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating preview...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize select2 for better dropdown experience
+        $('.criterion-field').select2({
+            placeholder: "Select a field",
+            width: '100%'
+        });
+        
+        // Handle adding new criteria
+        $('#addCriterion').click(function() {
+            var criteriaCount = $('.criterion-row').length;
+            var newCriterion = `
+                <div class="criterion-row row mb-3">
+                    <div class="col-md-4">
+                        <select class="form-select criterion-field" name="criteria[${criteriaCount}][field]" required>
+                            {% include "leads/segment_field_options.html" with context %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select criterion-operator" name="criteria[${criteriaCount}][operator]" required>
+                            <option value="equals">Equals</option>
+                            <option value="not_equals">Does Not Equal</option>
+                            <option value="contains">Contains</option>
+                            <option value="starts_with">Starts With</option>
+                            <option value="ends_with">Ends With</option>
+                            <option value="greater_than">Greater Than</option>
+                            <option value="less_than">Less Than</option>
+                            <option value="between">Between</option>
+                            <option value="in_list">In List</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control criterion-value" name="criteria[${criteriaCount}][value]" required>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-danger remove-criterion"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            `;
+            $('#criteriaContainer').append(newCriterion);
+            
+            // Initialize select2 for the new dropdown
+            $('.criterion-field').last().select2({
+                placeholder: "Select a field",
+                width: '100%'
+            });
+        });
+        
+        // Handle removing criteria
+        $(document).on('click', '.remove-criterion', function() {
+            if ($('.criterion-row').length > 1) {
+                $(this).closest('.criterion-row').remove();
+                
+                // Renumber the remaining criteria
+                $('.criterion-row').each(function(index) {
+                    $(this).find('.criterion-field').attr('name', `criteria[${index}][field]`);
+                    $(this).find('.criterion-operator').attr('name', `criteria[${index}][operator]`);
+                    $(this).find('.criterion-value').attr('name', `criteria[${index}][value]`);
+                });
+            } else {
+                alert('You must have at least one criterion.');
+            }
+        });
+        
+        // Handle segment type change
+        $('#segmentType').change(function() {
+            var segmentType = $(this).val();
+            
+            // Clear existing criteria
+            if (confirm('Changing segment type will clear your current criteria. Continue?')) {
+                $('#criteriaContainer').empty();
+                
+                // Add a new empty criterion
+                $('#addCriterion').click();
+            } else {
+                // Revert to previous selection
+                $(this).val('{{ segment_type }}');
+            }
+        });
+        
+        {% if segment %}
+        // Load segment leads on page load
+        loadSegmentLeads();
+        
+        // Refresh segment leads
+        $('#refreshSegmentLeads').click(function() {
+            loadSegmentLeads();
+        });
+        
+        // Preview segment with current criteria
+        $('#previewSegment').click(function() {
+            var formData = $('#segmentForm').serialize();
+            
+            $('#previewSegmentModal').modal('show');
+            
+            $.ajax({
+                url: "{{ url_for('preview_segment', segment_id=segment.id) }}",
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    $('#previewLeadsContainer').html(response);
+                },
+                error: function() {
+                    $('#previewLeadsContainer').html('<div class="alert alert-danger">Error generating preview. Please try again.</div>');
+                }
+            });
+        });
+        
+        function loadSegmentLeads() {
+            $('#segmentLeadsContainer').html(`
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading segment leads...</p>
+                </div>
+            `);
+            
+            $.ajax({
+                url: "{{ url_for('get_segment_leads', segment_id=segment.id) }}",
+                type: 'GET',
+                success: function(response) {
+                    $('#segmentLeadsContainer').html(response);
+                },
+                error: function() {
+                    $('#segmentLeadsContainer').html('<div class="alert alert-danger">Error loading segment leads. Please try again.</div>');
+                }
+            });
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}

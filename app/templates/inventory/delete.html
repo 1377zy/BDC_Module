@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h3 class="panel-title">Confirm Delete</h3>
+            </div>
+            <div class="panel-body">
+                <p>Are you sure you want to remove this vehicle from inventory? This action cannot be undone.</p>
+                
+                <div class="well">
+                    <h4>{{ inventory.year }} {{ inventory.make }} {{ inventory.model }} {{ inventory.trim }}</h4>
+                    <p><strong>Stock Number:</strong> {{ inventory.stock_number }}</p>
+                    <p><strong>Color:</strong> {{ inventory.color_exterior }}</p>
+                    <p><strong>Status:</strong> {{ inventory.status }}</p>
+                </div>
+                
+                <form action="{{ url_for('inventory.delete_inventory', inventory_id=inventory.id) }}" method="post">
+                    <div class="form-group text-center">
+                        <a href="{{ url_for('inventory.view_inventory', inventory_id=inventory.id) }}" class="btn btn-default">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Vehicle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sales Report</title>
+</head>
+<body>
+    <div class="header">
+        <div class="row">
+            <div class="col">
+                <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" class="logo" alt="Dealership Logo">
+            </div>
+            <div class="col-2 text-center">
+                <h1 class="report-title">Sales Report</h1>
+                <p class="report-subtitle">{{ dealership_name }}</p>
+            </div>
+            <div class="col text-right">
+                <p class="report-metadata">
+                    Generated: {{ report_generated_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    Date Range: {{ start_date.strftime('%Y-%m-%d') }} to {{ end_date.strftime('%Y-%m-%d') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Page <span class="page"></span> of <span class="topage"></span> | Auto Dealership BDC Module | Confidential</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Sales Summary</h2>
+        
+        <div class="row">
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Key Metrics</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Sales:</span>
+                        <span class="summary-value">{{ total_sales }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Revenue:</span>
+                        <span class="summary-value">${{ total_revenue|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average Sale Price:</span>
+                        <span class="summary-value">${{ avg_sale_price|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average Sales per Day:</span>
+                        <span class="summary-value">{{ avg_sales_per_day|round(1) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Lead to Sale Conversion:</span>
+                        <span class="summary-value">{{ lead_to_sale_conversion|round(1) }}%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Sales Breakdown</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">New Vehicles:</span>
+                        <span class="summary-value">{{ new_vehicle_sales }} ({{ new_vehicle_percentage|round(1) }}%)</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Used Vehicles:</span>
+                        <span class="summary-value">{{ used_vehicle_sales }} ({{ used_vehicle_percentage|round(1) }}%)</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">New Vehicle Revenue:</span>
+                        <span class="summary-value">${{ new_vehicle_revenue|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Used Vehicle Revenue:</span>
+                        <span class="summary-value">${{ used_vehicle_revenue|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Finance & Insurance Revenue:</span>
+                        <span class="summary-value">${{ fi_revenue|round(2) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if chart_images %}
+    <div class="section">
+        <h2 class="section-title">Sales Analysis</h2>
+        
+        <div class="row">
+            {% if chart_images.make_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">Sales by Make</h3>
+                    <img src="{{ chart_images.make_chart }}" class="chart-image" alt="Sales by Make Chart">
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if chart_images.new_used_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">New vs Used Sales</h3>
+                    <img src="{{ chart_images.new_used_chart }}" class="chart-image" alt="New vs Used Sales Chart">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if chart_images.daily_chart %}
+        <div class="chart-container mt-3">
+            <h3 class="chart-title">Daily Sales Trend</h3>
+            <img src="{{ chart_images.daily_chart }}" class="chart-image" alt="Daily Sales Trend Chart">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="section page-break">
+        <h2 class="section-title">Sales by Make</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Make</th>
+                    <th>Units Sold</th>
+                    <th>Percentage</th>
+                    <th>Revenue</th>
+                    <th>Avg. Sale Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for make in sales_by_make_details %}
+                <tr>
+                    <td>{{ make.name }}</td>
+                    <td>{{ make.count }}</td>
+                    <td>{{ make.percentage|round(1) }}%</td>
+                    <td>${{ make.revenue|round(2) }}</td>
+                    <td>${{ make.avg_price|round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Recent Sales</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Vehicle</th>
+                    <th>VIN</th>
+                    <th>Sale Price</th>
+                    <th>Salesperson</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in recent_sales %}
+                <tr>
+                    <td>{{ sale.date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ sale.customer_name }}</td>
+                    <td>{{ sale.vehicle_year }} {{ sale.vehicle_make }} {{ sale.vehicle_model }}</td>
+                    <td>{{ sale.vin }}</td>
+                    <td>${{ sale.sale_price|round(2) }}</td>
+                    <td>{{ sale.salesperson }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section page-break">
+        <h2 class="section-title">Price Range Analysis</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Price Range</th>
+                    <th>Units Sold</th>
+                    <th>Percentage</th>
+                    <th>Total Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for range in price_range_analysis %}
+                <tr>
+                    <td>{{ range.range }}</td>
+                    <td>{{ range.count }}</td>
+                    <td>{{ range.percentage|round(1) }}%</td>
+                    <td>${{ range.revenue|round(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Recommendations</h2>
+        
+        <div class="summary-box">
+            <h3 class="summary-title">Sales Optimization</h3>
+            <ul>
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

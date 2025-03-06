@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+
+{% block title %}Task Report{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .report-header {
+        margin-bottom: 30px;
+    }
+    .report-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .report-subtitle {
+        font-size: 16px;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+    .report-date {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .report-section {
+        margin-bottom: 30px;
+    }
+    .report-section-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .task-status-badge {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    .task-priority-high {
+        color: #dc3545;
+    }
+    .task-priority-medium {
+        color: #fd7e14;
+    }
+    .task-priority-low {
+        color: #28a745;
+    }
+    .summary-card {
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .summary-card .number {
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .summary-card .label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+    .summary-card.open {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+    .summary-card.completed {
+        background-color: #f8f9fa;
+        border-left: 4px solid #28a745;
+    }
+    .summary-card.overdue {
+        background-color: #f8f9fa;
+        border-left: 4px solid #dc3545;
+    }
+    .summary-card.high-priority {
+        background-color: #f8f9fa;
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                    <li class="breadcrumb-item active">Task Report</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="report-header">
+                <h1 class="report-title">Task Management Report</h1>
+                <p class="report-subtitle">Overview of all tasks and their statuses</p>
+                <p class="report-date">Generated on: {{ now.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary" id="exportPDF">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="exportCSV">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="printReport">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Filters -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Report Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reportFilters" method="GET" action="{{ url_for('reports.task_report') }}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label for="date_range">Date Range</label>
+                                    <select class="form-control" id="date_range" name="date_range">
+                                        <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+                                        <option value="this_week" {% if date_range == 'this_week' %}selected{% endif %}>This Week</option>
+                                        <option value="this_month" {% if date_range == 'this_month' %}selected{% endif %}>This Month</option>
+                                        <option value="last_30_days" {% if date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                                        <option value="last_90_days" {% if date_range == 'last_90_days' %}selected{% endif %}>Last 90 Days</option>
+                                        <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 {% if date_range != 'custom' %}d-none{% endif %}" id="customDateFields">
+                                <div class="form-group mb-3">
+                                    <label for="start_date">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3 {% if date_range != 'custom' %}d-none{% endif %}" id="customDateFields2">
+                                <div class="form-group mb-3">
+                                    <label for="end_date">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label for="user_id">Assigned To</label>
+                                    <select class="form-control" id="user_id" name="user_id">
+                                        <option value="">All Users</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}" {% if user_id == user.id|string %}selected{% endif %}>{{ user.get_full_name() }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label for="status">Status</label>
+                                    <select class="form-control" id="status" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option value="open" {% if status == 'open' %}selected{% endif %}>Open</option>
+                                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label for="priority">Priority</label>
+                                    <select class="form-control" id="priority" name="priority">
+                                        <option value="">All Priorities</option>
+                                        <option value="high" {% if priority == 'high' %}selected{% endif %}>High</option>
+                                        <option value="medium" {% if priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="low" {% if priority == 'low' %}selected{% endif %}>Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="summary-card open">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="number">{{ open_tasks_count }}</div>
+                        <div class="label">Open Tasks</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-tasks fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card completed">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="number">{{ completed_tasks_count }}</div>
+                        <div class="label">Completed Tasks</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card overdue">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="number">{{ overdue_tasks_count }}</div>
+                        <div class="label">Overdue Tasks</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card high-priority">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="number">{{ high_priority_tasks_count }}</div>
+                        <div class="label">High Priority Tasks</div>
+                    </div>
+                    <div>
+                        <i class="fas fa-flag fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Tasks by Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Tasks by Priority</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskPriorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Tasks by User</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskByUserChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Task List -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Task List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Assigned To</th>
+                                    <th>Priority</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Related To</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                <tr>
+                                    <td>{{ task.title }}</td>
+                                    <td>{{ task.assigned_to.get_full_name() }}</td>
+                                    <td>
+                                        {% if task.priority == 'high' %}
+                                        <span class="task-priority-high"><i class="fas fa-exclamation-circle"></i> High</span>
+                                        {% elif task.priority == 'medium' %}
+                                        <span class="task-priority-medium"><i class="fas fa-dot-circle"></i> Medium</span>
+                                        {% else %}
+                                        <span class="task-priority-low"><i class="fas fa-circle"></i> Low</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.due_date %}
+                                        {{ task.due_date.strftime('%Y-%m-%d') }}
+                                        {% if task.due_date < now.date() and task.status != 'completed' %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                        {% else %}
+                                        No due date
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.status == 'completed' %}
+                                        <span class="badge bg-success task-status-badge">Completed</span>
+                                        {% else %}
+                                        <span class="badge bg-primary task-status-badge">Open</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.related_entity_type == 'lead' and task.related_entity_id %}
+                                        {% set lead = get_lead(task.related_entity_id) %}
+                                        {% if lead %}
+                                        <a href="{{ url_for('leads.view', lead_id=lead.id) }}">{{ lead.get_full_name() }}</a>
+                                        {% else %}
+                                        Unknown Lead
+                                        {% endif %}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ task.created_at.strftime('%Y-%m-%d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Show/hide custom date fields based on date range selection
+        $('#date_range').change(function() {
+            if ($(this).val() === 'custom') {
+                $('#customDateFields, #customDateFields2').removeClass('d-none');
+            } else {
+                $('#customDateFields, #customDateFields2').addClass('d-none');
+            }
+        });
+        
+        // Task Status Chart
+        const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Open', 'Completed'],
+                datasets: [{
+                    data: [{{ open_tasks_count }}, {{ completed_tasks_count }}],
+                    backgroundColor: ['#007bff', '#28a745'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Task Priority Chart
+        const priorityCtx = document.getElementById('taskPriorityChart').getContext('2d');
+        const priorityChart = new Chart(priorityCtx, {
+            type: 'pie',
+            data: {
+                labels: ['High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [{{ high_priority_tasks_count }}, {{ medium_priority_tasks_count }}, {{ low_priority_tasks_count }}],
+                    backgroundColor: ['#dc3545', '#fd7e14', '#28a745'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Tasks by User Chart
+        const userCtx = document.getElementById('taskByUserChart').getContext('2d');
+        const userChart = new Chart(userCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ user_labels|tojson }},
+                datasets: [
+                    {
+                        label: 'Open Tasks',
+                        data: {{ user_open_tasks|tojson }},
+                        backgroundColor: '#007bff',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Completed Tasks',
+                        data: {{ user_completed_tasks|tojson }},
+                        backgroundColor: '#28a745',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Tasks'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'User'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+        
+        // Export PDF
+        $('#exportPDF').click(function() {
+            window.location.href = "{{ url_for('reports.task_report_pdf') }}?" + $('#reportFilters').serialize();
+        });
+        
+        // Export CSV
+        $('#exportCSV').click(function() {
+            window.location.href = "{{ url_for('reports.task_report_csv') }}?" + $('#reportFilters').serialize();
+        });
+        
+        // Print Report
+        $('#printReport').click(function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %}

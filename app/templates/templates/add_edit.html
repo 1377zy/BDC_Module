@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if template %}Edit Template{% else %}Add Template{% endif %} - Auto Dealership BDC
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-file-alt"></i> 
+            {% if template %}Edit Template{% else %}Create New Template{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{% if template %}/templates/edit/{{ template.id }}{% else %}/templates/add{% endif %}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Template Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ template.name if template else '' }}" required>
+                        <div class="form-text">Give your template a descriptive name</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Template Type</label>
+                        <select class="form-select" id="type" name="type" required {% if template %}disabled{% endif %}>
+                            <option value="">Select a type...</option>
+                            <option value="Email" {% if template and template.type == 'Email' %}selected{% endif %}>Email</option>
+                            <option value="SMS" {% if template and template.type == 'SMS' %}selected{% endif %}>SMS</option>
+                        </select>
+                        {% if template %}
+                        <input type="hidden" name="type" value="{{ template.type }}">
+                        {% endif %}
+                    </div>
+                    
+                    <div id="emailFields" class="{% if not template or template.type != 'Email' %}d-none{% endif %}">
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Email Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" value="{{ template.subject if template and template.type == 'Email' else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Template Content</label>
+                        <textarea class="form-control" id="content" name="content" rows="10" required>{{ template.content if template else '' }}</textarea>
+                        <div class="form-text">
+                            You can use the following placeholders in your template:
+                            <ul class="mt-2">
+                                <li><code>{lead_first_name}</code> - Lead's first name</li>
+                                <li><code>{lead_last_name}</code> - Lead's last name</li>
+                                <li><code>{lead_full_name}</code> - Lead's full name</li>
+                                <li><code>{dealership_name}</code> - Dealership name</li>
+                                <li><code>{salesperson_name}</code> - Your name</li>
+                                <li><code>{salesperson_phone}</code> - Your phone number</li>
+                                <li><code>{salesperson_email}</code> - Your email address</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div id="smsCounter" class="mb-3 {% if not template or template.type != 'SMS' %}d-none{% endif %}">
+                        <div class="alert alert-info">
+                            <span id="charCount">0</span>/160 characters
+                            <span id="segmentCount">(1 segment)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/templates" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if template %}Update Template{% else %}Save Template{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-lightbulb"></i> Template Tips
+            </div>
+            <div class="card-body">
+                <h5>Email Templates</h5>
+                <ul>
+                    <li>Keep subject lines short and specific</li>
+                    <li>Personalize with the lead's name</li>
+                    <li>Include a clear call-to-action</li>
+                    <li>Keep emails concise and professional</li>
+                    <li>Always include your contact information</li>
+                </ul>
+                
+                <h5>SMS Templates</h5>
+                <ul>
+                    <li>Keep messages under 160 characters when possible</li>
+                    <li>Be direct and clear about your purpose</li>
+                    <li>Include your name and dealership</li>
+                    <li>Avoid abbreviations that may be confusing</li>
+                    <li>Include a way for customers to opt out</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-eye"></i> Template Preview
+            </div>
+            <div class="card-body">
+                <div id="templatePreview">
+                    <div id="emailPreview" class="{% if not template or template.type != 'Email' %}d-none{% endif %}">
+                        <div class="mb-2"><strong>Subject:</strong> <span id="previewSubject">{{ template.subject if template and template.type == 'Email' else '' }}</span></div>
+                        <div class="border rounded p-3 bg-light">
+                            <div id="previewContent">{{ template.content if template else '' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div id="smsPreview" class="{% if not template or template.type != 'SMS' %}d-none{% endif %}">
+                        <div class="border rounded p-3 bg-light">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-primary text-white rounded p-2 me-2 mb-2" style="max-width: 80%;">
+                                    <div id="previewSmsContent">{{ template.content if template and template.type == 'SMS' else '' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const emailFields = document.getElementById('emailFields');
+        const smsCounter = document.getElementById('smsCounter');
+        const emailPreview = document.getElementById('emailPreview');
+        const smsPreview = document.getElementById('smsPreview');
+        const contentField = document.getElementById('content');
+        const subjectField = document.getElementById('subject');
+        const previewSubject = document.getElementById('previewSubject');
+        const previewContent = document.getElementById('previewContent');
+        const previewSmsContent = document.getElementById('previewSmsContent');
+        const charCount = document.getElementById('charCount');
+        const segmentCount = document.getElementById('segmentCount');
+        
+        // Update template type fields visibility
+        typeSelect.addEventListener('change', function() {
+            if (this.value === 'Email') {
+                emailFields.classList.remove('d-none');
+                smsCounter.classList.add('d-none');
+                emailPreview.classList.remove('d-none');
+                smsPreview.classList.add('d-none');
+            } else if (this.value === 'SMS') {
+                emailFields.classList.add('d-none');
+                smsCounter.classList.remove('d-none');
+                emailPreview.classList.add('d-none');
+                smsPreview.classList.remove('d-none');
+                updateSmsCounter();
+            } else {
+                emailFields.classList.add('d-none');
+                smsCounter.classList.add('d-none');
+                emailPreview.classList.add('d-none');
+                smsPreview.classList.add('d-none');
+            }
+        });
+        
+        // Update SMS character counter
+        function updateSmsCounter() {
+            const text = contentField.value;
+            const length = text.length;
+            charCount.textContent = length;
+            
+            let segments = 1;
+            if (length > 160) {
+                segments = Math.ceil(length / 153);
+            }
+            
+            segmentCount.textContent = segments === 1 ? 
+                '(1 segment)' : 
+                `(${segments} segments)`;
+            
+            if (segments > 1) {
+                charCount.parentElement.classList.remove('alert-info');
+                charCount.parentElement.classList.add('alert-warning');
+            } else {
+                charCount.parentElement.classList.remove('alert-warning');
+                charCount.parentElement.classList.add('alert-info');
+            }
+        }
+        
+        // Update preview when content changes
+        contentField.addEventListener('input', function() {
+            previewContent.textContent = this.value;
+            previewSmsContent.textContent = this.value;
+            
+            if (typeSelect.value === 'SMS') {
+                updateSmsCounter();
+            }
+        });
+        
+        // Update subject preview
+        if (subjectField) {
+            subjectField.addEventListener('input', function() {
+                previewSubject.textContent = this.value;
+            });
+        }
+        
+        // Initialize SMS counter if needed
+        if (typeSelect.value === 'SMS') {
+            updateSmsCounter();
+        }
+    });
+</script>
+{% endblock %}

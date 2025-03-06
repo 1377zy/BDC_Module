@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Message Templates - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-file-alt"></i> Message Templates</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <div class="btn-group">
+            <a href="/templates/add" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> New Template
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/templates">All Templates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/templates?type=Email">Email Templates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/templates?type=SMS">SMS Templates</a>
+                    </li>
+                </ul>
+                
+                {% if templates %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Preview</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                            <tr>
+                                <td>{{ template.name }}</td>
+                                <td>
+                                    {% if template.type == 'Email' %}
+                                    <span class="badge bg-info"><i class="fas fa-envelope me-1"></i> Email</span>
+                                    {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-sms me-1"></i> SMS</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if template.type == 'Email' %}
+                                    <strong>{{ template.subject }}</strong><br>
+                                    {% endif %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ template.content|truncate(100) }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/templates/edit/{{ template.id }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-template" data-id="{{ template.id }}" data-bs-toggle="tooltip" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No templates found. Create your first template to get started.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteTemplateModal" tabindex="-1" aria-labelledby="deleteTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTemplateModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this template? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteTemplateForm" method="post" action="">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete template button clicks
+        const deleteButtons = document.querySelectorAll('.delete-template');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const templateId = this.getAttribute('data-id');
+                const deleteForm = document.getElementById('deleteTemplateForm');
+                deleteForm.action = '/templates/delete/' + templateId;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteTemplateModal'));
+                modal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

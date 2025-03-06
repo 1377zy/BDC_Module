@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Lead Status - {{ lead.first_name }} {{ lead.last_name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-tag"></i> Update Status: {{ lead.first_name }} {{ lead.last_name }}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-tag me-1"></i> Update Lead Status
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-4">
+                        <label for="status" class="form-label">Current Status: <span class="badge bg-{{ lead.status|lower }}">{{ lead.status }}</span></label>
+                        <select class="form-select form-select-lg mb-3" id="status" name="status">
+                            <option value="New" {% if lead.status == 'New' %}selected{% endif %}>New</option>
+                            <option value="Contacted" {% if lead.status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                            <option value="Qualified" {% if lead.status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                            <option value="Hot" {% if lead.status == 'Hot' %}selected{% endif %}>Hot</option>
+                            <option value="Cold" {% if lead.status == 'Cold' %}selected{% endif %}>Cold</option>
+                            <option value="Closed" {% if lead.status == 'Closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="/leads/{{ lead.id }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-1"></i> Status Guide
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <span class="badge bg-new me-2">New</span>
+                        Lead has been added but no contact has been made yet.
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge bg-contacted me-2">Contacted</span>
+                        Initial contact has been made with the lead.
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge bg-qualified me-2">Qualified</span>
+                        Lead has been qualified as a potential customer.
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge bg-hot me-2">Hot</span>
+                        Lead is very interested and likely to convert soon.
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge bg-cold me-2">Cold</span>
+                        Lead has shown little interest or is not responding.
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge bg-closed me-2">Closed</span>
+                        Lead has been closed (purchased or lost).
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-exclamation-triangle me-1"></i> Important
+            </div>
+            <div class="card-body">
+                <p>Updating a lead's status helps your team prioritize follow-ups and track the sales pipeline effectively.</p>
+                <div class="d-grid">
+                    <a href="/leads/{{ lead.id }}" class="btn btn-outline-dark">
+                        <i class="fas fa-arrow-left"></i> Back to Lead Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

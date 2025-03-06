@@ -1,0 +1,230 @@
+/* Deal Management Styles */
+.deal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.deal-title {
+    margin-bottom: 5px;
+}
+
+.deal-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.deal-stage-badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    border-radius: 50px;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.deal-info-card {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.deal-info-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 15px 20px;
+}
+
+.deal-info-card .card-body {
+    padding: 20px;
+}
+
+.deal-summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.deal-summary-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.deal-summary-item .label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.deal-summary-item .value {
+    text-align: right;
+}
+
+.deal-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.deal-probability {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.activity-timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 30px;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+}
+
+.timeline-content {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.timeline-title {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.timeline-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.timeline-body p {
+    margin-bottom: 0;
+}
+
+/* Activity type colors */
+.activity-call {
+    background-color: #007bff;
+}
+
+.activity-email {
+    background-color: #6610f2;
+}
+
+.activity-meeting {
+    background-color: #fd7e14;
+}
+
+.activity-note {
+    background-color: #20c997;
+}
+
+.activity-task {
+    background-color: #dc3545;
+}
+
+.activity-stage-change {
+    background-color: #17a2b8;
+}
+
+/* Action buttons */
+.deal-actions {
+    margin-bottom: 20px;
+}
+
+.deal-actions .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* Activity form */
+.activity-form-container {
+    margin-bottom: 30px;
+}
+
+.activity-form-container .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.activity-tabs .nav-link {
+    padding: 10px 15px;
+    border-radius: 0;
+    color: #495057;
+}
+
+.activity-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.activity-tabs .nav-link i {
+    margin-right: 5px;
+}
+
+/* Related items */
+.related-items {
+    margin-top: 30px;
+}
+
+.related-item-card {
+    margin-bottom: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.related-item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .deal-header {
+        padding: 15px 0;
+    }
+    
+    .deal-title {
+        font-size: 1.5rem;
+    }
+    
+    .deal-value {
+        font-size: 1.2rem;
+    }
+    
+    .activity-tabs .nav-link {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+    
+    .timeline-marker {
+        width: 25px;
+        height: 25px;
+        line-height: 25px;
+        font-size: 0.8rem;
+    }
+}

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if appointment %}Edit Appointment{% else %}Schedule Appointment{% endif %} - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            {% if appointment %}
+            <i class="fas fa-calendar-alt"></i> Edit Appointment
+            {% else %}
+            <i class="fas fa-calendar-plus"></i> Schedule New Appointment
+            {% endif %}
+            {% if lead %}
+            for {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select name="lead_id" id="lead_id" class="form-select" required>
+                            <option value="">-- Select a Lead --</option>
+                            {% for lead in leads %}
+                            <option value="{{ lead.id }}" {% if appointment and appointment.lead_id == lead.id %}selected{% endif %}>
+                                {{ lead.first_name }} {{ lead.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Can't find the lead? <a href="{{ url_for('add_lead') }}">Create a new one</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Appointment Date</label>
+                            <input type="date" name="date" id="date" class="form-control datepicker" 
+                                   value="{{ date_str if date_str else current_date }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">Appointment Time</label>
+                            <input type="time" name="time" id="time" class="form-control" 
+                                   value="{{ time_str if time_str else '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="purpose" class="form-label">Purpose</label>
+                        <select name="purpose" id="purpose" class="form-select" required>
+                            <option value="">-- Select Purpose --</option>
+                            <option value="Test Drive" {% if appointment and appointment.purpose == 'Test Drive' %}selected{% endif %}>Test Drive</option>
+                            <option value="Vehicle Viewing" {% if appointment and appointment.purpose == 'Vehicle Viewing' %}selected{% endif %}>Vehicle Viewing</option>
+                            <option value="Pricing Discussion" {% if appointment and appointment.purpose == 'Pricing Discussion' %}selected{% endif %}>Pricing Discussion</option>
+                            <option value="Financing Options" {% if appointment and appointment.purpose == 'Financing Options' %}selected{% endif %}>Financing Options</option>
+                            <option value="Trade-In Evaluation" {% if appointment and appointment.purpose == 'Trade-In Evaluation' %}selected{% endif %}>Trade-In Evaluation</option>
+                            <option value="Paperwork Signing" {% if appointment and appointment.purpose == 'Paperwork Signing' %}selected{% endif %}>Paperwork Signing</option>
+                            <option value="Vehicle Delivery" {% if appointment and appointment.purpose == 'Vehicle Delivery' %}selected{% endif %}>Vehicle Delivery</option>
+                            <option value="Service Consultation" {% if appointment and appointment.purpose == 'Service Consultation' %}selected{% endif %}>Service Consultation</option>
+                            <option value="Other" {% if appointment and appointment.purpose == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    {% if appointment %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select" required>
+                            <option value="Scheduled" {% if appointment.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="Confirmed" {% if appointment.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="Completed" {% if appointment.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            <option value="Cancelled" {% if appointment.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            <option value="No-Show" {% if appointment.status == 'No-Show' %}selected{% endif %}>No-Show</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="4">{{ appointment.notes if appointment else '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('appointments') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if appointment %}Update Appointment{% else %}Schedule Appointment{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Appointment Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Schedule appointments during dealership business hours</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Allow at least 1 hour for test drives</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Include specific vehicle interests in notes</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Mention if financing pre-approval is needed</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Note any trade-in vehicles the customer may bring</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Follow-Up Reminders</h5>
+            </div>
+            <div class="card-body">
+                <p>Don't forget to:</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Send a confirmation email 24 hours before</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Send an SMS reminder 2 hours before</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Call to confirm on the day of appointment</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Follow up within 24 hours after the appointment</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize datepicker
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            startDate: new Date()
+        });
+        
+        // Set min date to today
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
+        
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        
+        const formattedToday = yyyy + '-' + mm + '-' + dd;
+        $('#date').attr('min', formattedToday);
+    });
+</script>
+{% endblock %}

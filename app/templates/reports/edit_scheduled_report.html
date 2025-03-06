@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Scheduled Report - Auto Dealership BDC{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/print.css') }}">
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('reports.scheduled_reports') }}">Scheduled Reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit Report</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5 fw-bold mb-0"><i class="fas fa-edit"></i> Edit Scheduled Report</h1>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-edit me-2"></i> Edit "{{ report.name }}"
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('reports.edit_scheduled_report', report_id=report.id) }}">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Report Name</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ report.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="report_type" class="form-label">Report Type</label>
+                                <select class="form-select" id="report_type" name="report_type" required>
+                                    <option value="inventory" {% if report.report_type == 'inventory' %}selected{% endif %}>Inventory Report</option>
+                                    <option value="leads" {% if report.report_type == 'leads' %}selected{% endif %}>Leads Report</option>
+                                    <option value="sales" {% if report.report_type == 'sales' %}selected{% endif %}>Sales Report</option>
+                                    <option value="performance" {% if report.report_type == 'performance' %}selected{% endif %}>Performance Report</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="frequency" class="form-label">Frequency</label>
+                                <select class="form-select" id="frequency" name="frequency" required>
+                                    <option value="daily" {% if report.frequency == 'daily' %}selected{% endif %}>Daily</option>
+                                    <option value="weekly" {% if report.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                                    <option value="monthly" {% if report.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 weekly-options {% if report.frequency != 'weekly' %}d-none{% endif %}">
+                            <div class="mb-3">
+                                <label for="day_of_week" class="form-label">Day of Week</label>
+                                <select class="form-select" id="day_of_week" name="day_of_week">
+                                    <option value="0" {% if report.day_of_week == 0 %}selected{% endif %}>Monday</option>
+                                    <option value="1" {% if report.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                                    <option value="2" {% if report.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                                    <option value="3" {% if report.day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                                    <option value="4" {% if report.day_of_week == 4 %}selected{% endif %}>Friday</option>
+                                    <option value="5" {% if report.day_of_week == 5 %}selected{% endif %}>Saturday</option>
+                                    <option value="6" {% if report.day_of_week == 6 %}selected{% endif %}>Sunday</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 monthly-options {% if report.frequency != 'monthly' %}d-none{% endif %}">
+                            <div class="mb-3">
+                                <label for="day_of_month" class="form-label">Day of Month</label>
+                                <select class="form-select" id="day_of_month" name="day_of_month">
+                                    {% for day in range(1, 32) %}
+                                    <option value="{{ day }}" {% if report.day_of_month == day %}selected{% endif %}>{{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="time_of_day" class="form-label">Time of Day</label>
+                                <input type="time" class="form-control" id="time_of_day" name="time_of_day" value="{{ report.time_of_day.strftime('%H:%M') }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="format" class="form-label">Format</label>
+                                <select class="form-select" id="format" name="format" required>
+                                    <option value="pdf" {% if report.format == 'pdf' %}selected{% endif %}>PDF</option>
+                                    <option value="csv" {% if report.format == 'csv' %}selected{% endif %}>CSV</option>
+                                    <option value="excel" {% if report.format == 'excel' %}selected{% endif %}>Excel</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="date_range" class="form-label">Date Range</label>
+                                <select class="form-select" id="date_range" name="date_range" required>
+                                    <option value="last_7_days" {% if report.date_range == 'last_7_days' %}selected{% endif %}>Last 7 Days</option>
+                                    <option value="last_30_days" {% if report.date_range == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                                    <option value="last_90_days" {% if report.date_range == 'last_90_days' %}selected{% endif %}>Last 90 Days</option>
+                                    <option value="custom" {% if report.date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3 custom-date-range {% if report.date_range != 'custom' %}d-none{% endif %}">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="custom_start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="custom_start_date" name="custom_start_date" 
+                                       value="{{ report.custom_start_date.strftime('%Y-%m-%d') if report.custom_start_date else '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="custom_end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="custom_end_date" name="custom_end_date"
+                                       value="{{ report.custom_end_date.strftime('%Y-%m-%d') if report.custom_end_date else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipients" class="form-label">Recipients (comma-separated email addresses)</label>
+                        <textarea class="form-control" id="recipients" name="recipients" rows="2" required>{{ report.recipients }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="template_id" class="form-label">Report Template</label>
+                        <div class="input-group">
+                            <select class="form-select" id="template_id" name="template_id">
+                                <option value="">Default Template</option>
+                                <!-- Templates will be populated dynamically based on report type -->
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-secondary" id="preview-template-btn" disabled>
+                                    <i class="fas fa-eye"></i> Preview
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">Select a template to customize the appearance of your report. <a href="{{ url_for('reports.report_templates') }}" target="_blank">Manage Templates</a></small>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="include_charts" name="include_charts" {% if report.include_charts %}checked{% endif %}>
+                        <label class="form-check-label" for="include_charts">Include Charts and Visualizations</label>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('reports.scheduled_reports') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide frequency options based on selection
+        const frequencySelect = document.getElementById('frequency');
+        const weeklyOptions = document.querySelector('.weekly-options');
+        const monthlyOptions = document.querySelector('.monthly-options');
+        
+        frequencySelect.addEventListener('change', function() {
+            if (this.value === 'weekly') {
+                weeklyOptions.classList.remove('d-none');
+                monthlyOptions.classList.add('d-none');
+            } else if (this.value === 'monthly') {
+                weeklyOptions.classList.add('d-none');
+                monthlyOptions.classList.remove('d-none');
+            } else {
+                weeklyOptions.classList.add('d-none');
+                monthlyOptions.classList.add('d-none');
+            }
+        });
+        
+        // Show/hide custom date range options
+        const dateRangeSelect = document.getElementById('date_range');
+        const customDateRange = document.querySelector('.custom-date-range');
+        
+        dateRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.classList.remove('d-none');
+            } else {
+                customDateRange.classList.add('d-none');
+            }
+        });
+        
+        // Load templates based on report type
+        const reportTypeSelect = document.getElementById('report_type');
+        const templateSelect = document.getElementById('template_id');
+        const currentTemplateId = {{ report.template_id or 'null' }};
+        
+        reportTypeSelect.addEventListener('change', function() {
+            loadTemplatesForReportType(this.value);
+        });
+        
+        function loadTemplatesForReportType(reportType) {
+            if (!reportType) return;
+            
+            // Clear current options except the default
+            while (templateSelect.options.length > 1) {
+                templateSelect.remove(1);
+            }
+            
+            // Disable preview button until a template is selected
+            document.getElementById('preview-template-btn').disabled = true;
+            
+            // Fetch templates for this report type
+            fetch(`/reports/templates/for_type/${reportType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        data.templates.forEach(template => {
+                            const option = document.createElement('option');
+                            option.value = template.id;
+                            option.text = template.name + (template.is_default ? ' (Default)' : '');
+                            
+                            // Select the current template if it matches
+                            if (currentTemplateId && currentTemplateId == template.id) {
+                                option.selected = true;
+                            }
+                            
+                            // If this is a default template and no current template is selected, select it automatically
+                            if (template.is_default && !currentTemplateId) {
+                                option.selected = true;
+                            }
+                            
+                            templateSelect.appendChild(option);
+                        });
+                        
+                        // Enable preview button if a template is selected
+                        document.getElementById('preview-template-btn').disabled = !templateSelect.value;
+                        
+                        // If no template is selected and no current template exists, try to get the default
+                        if (!templateSelect.value && !currentTemplateId) {
+                            // Try to get the default template for this report type
+                            fetch(`/reports/templates/default/${reportType}`)
+                                .then(response => response.json())
+                                .then(defaultData => {
+                                    if (defaultData.success && defaultData.has_default) {
+                                        // Find and select the default template
+                                        for (let i = 0; i < templateSelect.options.length; i++) {
+                                            if (templateSelect.options[i].value == defaultData.template.id) {
+                                                templateSelect.options[i].selected = true;
+                                                document.getElementById('preview-template-btn').disabled = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading default template:', error);
+                                });
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading templates:', error);
+                });
+        }
+        
+        // Enable/disable preview button based on template selection
+        templateSelect.addEventListener('change', function() {
+            const previewBtn = document.getElementById('preview-template-btn');
+            previewBtn.disabled = !this.value;
+        });
+        
+        // Preview template button functionality
+        document.getElementById('preview-template-btn').addEventListener('click', function() {
+            const templateId = templateSelect.value;
+            if (templateId) {
+                window.open(`/reports/preview-template/${templateId}`, '_blank');
+            }
+        });
+        
+        // Load templates for initial report type
+        if (reportTypeSelect.value) {
+            loadTemplatesForReportType(reportTypeSelect.value);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,257 @@
+/* PDF Report Styles */
+@page {
+    margin: 1cm;
+    @top-center {
+        content: element(header);
+    }
+    @bottom-center {
+        content: element(footer);
+    }
+}
+
+html {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    position: running(header);
+    width: 100%;
+    text-align: center;
+    padding-bottom: 5mm;
+    border-bottom: 1px solid #ccc;
+}
+
+.footer {
+    position: running(footer);
+    width: 100%;
+    text-align: center;
+    padding-top: 5mm;
+    border-top: 1px solid #ccc;
+    font-size: 9pt;
+    color: #666;
+}
+
+.report-title {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.report-subtitle {
+    font-size: 14pt;
+    color: #666;
+    margin: 5mm 0 0 0;
+    padding: 0;
+}
+
+.report-metadata {
+    margin-top: 5mm;
+    font-size: 10pt;
+    color: #666;
+}
+
+.page-break {
+    page-break-before: always;
+}
+
+.section {
+    margin: 10mm 0;
+}
+
+.section-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #333;
+    margin: 0 0 5mm 0;
+    padding: 0 0 2mm 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.chart-container {
+    text-align: center;
+    margin: 5mm 0;
+}
+
+.chart-image {
+    max-width: 100%;
+    height: auto;
+}
+
+.chart-title {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 2mm 0;
+    color: #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5mm 0;
+}
+
+th {
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    padding: 2mm;
+    text-align: left;
+    font-weight: bold;
+}
+
+td {
+    border: 1px solid #ddd;
+    padding: 2mm;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.summary-box {
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    border-radius: 3mm;
+    padding: 3mm;
+    margin: 5mm 0;
+}
+
+.summary-title {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0 0 2mm 0;
+    color: #333;
+}
+
+.summary-item {
+    margin: 1mm 0;
+}
+
+.summary-label {
+    font-weight: bold;
+    display: inline-block;
+    width: 60%;
+}
+
+.summary-value {
+    display: inline-block;
+    width: 38%;
+    text-align: right;
+}
+
+.highlight {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.positive {
+    color: #28a745;
+}
+
+.negative {
+    color: #dc3545;
+}
+
+.warning {
+    color: #ffc107;
+}
+
+.info {
+    color: #17a2b8;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -5mm;
+}
+
+.col {
+    flex: 1;
+    padding: 0 5mm;
+}
+
+.col-2 {
+    flex: 2;
+    padding: 0 5mm;
+}
+
+.logo {
+    max-height: 20mm;
+    max-width: 40mm;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.small {
+    font-size: 9pt;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.underline {
+    text-decoration: underline;
+}
+
+.no-margin {
+    margin: 0;
+}
+
+.no-padding {
+    padding: 0;
+}
+
+.mt-1 {
+    margin-top: 2mm;
+}
+
+.mt-2 {
+    margin-top: 4mm;
+}
+
+.mt-3 {
+    margin-top: 6mm;
+}
+
+.mb-1 {
+    margin-bottom: 2mm;
+}
+
+.mb-2 {
+    margin-bottom: 4mm;
+}
+
+.mb-3 {
+    margin-bottom: 6mm;
+}
+
+/* Print-specific styles */
+@media print {
+    .no-print {
+        display: none;
+    }
+}

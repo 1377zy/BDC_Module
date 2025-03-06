@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Email - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-envelope"></i> Send Email
+            {% if lead %}
+            to {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post" action="/communications/email">
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select class="form-select" id="lead_id" name="lead_id">
+                            <option value="">Select a lead...</option>
+                            {% for lead in leads_data %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Email Subject">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Message</label>
+                        <textarea class="form-control" id="content" name="content" rows="10" placeholder="Email Message"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Email
+                        </button>
+                        <a href="{{ url_for('view_lead', lead_id=lead.id) if lead else url_for('leads') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-1"></i> Email Information
+            </div>
+            <div class="card-body">
+                <h5>Available Placeholders</h5>
+                <p>You can use the following placeholders in your email:</p>
+                <ul>
+                    <li><code>{first_name}</code> - Lead's first name</li>
+                    <li><code>{last_name}</code> - Lead's last name</li>
+                    <li><code>{email}</code> - Lead's email address</li>
+                    <li><code>{phone}</code> - Lead's phone number</li>
+                    <li><code>{dealership_name}</code> - Dealership name</li>
+                    <li><code>{dealership_phone}</code> - Dealership phone</li>
+                </ul>
+                
+                {% if lead %}
+                <hr>
+                <h5>Lead Information</h5>
+                <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                <p><strong>Email:</strong> {{ lead.email }}</p>
+                <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                <p><strong>Vehicle Interest:</strong> {{ lead.vehicle_interest }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if lead %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-1"></i> Previous Communications
+            </div>
+            <div class="card-body">
+                {% set previous_communications = communications_data|selectattr('lead_id', 'equalto', lead.id)|list %}
+                {% if previous_communications %}
+                <div class="list-group">
+                    {% for comm in previous_communications %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if comm.type == 'Email' %}
+                                <i class="fas fa-envelope me-1"></i>
+                                {% elif comm.type == 'SMS' %}
+                                <i class="fas fa-sms me-1"></i>
+                                {% else %}
+                                <i class="fas fa-comment me-1"></i>
+                                {% endif %}
+                                {{ comm.type }}
+                            </h6>
+                            <small>{{ comm.sent_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        <p class="mb-0 small">{{ comm.content|truncate(100) }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No previous communications with this lead.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

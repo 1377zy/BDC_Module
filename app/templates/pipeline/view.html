@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ pipeline.name }} - Pipeline View{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="pipeline-container">
+    <!-- Pipeline Header -->
+    <div class="pipeline-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="pipeline-title">{{ pipeline.name }}</h1>
+                    <p class="pipeline-subtitle">{{ deals|length }} deals • Total value: ${{ total_value|format_currency }}</p>
+                </div>
+                <div class="col-md-6 text-md-right">
+                    <div class="pipeline-actions">
+                        <a href="{{ url_for('pipeline.edit_pipeline', pipeline_id=pipeline.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Edit Pipeline
+                        </a>
+                        <a href="{{ url_for('pipeline.create_deal', pipeline_id=pipeline.id) }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Deal
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="{{ url_for('pipeline.analytics', pipeline_id=pipeline.id) }}">
+                                    <i class="fas fa-chart-bar"></i> View Analytics
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('pipeline.stage_transitions', pipeline_id=pipeline.id) }}">
+                                    <i class="fas fa-exchange-alt"></i> Stage Transitions
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('pipeline.reports', pipeline_id=pipeline.id) }}">
+                                    <i class="fas fa-file-alt"></i> Generate Reports
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#deletePipelineModal">
+                                    <i class="fas fa-trash-alt"></i> Delete Pipeline
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="container mb-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter"></i> Filter Deals
+                    </h5>
+                    <button class="btn btn-sm btn-link" type="button" data-toggle="collapse" data-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="collapse" id="filterCollapse">
+                <div class="card-body">
+                    <form id="pipelineFilterForm" method="GET" action="{{ url_for('pipeline.view_pipeline', pipeline_id=pipeline.id) }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="searchTerm">Search</label>
+                                    <input type="text" class="form-control" id="searchTerm" name="search" value="{{ request.args.get('search', '') }}" placeholder="Deal title, description...">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="stageFilter">Stage</label>
+                                    <select class="form-control selectpicker" id="stageFilter" name="stage_id" data-live-search="true">
+                                        <option value="">All Stages</option>
+                                        {% for stage in pipeline.stages %}
+                                        <option value="{{ stage.id }}" {% if request.args.get('stage_id')|int == stage.id %}selected{% endif %}>
+                                            {{ stage.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="dateRangePicker">Date Range</label>
+                                    <input type="text" class="form-control" id="dateRangePicker" name="date_range" value="{{ request.args.get('date_range', '') }}" placeholder="Select date range">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="minValue">Min Value ($)</label>
+                                    <input type="number" class="form-control" id="minValue" name="min_value" value="{{ request.args.get('min_value', '') }}" placeholder="Minimum value">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="maxValue">Max Value ($)</label>
+                                    <input type="number" class="form-control" id="maxValue" name="max_value" value="{{ request.args.get('max_value', '') }}" placeholder="Maximum value">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="assignedToFilter">Assigned To</label>
+                                    <select class="form-control selectpicker" id="assignedToFilter" name="assigned_to" data-live-search="true">
+                                        <option value="">All Users</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}" {% if request.args.get('assigned_to')|int == user.id %}selected{% endif %}>
+                                            {{ user.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="savedFilterSelect">Saved Filters</label>
+                                    <select class="form-control" id="savedFilterSelect">
+                                        <option value="">Select a saved filter</option>
+                                        {% for filter in saved_filters %}
+                                        <option value="{{ filter.id }}">{{ filter.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-8 d-flex align-items-end">
+                                <div class="form-group mb-0 ml-auto">
+                                    <button type="button" id="saveFilterBtn" class="btn btn-outline-secondary">
+                                        <i class="fas fa-save"></i> Save Filter
+                                    </button>
+                                    <button type="button" id="resetFiltersBtn" class="btn btn-outline-secondary">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline View -->
+    <div class="container-fluid">
+        <div class="pipeline-board">
+            <div class="pipeline-stages">
+                {% for stage in pipeline.stages %}
+                <div class="pipeline-stage" data-stage-id="{{ stage.id }}" style="background-color: {{ stage.color }}10;">
+                    <div class="stage-header" style="background-color: {{ stage.color }};">
+                        <h3 class="stage-name">{{ stage.name }}</h3>
+                        <div class="stage-meta">
+                            <span class="stage-count">{{ stage.deals|length }}</span>
+                            <span class="stage-value">${{ stage.total_value|format_currency }}</span>
+                        </div>
+                    </div>
+                    <div class="stage-body">
+                        <div class="deals-container" id="stage-{{ stage.id }}-deals">
+                            {% for deal in stage.deals %}
+                            <div class="deal-card" data-deal-id="{{ deal.id }}">
+                                <div class="deal-card-header">
+                                    <h4 class="deal-title">
+                                        <a href="{{ url_for('pipeline.view_deal', deal_id=deal.id) }}">{{ deal.title }}</a>
+                                    </h4>
+                                    <div class="deal-actions dropdown">
+                                        <button class="btn btn-sm btn-link dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <a class="dropdown-item" href="{{ url_for('pipeline.view_deal', deal_id=deal.id) }}">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </a>
+                                            <a class="dropdown-item" href="{{ url_for('pipeline.edit_deal', deal_id=deal.id) }}">
+                                                <i class="fas fa-edit"></i> Edit Deal
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#deleteDealModal" data-deal-id="{{ deal.id }}" data-deal-title="{{ deal.title }}">
+                                                <i class="fas fa-trash-alt"></i> Delete Deal
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="deal-card-body">
+                                    {% if deal.lead %}
+                                    <div class="deal-lead">
+                                        <i class="fas fa-user"></i> {{ deal.lead.name }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="deal-value">${{ deal.value|format_currency }}</div>
+                                    <div class="deal-probability">{{ deal.probability }}% probability</div>
+                                    {% if deal.expected_close_date %}
+                                    <div class="deal-date">
+                                        <i class="far fa-calendar-alt"></i> 
+                                        {{ deal.expected_close_date.strftime('%b %d, %Y') }}
+                                        {% set days_remaining = (deal.expected_close_date - now).days %}
+                                        {% if days_remaining > 0 %}
+                                        <span class="badge badge-info">{{ days_remaining }} days left</span>
+                                        {% elif days_remaining == 0 %}
+                                        <span class="badge badge-warning">Due today</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">{{ days_remaining|abs }} days overdue</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if deal.assigned_to %}
+                                    <div class="deal-assigned">
+                                        <i class="fas fa-user-tag"></i> {{ deal.assigned_to.name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="deal-card-footer">
+                                    <div class="deal-last-activity">
+                                        {% if deal.last_activity %}
+                                        <i class="fas fa-history"></i> {{ deal.last_activity.created_at.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                        <i class="fas fa-history"></i> No activity
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if not stage.deals %}
+                            <div class="empty-stage-message">
+                                <i class="fas fa-inbox"></i>
+                                <p>No deals in this stage</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="stage-footer">
+                        <a href="{{ url_for('pipeline.create_deal', pipeline_id=pipeline.id, stage_id=stage.id) }}" class="btn btn-sm btn-outline-primary btn-block">
+                            <i class="fas fa-plus"></i> Add Deal
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Pipeline Modal -->
+    <div class="modal fade" id="deletePipelineModal" tabindex="-1" role="dialog" aria-labelledby="deletePipelineModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletePipelineModalLabel">Delete Pipeline</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">Warning: This action cannot be undone!</p>
+                    <p>Are you sure you want to delete the pipeline <strong>{{ pipeline.name }}</strong>?</p>
+                    <p>This will also delete all stages and deals associated with this pipeline.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form action="{{ url_for('pipeline.delete_pipeline', pipeline_id=pipeline.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete Pipeline</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Deal Modal -->
+    <div class="modal fade" id="deleteDealModal" tabindex="-1" role="dialog" aria-labelledby="deleteDealModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteDealModalLabel">Delete Deal</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">Warning: This action cannot be undone!</p>
+                    <p>Are you sure you want to delete the deal <strong id="dealTitleToDelete"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form id="deleteDealForm" action="" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete Deal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator d-none">
+        <div class="loading-spinner"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
+<script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pipeline_filters.js') }}"></script>
+{% endblock %}

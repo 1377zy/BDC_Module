@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+
+{% block title %}Template Preview - {{ template.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .preview-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .preview-header {
+        margin-bottom: 20px;
+    }
+    
+    .preview-footer {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .preview-content {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 20px;
+        min-height: 400px;
+    }
+    
+    .template-info {
+        margin-bottom: 20px;
+    }
+    
+    .template-code {
+        font-family: monospace;
+        white-space: pre-wrap;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 3px;
+        padding: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .nav-tabs {
+        margin-bottom: 15px;
+    }
+    
+    {{ template.css_styles|safe if template.css_styles else '' }}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Template Preview: {{ template.name }}</h1>
+                <div>
+                    <a href="{{ url_for('reports.report_templates') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Templates
+                    </a>
+                    <a href="{{ url_for('reports.edit_template', template_id=template.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Template
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Template Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Name:</strong> {{ template.name }}</p>
+                            <p><strong>Report Type:</strong> {{ template.report_type|capitalize }}</p>
+                            <p><strong>Default:</strong> {{ 'Yes' if template.is_default else 'No' }}</p>
+                        </div>
+                        <div class="col-md-8">
+                            <p><strong>Description:</strong></p>
+                            <p>{{ template.description or 'No description provided.' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="nav nav-tabs" id="previewTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab" aria-controls="preview" aria-selected="true">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="header-tab" data-bs-toggle="tab" data-bs-target="#header" type="button" role="tab" aria-controls="header" aria-selected="false">
+                        <i class="fas fa-heading"></i> Header
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="footer-tab" data-bs-toggle="tab" data-bs-target="#footer" type="button" role="tab" aria-controls="footer" aria-selected="false">
+                        <i class="fas fa-shoe-prints"></i> Footer
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="css-tab" data-bs-toggle="tab" data-bs-target="#css" type="button" role="tab" aria-controls="css" aria-selected="false">
+                        <i class="fas fa-paint-brush"></i> CSS Styles
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="previewTabsContent">
+                <!-- Preview Tab -->
+                <div class="tab-pane fade show active" id="preview" role="tabpanel" aria-labelledby="preview-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="preview-container">
+                                <!-- Header -->
+                                <div class="preview-header">
+                                    {% if template.header_html %}
+                                        {{ template.header_html|safe }}
+                                    {% else %}
+                                        <h2>{{ sample_data.title }}</h2>
+                                        <p>{{ sample_data.date_range }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="preview-content">
+                                    {% if sample_data.report_type == 'inventory' %}
+                                        <h3>Inventory Summary</h3>
+                                        <div class="row mb-4">
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.total_vehicles }}</h4>
+                                                        <p>Total Vehicles</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.avg_days_in_stock }}</h4>
+                                                        <p>Avg. Days in Stock</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>${{ sample_data.avg_price }}</h4>
+                                                        <p>Avg. Price</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h3>Top Models</h3>
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Make</th>
+                                                    <th>Model</th>
+                                                    <th>Count</th>
+                                                    <th>Avg. Days</th>
+                                                    <th>Avg. Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for model in sample_data.top_models %}
+                                                <tr>
+                                                    <td>{{ model.make }}</td>
+                                                    <td>{{ model.model }}</td>
+                                                    <td>{{ model.count }}</td>
+                                                    <td>{{ model.avg_days }}</td>
+                                                    <td>${{ model.avg_price }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% elif sample_data.report_type == 'leads' %}
+                                        <h3>Lead Generation Summary</h3>
+                                        <div class="row mb-4">
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.total_leads }}</h4>
+                                                        <p>Total Leads</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.conversion_rate }}%</h4>
+                                                        <p>Conversion Rate</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.avg_response_time }}</h4>
+                                                        <p>Avg. Response Time</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h3>Lead Conversion Rates</h3>
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Source</th>
+                                                    <th>Total</th>
+                                                    <th>Appointments</th>
+                                                    <th>Test Drives</th>
+                                                    <th>Sales</th>
+                                                    <th>Conversion Rate</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for source in sample_data.source_metrics %}
+                                                <tr>
+                                                    <td>{{ source.name }}</td>
+                                                    <td>{{ source.total }}</td>
+                                                    <td>{{ source.appointments }}</td>
+                                                    <td>{{ source.test_drives }}</td>
+                                                    <td>{{ source.sales }}</td>
+                                                    <td>{{ source.conversion_rate }}%</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% elif sample_data.report_type == 'sales' %}
+                                        <h3>Sales Performance Summary</h3>
+                                        <div class="row mb-4">
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.total_sales }}</h4>
+                                                        <p>Total Sales</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>${{ sample_data.total_revenue }}</h4>
+                                                        <p>Total Revenue</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>${{ sample_data.avg_sale_price }}</h4>
+                                                        <p>Avg. Sale Price</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h3>Top Selling Vehicles</h3>
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Make</th>
+                                                    <th>Model</th>
+                                                    <th>Units</th>
+                                                    <th>Revenue</th>
+                                                    <th>Avg. Price</th>
+                                                    <th>Avg. Profit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for vehicle in sample_data.top_vehicles %}
+                                                <tr>
+                                                    <td>{{ vehicle.make }}</td>
+                                                    <td>{{ vehicle.model }}</td>
+                                                    <td>{{ vehicle.units }}</td>
+                                                    <td>${{ vehicle.revenue }}</td>
+                                                    <td>${{ vehicle.avg_price }}</td>
+                                                    <td>${{ vehicle.avg_profit }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% elif sample_data.report_type == 'performance' %}
+                                        <h3>Staff Performance Summary</h3>
+                                        <div class="row mb-4">
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.total_staff }}</h4>
+                                                        <p>Total Staff</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.avg_conversion_rate }}%</h4>
+                                                        <p>Avg. Conversion Rate</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 text-center">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h4>{{ sample_data.avg_sales_per_staff }}</h4>
+                                                        <p>Avg. Sales per Staff</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h3>Individual Performance Metrics</h3>
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Staff Member</th>
+                                                    <th>Leads</th>
+                                                    <th>Appointments</th>
+                                                    <th>Test Drives</th>
+                                                    <th>Sales</th>
+                                                    <th>Conversion Rate</th>
+                                                    <th>Avg. Sale Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for staff in sample_data.staff_metrics %}
+                                                <tr>
+                                                    <td>{{ staff.name }}</td>
+                                                    <td>{{ staff.leads }}</td>
+                                                    <td>{{ staff.appointments }}</td>
+                                                    <td>{{ staff.test_drives }}</td>
+                                                    <td>{{ staff.sales }}</td>
+                                                    <td>{{ staff.conversion_rate }}%</td>
+                                                    <td>${{ staff.avg_sale_value }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Footer -->
+                                <div class="preview-footer">
+                                    {% if template.footer_html %}
+                                        {{ template.footer_html|safe }}
+                                    {% else %}
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p>{{ sample_data.company_name }} - Confidential Report</p>
+                                            </div>
+                                            <div class="col-md-6 text-end">
+                                                <p>Page {{ sample_data.page_number }} of {{ sample_data.total_pages }}</p>
+                                                <p>Generated on {{ sample_data.report_generated_at.strftime('%Y-%m-%d %H:%M') }} by {{ sample_data.generated_by }}</p>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Header Tab -->
+                <div class="tab-pane fade" id="header" role="tabpanel" aria-labelledby="header-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Header HTML</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if template.header_html %}
+                                <div class="template-code">{{ template.header_html }}</div>
+                            {% else %}
+                                <p class="text-muted">No custom header HTML defined.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer Tab -->
+                <div class="tab-pane fade" id="footer" role="tabpanel" aria-labelledby="footer-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Footer HTML</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if template.footer_html %}
+                                <div class="template-code">{{ template.footer_html }}</div>
+                            {% else %}
+                                <p class="text-muted">No custom footer HTML defined.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CSS Tab -->
+                <div class="tab-pane fade" id="css" role="tabpanel" aria-labelledby="css-tab">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>CSS Styles</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if template.css_styles %}
+                                <div class="template-code">{{ template.css_styles }}</div>
+                            {% else %}
+                                <p class="text-muted">No custom CSS styles defined.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tabs
+        var tabs = document.querySelectorAll('#previewTabs button');
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                // Remove active class from all tabs
+                tabs.forEach(function(t) {
+                    t.classList.remove('active');
+                    document.querySelector(t.getAttribute('data-bs-target')).classList.remove('show', 'active');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                document.querySelector(this.getAttribute('data-bs-target')).classList.add('show', 'active');
+            });
+        });
+    });
+</script>
+{% endblock %}

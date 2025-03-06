@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Send SMS - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-sms"></i> Send SMS
+            {% if lead %}
+            to {{ lead.first_name }} {{ lead.last_name }}
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post" action="/communications/sms">
+                    {% if not lead %}
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select class="form-select" id="lead_id" name="lead_id">
+                            <option value="">Select a lead...</option>
+                            {% for lead in leads_data %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Message</label>
+                        <textarea class="form-control" id="content" name="content" rows="5" placeholder="SMS Message"></textarea>
+                        <div class="text-end mt-1">
+                            <small class="text-muted">Characters remaining: <span id="char-count">160</span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send SMS
+                        </button>
+                        <a href="{{ url_for('view_lead', lead_id=lead.id) if lead else url_for('leads') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-info-circle me-1"></i> SMS Information
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i> SMS messages are limited to 160 characters. Messages longer than this may be split into multiple messages.
+                </div>
+                
+                <h5>Available Placeholders</h5>
+                <p>You can use the following placeholders in your SMS:</p>
+                <ul>
+                    <li><code>{first_name}</code> - Lead's first name</li>
+                    <li><code>{last_name}</code> - Lead's last name</li>
+                    <li><code>{dealership_name}</code> - Dealership name</li>
+                    <li><code>{dealership_phone}</code> - Dealership phone</li>
+                </ul>
+                
+                {% if lead %}
+                <hr>
+                <h5>Lead Information</h5>
+                <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                <p><strong>Status:</strong> {{ lead.status }}</p>
+                <p><strong>Vehicle Interest:</strong> {{ lead.vehicle_interest }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if lead %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <i class="fas fa-history me-1"></i> Previous SMS
+            </div>
+            <div class="card-body">
+                {% set previous_sms = communications_data|selectattr('lead_id', 'equalto', lead.id)|selectattr('type', 'equalto', 'SMS')|list %}
+                {% if previous_sms %}
+                <div class="list-group">
+                    {% for sms in previous_sms %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="fas fa-sms me-1"></i> SMS
+                            </h6>
+                            <small>{{ sms.sent_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-0">{{ sms.content }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-1"></i> No previous SMS with this lead.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-lightbulb me-1"></i> SMS Templates
+            </div>
+            <div class="card-body">
+                <h5>Quick Templates</h5>
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action quick-template" onclick="insertTemplate(this.textContent)">
+                        Hi {first_name}, thanks for your interest in our dealership. How can I help you today?
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action quick-template" onclick="insertTemplate(this.textContent)">
+                        Hi {first_name}, just confirming your appointment. Looking forward to seeing you!
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action quick-template" onclick="insertTemplate(this.textContent)">
+                        Thank you for visiting {dealership_name} today! It was a pleasure meeting you. Please call if you have any questions.
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Character counter for SMS
+        const contentField = document.getElementById('content');
+        const charCount = document.getElementById('char-count');
+        
+        if (contentField && charCount) {
+            contentField.addEventListener('input', function() {
+                const remaining = 160 - this.value.length;
+                charCount.textContent = remaining >= 0 ? remaining : 0;
+                
+                if (remaining < 0) {
+                    charCount.classList.add('text-danger');
+                } else {
+                    charCount.classList.remove('text-danger');
+                }
+            });
+        }
+    });
+    
+    function insertTemplate(text) {
+        document.getElementById('content').value = text;
+        // Trigger the input event to update character count
+        document.getElementById('content').dispatchEvent(new Event('input'));
+    }
+</script>
+{% endblock %}

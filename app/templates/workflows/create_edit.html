@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ 'Edit' if workflow else 'Create' }} Workflow - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3 mb-0 text-gray-800">{{ 'Edit' if workflow else 'Create' }} Lead Nurturing Workflow</h1>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="{{ url_for('workflows') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Workflows
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <form id="workflow-form" method="post" action="{{ url_for('edit_workflow', workflow_id=workflow.id) if workflow else url_for('create_workflow') }}">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Workflow Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="workflow-name" class="form-label">Workflow Name</label>
+                            <input type="text" class="form-control" id="workflow-name" name="name" value="{{ workflow.name if workflow else '' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="trigger-status" class="form-label">Trigger Status</label>
+                            <select class="form-select" id="trigger-status" name="trigger_status" required>
+                                <option value="">Select a status...</option>
+                                <option value="New" {% if workflow and workflow.trigger_status == 'New' %}selected{% endif %}>New</option>
+                                <option value="Contacted" {% if workflow and workflow.trigger_status == 'Contacted' %}selected{% endif %}>Contacted</option>
+                                <option value="Qualified" {% if workflow and workflow.trigger_status == 'Qualified' %}selected{% endif %}>Qualified</option>
+                                <option value="Appointment" {% if workflow and workflow.trigger_status == 'Appointment' %}selected{% endif %}>Appointment</option>
+                                <option value="Sold" {% if workflow and workflow.trigger_status == 'Sold' %}selected{% endif %}>Sold</option>
+                                <option value="Lost" {% if workflow and workflow.trigger_status == 'Lost' %}selected{% endif %}>Lost</option>
+                            </select>
+                            <div class="form-text">When a lead changes to this status, this workflow can be triggered.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="auto-apply" name="auto_apply" {% if workflow and workflow.auto_apply %}checked{% endif %}>
+                            <label class="form-check-label" for="auto-apply">
+                                Auto-apply workflow when status changes
+                            </label>
+                            <div class="form-text">If checked, this workflow will be automatically applied to leads when they reach the trigger status.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="workflow-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="workflow-description" name="description" rows="3">{{ workflow.description if workflow else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Workflow Steps</h6>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-step">
+                        <i class="fas fa-plus"></i> Add Step
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="steps-container">
+                        {% if workflow and workflow.steps %}
+                            {% for step in workflow.steps|sort(attribute='step_order') %}
+                            <div class="card mb-3 workflow-step" data-step-id="{{ step.id }}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>Step {{ step.step_order + 1 }}: {{ step.step_type }}</span>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary move-step-up" {% if loop.first %}disabled{% endif %}>
+                                            <i class="fas fa-arrow-up"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary move-step-down" {% if loop.last %}disabled{% endif %}>
+                                            <i class="fas fa-arrow-down"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-step">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="step_id[]" value="{{ step.id }}">
+                                    <input type="hidden" name="step_order[]" value="{{ step.step_order }}">
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Step Type</label>
+                                            <select class="form-select step-type" name="step_type[]" required>
+                                                <option value="Email" {% if step.step_type == 'Email' %}selected{% endif %}>Email</option>
+                                                <option value="SMS" {% if step.step_type == 'SMS' %}selected{% endif %}>SMS</option>
+                                                <option value="Call" {% if step.step_type == 'Call' %}selected{% endif %}>Phone Call</option>
+                                                <option value="Task" {% if step.step_type == 'Task' %}selected{% endif %}>Task</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Delay (Days)</label>
+                                            <input type="number" class="form-control" name="delay_days[]" min="0" value="{{ step.delay_days }}" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3 template-select-container" {% if step.step_type not in ['Email', 'SMS'] %}style="display: none;"{% endif %}>
+                                            <label class="form-label">Template</label>
+                                            <select class="form-select" name="template_id[]">
+                                                <option value="">Select a template...</option>
+                                                {% if step.step_type == 'Email' %}
+                                                    {% for template in email_templates %}
+                                                    <option value="{{ template.id }}" {% if step.template_id == template.id %}selected{% endif %}>{{ template.name }}</option>
+                                                    {% endfor %}
+                                                {% elif step.step_type == 'SMS' %}
+                                                    {% for template in sms_templates %}
+                                                    <option value="{{ template.id }}" {% if step.template_id == template.id %}selected{% endif %}>{{ template.name }}</option>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3 subject-container" {% if step.step_type not in ['Email', 'Task'] %}style="display: none;"{% endif %}>
+                                        <label class="form-label">Subject</label>
+                                        <input type="text" class="form-control" name="subject[]" value="{{ step.subject }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Content</label>
+                                        <textarea class="form-control" name="content[]" rows="3">{{ step.content }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Empty state - no steps yet -->
+                            <div class="text-center py-4" id="no-steps-message">
+                                <div class="mb-3">
+                                    <i class="fas fa-tasks fa-3x text-muted"></i>
+                                </div>
+                                <h5 class="text-muted">No steps added yet</h5>
+                                <p class="text-muted">Click "Add Step" to start building your workflow.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'Update' if workflow else 'Create' }} Workflow
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Step Template (hidden, used for JavaScript) -->
+<template id="step-template">
+    <div class="card mb-3 workflow-step">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="step-title">New Step</span>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-step-up">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-step-down">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-step">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <input type="hidden" name="step_id[]" value="">
+            <input type="hidden" name="step_order[]" value="">
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Step Type</label>
+                    <select class="form-select step-type" name="step_type[]" required>
+                        <option value="Email">Email</option>
+                        <option value="SMS">SMS</option>
+                        <option value="Call">Phone Call</option>
+                        <option value="Task">Task</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Delay (Days)</label>
+                    <input type="number" class="form-control" name="delay_days[]" min="0" value="0" required>
+                </div>
+                <div class="col-md-4 mb-3 template-select-container">
+                    <label class="form-label">Template</label>
+                    <select class="form-select" name="template_id[]">
+                        <option value="">Select a template...</option>
+                        <!-- Templates will be populated via JavaScript -->
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3 subject-container">
+                <label class="form-label">Subject</label>
+                <input type="text" class="form-control" name="subject[]" value="">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Content</label>
+                <textarea class="form-control" name="content[]" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stepsContainer = document.getElementById('steps-container');
+        const stepTemplate = document.getElementById('step-template');
+        const noStepsMessage = document.getElementById('no-steps-message');
+        const addStepButton = document.getElementById('add-step');
+        
+        // Email templates data
+        const emailTemplates = [
+            {% for template in email_templates %}
+            { id: {{ template.id }}, name: "{{ template.name }}" },
+            {% endfor %}
+        ];
+        
+        // SMS templates data
+        const smsTemplates = [
+            {% for template in sms_templates %}
+            { id: {{ template.id }}, name: "{{ template.name }}" },
+            {% endfor %}
+        ];
+        
+        // Add a new step
+        addStepButton.addEventListener('click', function() {
+            // Hide the no steps message if it's visible
+            if (noStepsMessage) {
+                noStepsMessage.style.display = 'none';
+            }
+            
+            // Clone the template
+            const newStep = document.importNode(stepTemplate.content, true).querySelector('.workflow-step');
+            
+            // Set the step order
+            const stepCount = document.querySelectorAll('.workflow-step').length;
+            newStep.querySelector('input[name="step_order[]"]').value = stepCount;
+            newStep.querySelector('.step-title').textContent = `Step ${stepCount + 1}: Email`;
+            
+            // Populate the email templates by default
+            populateTemplateOptions(newStep.querySelector('select[name="template_id[]"]'), 'Email');
+            
+            // Add the new step to the container
+            stepsContainer.appendChild(newStep);
+            
+            // Update move buttons state
+            updateMoveButtonsState();
+            
+            // Setup event listeners for the new step
+            setupStepEventListeners(newStep);
+        });
+        
+        // Setup event listeners for existing steps
+        document.querySelectorAll('.workflow-step').forEach(setupStepEventListeners);
+        
+        // Update move buttons initial state
+        updateMoveButtonsState();
+        
+        // Function to setup event listeners for a step
+        function setupStepEventListeners(step) {
+            // Remove step button
+            step.querySelector('.remove-step').addEventListener('click', function() {
+                step.remove();
+                reorderSteps();
+                updateMoveButtonsState();
+                
+                // Show the no steps message if there are no steps left
+                if (document.querySelectorAll('.workflow-step').length === 0 && noStepsMessage) {
+                    noStepsMessage.style.display = 'block';
+                }
+            });
+            
+            // Move step up button
+            step.querySelector('.move-step-up').addEventListener('click', function() {
+                const prevStep = step.previousElementSibling;
+                if (prevStep && prevStep.classList.contains('workflow-step')) {
+                    stepsContainer.insertBefore(step, prevStep);
+                    reorderSteps();
+                    updateMoveButtonsState();
+                }
+            });
+            
+            // Move step down button
+            step.querySelector('.move-step-down').addEventListener('click', function() {
+                const nextStep = step.nextElementSibling;
+                if (nextStep && nextStep.classList.contains('workflow-step')) {
+                    stepsContainer.insertBefore(nextStep, step);
+                    reorderSteps();
+                    updateMoveButtonsState();
+                }
+            });
+            
+            // Step type change
+            const stepTypeSelect = step.querySelector('.step-type');
+            stepTypeSelect.addEventListener('change', function() {
+                const stepType = this.value;
+                const templateContainer = step.querySelector('.template-select-container');
+                const subjectContainer = step.querySelector('.subject-container');
+                const templateSelect = step.querySelector('select[name="template_id[]"]');
+                
+                // Update step title
+                step.querySelector('.step-title').textContent = `Step ${step.querySelector('input[name="step_order[]"]').value * 1 + 1}: ${stepType}`;
+                
+                // Show/hide template selector based on step type
+                if (stepType === 'Email' || stepType === 'SMS') {
+                    templateContainer.style.display = 'block';
+                    populateTemplateOptions(templateSelect, stepType);
+                } else {
+                    templateContainer.style.display = 'none';
+                }
+                
+                // Show/hide subject field based on step type
+                if (stepType === 'Email' || stepType === 'Task') {
+                    subjectContainer.style.display = 'block';
+                } else {
+                    subjectContainer.style.display = 'none';
+                }
+            });
+        }
+        
+        // Function to reorder steps after moving or removing
+        function reorderSteps() {
+            document.querySelectorAll('.workflow-step').forEach((step, index) => {
+                step.querySelector('input[name="step_order[]"]').value = index;
+                step.querySelector('.step-title').textContent = `Step ${index + 1}: ${step.querySelector('.step-type').value}`;
+            });
+        }
+        
+        // Function to update the state of move up/down buttons
+        function updateMoveButtonsState() {
+            const steps = document.querySelectorAll('.workflow-step');
+            
+            steps.forEach((step, index) => {
+                const upButton = step.querySelector('.move-step-up');
+                const downButton = step.querySelector('.move-step-down');
+                
+                // First step can't move up
+                if (index === 0) {
+                    upButton.disabled = true;
+                } else {
+                    upButton.disabled = false;
+                }
+                
+                // Last step can't move down
+                if (index === steps.length - 1) {
+                    downButton.disabled = true;
+                } else {
+                    downButton.disabled = false;
+                }
+            });
+        }
+        
+        // Function to populate template options based on step type
+        function populateTemplateOptions(selectElement, stepType) {
+            // Clear existing options except the first one
+            while (selectElement.options.length > 1) {
+                selectElement.remove(1);
+            }
+            
+            // Add appropriate templates based on step type
+            const templates = stepType === 'Email' ? emailTemplates : smsTemplates;
+            
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                selectElement.appendChild(option);
+            });
+        }
+    });
+</script>
+{% endblock %}

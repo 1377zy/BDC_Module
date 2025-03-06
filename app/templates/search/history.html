@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Search History{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Search History</h1>
+            <p class="lead">View your recent searches</p>
+        </div>
+        <div class="col-md-4 text-right">
+            <a href="{{ url_for('search.advanced_search') }}" class="btn btn-primary">
+                <i class="fas fa-search"></i> New Search
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recent Searches</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if history %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Search Criteria</th>
+                                    <th>Results</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in history %}
+                                <tr>
+                                    <td>{{ item.executed_at|format_datetime }}</td>
+                                    <td>
+                                        <div class="search-criteria-summary">
+                                            {% set params = item.search_params|from_json %}
+                                            <ul class="list-inline mb-0">
+                                                {% if params.get('first_name') %}
+                                                <li class="list-inline-item"><span class="badge badge-light">First Name: {{ params.first_name }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('last_name') %}
+                                                <li class="list-inline-item"><span class="badge badge-light">Last Name: {{ params.last_name }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('email') %}
+                                                <li class="list-inline-item"><span class="badge badge-light">Email: {{ params.email }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('status') %}
+                                                <li class="list-inline-item"><span class="badge badge-primary">Status: {{ params.status|title }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('source') %}
+                                                <li class="list-inline-item"><span class="badge badge-info">Source: {{ params.source|title }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('vehicle_make') %}
+                                                <li class="list-inline-item"><span class="badge badge-secondary">Make: {{ params.vehicle_make }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('vehicle_model') %}
+                                                <li class="list-inline-item"><span class="badge badge-secondary">Model: {{ params.vehicle_model }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('timeline') %}
+                                                <li class="list-inline-item"><span class="badge badge-warning">Timeline: {{ params.timeline|title }}</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('in_workflow') %}
+                                                <li class="list-inline-item"><span class="badge badge-success">In Workflow</span></li>
+                                                {% endif %}
+                                                
+                                                {% if params.get('has_appointment') %}
+                                                <li class="list-inline-item"><span class="badge badge-success">Has Appointment</span></li>
+                                                {% endif %}
+                                                
+                                                <li class="list-inline-item">
+                                                    <button type="button" class="btn btn-sm btn-link" data-toggle="modal" data-target="#viewSearchModal" 
+                                                            data-search-params="{{ item.search_params|tojson|escape }}">
+                                                        View All Criteria
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td>{{ item.results_count }} lead{{ 's' if item.results_count != 1 else '' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('search.advanced_search') }}?history_id={{ item.id }}" class="btn btn-outline-primary" title="Run Search Again">
+                                                <i class="fas fa-redo"></i> Run Again
+                                            </a>
+                                            <a href="{{ url_for('search.save_search') }}?history_id={{ item.id }}" class="btn btn-outline-secondary" title="Save Search">
+                                                <i class="fas fa-bookmark"></i> Save
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info m-3">
+                        <i class="fas fa-info-circle"></i> You don't have any search history yet.
+                        <a href="{{ url_for('search.advanced_search') }}">Perform a search</a> to see it in your history.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Search Criteria Modal -->
+<div class="modal fade" id="viewSearchModal" tabindex="-1" role="dialog" aria-labelledby="viewSearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewSearchModalLabel">Search Criteria Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <tbody id="searchParamsTable">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="#" id="runSearchAgainBtn" class="btn btn-primary">Run This Search</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // View search criteria modal
+        $('#viewSearchModal').on('show.bs.modal', function (event) {
+            const button = $(event.relatedTarget);
+            const searchParams = JSON.parse(button.data('search-params'));
+            
+            const modal = $(this);
+            const table = modal.find('#searchParamsTable');
+            table.empty();
+            
+            // Format field names for display
+            const fieldLabels = {
+                'first_name': 'First Name',
+                'last_name': 'Last Name',
+                'email': 'Email',
+                'phone': 'Phone',
+                'status': 'Status',
+                'source': 'Source',
+                'created_from': 'Created From',
+                'created_to': 'Created To',
+                'updated_from': 'Updated From',
+                'updated_to': 'Updated To',
+                'vehicle_make': 'Vehicle Make',
+                'vehicle_model': 'Vehicle Model',
+                'vehicle_year_min': 'Min Year',
+                'vehicle_year_max': 'Max Year',
+                'new_or_used': 'New or Used',
+                'budget_min': 'Min Budget',
+                'budget_max': 'Max Budget',
+                'preferred_payment': 'Preferred Payment',
+                'timeline': 'Purchase Timeline',
+                'in_workflow': 'In Active Workflow',
+                'has_appointment': 'Has Appointment',
+                'has_communication': 'Has Communication',
+                'segments': 'Segments',
+                'sort_by': 'Sort By',
+                'sort_order': 'Sort Order'
+            };
+            
+            // Add rows for each parameter
+            for (const [key, value] of Object.entries(searchParams)) {
+                if (value !== null && value !== '' && key !== 'csrf_token' && 
+                    key !== 'submit' && key !== 'save' && key !== 'export') {
+                    
+                    let displayValue = value;
+                    
+                    // Format boolean values
+                    if (typeof value === 'boolean') {
+                        displayValue = value ? 'Yes' : 'No';
+                    }
+                    
+                    // Format date values
+                    if (key.includes('_from') || key.includes('_to')) {
+                        if (value) {
+                            displayValue = new Date(value).toLocaleDateString();
+                        }
+                    }
+                    
+                    // Format arrays
+                    if (Array.isArray(value)) {
+                        displayValue = value.join(', ');
+                    }
+                    
+                    // Add row to table
+                    const label = fieldLabels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    table.append(`
+                        <tr>
+                            <th style="width: 30%">${label}</th>
+                            <td>${displayValue}</td>
+                        </tr>
+                    `);
+                }
+            }
+            
+            // Set the run search again button URL
+            const searchParamsEncoded = encodeURIComponent(JSON.stringify(searchParams));
+            modal.find('#runSearchAgainBtn').attr('href', `/search/advanced?params=${searchParamsEncoded}`);
+        });
+    });
+</script>
+{% endblock %}

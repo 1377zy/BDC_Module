@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Task Management Report</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        {% if template %}
+            {{ template.css_styles|safe }}
+        {% else %}
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .header h1 {
+            font-size: 18pt;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 10pt;
+            color: #7f8c8d;
+            margin: 5px 0;
+        }
+        .summary {
+            margin-bottom: 20px;
+        }
+        .summary-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        .summary-card {
+            flex: 1;
+            margin: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .summary-card.open {
+            border-left: 4px solid #3498db;
+        }
+        .summary-card.completed {
+            border-left: 4px solid #2ecc71;
+        }
+        .summary-card.overdue {
+            border-left: 4px solid #e74c3c;
+        }
+        .summary-card.high-priority {
+            border-left: 4px solid #e74c3c;
+        }
+        .summary-card .number {
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .summary-card .label {
+            font-size: 9pt;
+            color: #7f8c8d;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+        th {
+            background-color: #f8f9fa;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .priority-high {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #f39c12;
+        }
+        .priority-low {
+            color: #27ae60;
+        }
+        .status-open {
+            color: #3498db;
+        }
+        .status-completed {
+            color: #2ecc71;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 8pt;
+            color: #7f8c8d;
+            text-align: center;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 20px;
+        }
+        {% endif %}
+    </style>
+</head>
+<body>
+    {% if template %}
+        {{ template.header_html|safe }}
+    {% else %}
+    <div class="header">
+        <h1>Task Management Report</h1>
+        <p>{{ data.date_range }}</p>
+        <p>Generated on: {{ data.generated_at }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="summary">
+        <div class="summary-row">
+            <div class="summary-card open">
+                <div class="number">{{ data.open_tasks_count }}</div>
+                <div class="label">Open Tasks</div>
+            </div>
+            <div class="summary-card completed">
+                <div class="number">{{ data.completed_tasks_count }}</div>
+                <div class="label">Completed Tasks</div>
+            </div>
+            <div class="summary-card overdue">
+                <div class="number">{{ data.overdue_tasks_count }}</div>
+                <div class="label">Overdue Tasks</div>
+            </div>
+            <div class="summary-card high-priority">
+                <div class="number">{{ data.high_priority_tasks_count }}</div>
+                <div class="label">High Priority Tasks</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Task Analysis</div>
+        <div class="row">
+            {% if data.chart_images.status_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ data.chart_images.status_chart }}" alt="Tasks by Status" style="width: 100%;">
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if data.chart_images.priority_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ data.chart_images.priority_chart }}" alt="Tasks by Priority" style="width: 100%;">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if data.chart_images.user_chart %}
+        <div class="row">
+            <div class="col">
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ data.chart_images.user_chart }}" alt="Tasks by User" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Task List</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Assigned To</th>
+                    <th>Priority</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Related To</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in data.tasks %}
+                <tr>
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.assigned_to.get_full_name() }}</td>
+                    <td>
+                        {% if task.priority == 'high' %}
+                        <span class="priority-high">High</span>
+                        {% elif task.priority == 'medium' %}
+                        <span class="priority-medium">Medium</span>
+                        {% else %}
+                        <span class="priority-low">Low</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                        {{ task.due_date.strftime('%Y-%m-%d') }}
+                        {% if task.due_date < data.now.date() and task.status != 'completed' %}
+                        <span class="overdue">(Overdue)</span>
+                        {% endif %}
+                        {% else %}
+                        No due date
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if task.status == 'completed' %}
+                        <span class="status-completed">Completed</span>
+                        {% else %}
+                        <span class="status-open">Open</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if task.related_entity_type == 'lead' and task.related_entity_id %}
+                        {% set lead = data.get_lead(task.related_entity_id) %}
+                        {% if lead %}
+                        {{ lead.get_full_name() }}
+                        {% else %}
+                        Unknown Lead
+                        {% endif %}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if template %}
+        {{ template.footer_html|safe }}
+    {% else %}
+    <div class="footer">
+        <p>Auto Dealer BDC Module - Task Management Report - Page 1</p>
+    </div>
+    {% endif %}
+</body>
+</html>

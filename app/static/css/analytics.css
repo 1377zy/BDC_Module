@@ -1,0 +1,151 @@
+/* Analytics Dashboard Styling */
+
+/* KPI Cards */
+.kpi-card {
+    transition: transform 0.3s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 1.5rem;
+}
+
+/* Date Range Filter */
+.date-filter {
+    background-color: #f8f9fc;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Performance Metrics */
+.metric-badge {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+}
+
+.metric-badge.positive {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.metric-badge.negative {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: #e74a3b;
+}
+
+.metric-badge.neutral {
+    background-color: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+}
+
+/* Team Performance Table */
+.performance-table th {
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.performance-table td {
+    vertical-align: middle;
+}
+
+/* Export Options */
+.export-options {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Conversion Funnel */
+.funnel-step {
+    position: relative;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.35rem;
+    color: white;
+    font-weight: bold;
+}
+
+.funnel-step.step-1 {
+    background-color: #4e73df;
+    width: 100%;
+}
+
+.funnel-step.step-2 {
+    background-color: #36b9cc;
+    width: 85%;
+}
+
+.funnel-step.step-3 {
+    background-color: #1cc88a;
+    width: 70%;
+}
+
+.funnel-step.step-4 {
+    background-color: #f6c23e;
+    width: 55%;
+}
+
+.funnel-step.step-5 {
+    background-color: #e74a3b;
+    width: 40%;
+}
+
+/* Response Time Chart */
+.response-time-chart {
+    height: 250px;
+}
+
+/* Metric Cards */
+.metric-card {
+    border-left: 0.25rem solid;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+}
+
+.metric-card.primary {
+    border-left-color: #4e73df;
+}
+
+.metric-card.success {
+    border-left-color: #1cc88a;
+}
+
+.metric-card.info {
+    border-left-color: #36b9cc;
+}
+
+.metric-card.warning {
+    border-left-color: #f6c23e;
+}
+
+.metric-card.danger {
+    border-left-color: #e74a3b;
+}
+
+/* Dropdown Menu */
+.chart-dropdown {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .funnel-step {
+        width: 100% !important;
+    }
+}

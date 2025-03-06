@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Inventory Report</title>
+</head>
+<body>
+    <div class="header">
+        <div class="row">
+            <div class="col">
+                <img src="{{ url_for('static', filename='img/logo.png', _external=True) }}" class="logo" alt="Dealership Logo">
+            </div>
+            <div class="col-2 text-center">
+                <h1 class="report-title">Inventory Report</h1>
+                <p class="report-subtitle">{{ dealership_name }}</p>
+            </div>
+            <div class="col text-right">
+                <p class="report-metadata">
+                    Generated: {{ report_generated_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    Date Range: {{ start_date.strftime('%Y-%m-%d') }} to {{ end_date.strftime('%Y-%m-%d') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Page <span class="page"></span> of <span class="topage"></span> | Auto Dealership BDC Module | Confidential</p>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Inventory Summary</h2>
+        
+        <div class="row">
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Key Metrics</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Vehicles:</span>
+                        <span class="summary-value">{{ total_vehicles }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">New Vehicles:</span>
+                        <span class="summary-value">{{ new_vehicles }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Used Vehicles:</span>
+                        <span class="summary-value">{{ used_vehicles }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average Price:</span>
+                        <span class="summary-value">${{ avg_price|round(2) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Average Days in Inventory:</span>
+                        <span class="summary-value">{{ avg_days_in_inventory|round(1) }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col">
+                <div class="summary-box">
+                    <h3 class="summary-title">Inventory Status</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Available:</span>
+                        <span class="summary-value">{{ status_counts.get('Available', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">On Hold:</span>
+                        <span class="summary-value">{{ status_counts.get('On Hold', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Sold:</span>
+                        <span class="summary-value">{{ status_counts.get('Sold', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">In Transit:</span>
+                        <span class="summary-value">{{ status_counts.get('In Transit', 0) }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">In Service:</span>
+                        <span class="summary-value">{{ status_counts.get('In Service', 0) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if chart_images %}
+    <div class="section">
+        <h2 class="section-title">Inventory Analysis</h2>
+        
+        <div class="row">
+            {% if chart_images.status_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">Status Distribution</h3>
+                    <img src="{{ chart_images.status_chart }}" class="chart-image" alt="Status Distribution Chart">
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if chart_images.make_chart %}
+            <div class="col">
+                <div class="chart-container">
+                    <h3 class="chart-title">Make Distribution</h3>
+                    <img src="{{ chart_images.make_chart }}" class="chart-image" alt="Make Distribution Chart">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if chart_images.age_chart %}
+        <div class="chart-container mt-3">
+            <h3 class="chart-title">Age Distribution</h3>
+            <img src="{{ chart_images.age_chart }}" class="chart-image" alt="Age Distribution Chart">
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="section page-break">
+        <h2 class="section-title">Inventory Details</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>VIN</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Year</th>
+                    <th>Color</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Days in Inventory</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in vehicles %}
+                <tr>
+                    <td>{{ vehicle.vin }}</td>
+                    <td>{{ vehicle.make }}</td>
+                    <td>{{ vehicle.model }}</td>
+                    <td>{{ vehicle.year }}</td>
+                    <td>{{ vehicle.color }}</td>
+                    <td>${{ vehicle.price|round(2) }}</td>
+                    <td>{{ vehicle.status }}</td>
+                    <td>{{ vehicle.days_in_inventory }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-title">Price Range Analysis</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Price Range</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                    <th>Avg. Days in Inventory</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for range in price_ranges %}
+                <tr>
+                    <td>{{ range.range }}</td>
+                    <td>{{ range.count }}</td>
+                    <td>{{ range.percentage }}%</td>
+                    <td>{{ range.avg_days }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section page-break">
+        <h2 class="section-title">Recommendations</h2>
+        
+        <div class="summary-box">
+            <h3 class="summary-title">Inventory Optimization</h3>
+            <ul>
+                {% for recommendation in recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

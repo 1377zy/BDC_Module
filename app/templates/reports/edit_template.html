@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Report Template{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/lib/codemirror.css">
+<style>
+    .CodeMirror {
+        height: 200px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .preview-section {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-top: 10px;
+        border-radius: 4px;
+        min-height: 100px;
+    }
+    
+    .template-options label {
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1><i class="fas fa-edit me-2"></i> Edit Report Template</h1>
+            <p class="text-muted">Editing template: {{ template.name }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('reports.report_templates') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Templates
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-file-alt me-2"></i> Template Details
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="templateForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Template Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ template.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="report_type" class="form-label">Report Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="report_type" name="report_type" required>
+                                    <option value="">Select a report type</option>
+                                    <option value="inventory" {% if template.report_type == 'inventory' %}selected{% endif %}>Inventory</option>
+                                    <option value="leads" {% if template.report_type == 'leads' %}selected{% endif %}>Leads</option>
+                                    <option value="sales" {% if template.report_type == 'sales' %}selected{% endif %}>Sales</option>
+                                    <option value="performance" {% if template.report_type == 'performance' %}selected{% endif %}>Performance</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ template.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="header_html" class="form-label">Header HTML</label>
+                                <textarea class="form-control code-editor" id="header_html" name="header_html">{{ template.header_html or '' }}</textarea>
+                                <small class="text-muted">HTML content to display at the top of each report page</small>
+                                <div class="preview-section mt-2" id="headerPreview">
+                                    {% if template.header_html %}
+                                        {{ template.header_html|safe }}
+                                    {% else %}
+                                        <p class="text-muted text-center">Header preview will appear here</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="footer_html" class="form-label">Footer HTML</label>
+                                <textarea class="form-control code-editor" id="footer_html" name="footer_html">{{ template.footer_html or '' }}</textarea>
+                                <small class="text-muted">HTML content to display at the bottom of each report page</small>
+                                <div class="preview-section mt-2" id="footerPreview">
+                                    {% if template.footer_html %}
+                                        {{ template.footer_html|safe }}
+                                    {% else %}
+                                        <p class="text-muted text-center">Footer preview will appear here</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="css_styles" class="form-label">CSS Styles</label>
+                            <textarea class="form-control code-editor" id="css_styles" name="css_styles">{{ template.css_styles or '' }}</textarea>
+                            <small class="text-muted">Custom CSS styles to apply to the report</small>
+                        </div>
+                        
+                        <div class="mb-4 template-options">
+                            <label class="form-label">Template Options</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="include_logo" name="include_logo" {% if template.include_logo %}checked{% endif %}>
+                                <label class="form-check-label" for="include_logo">Include Logo</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="include_timestamp" name="include_timestamp" {% if template.include_timestamp %}checked{% endif %}>
+                                <label class="form-check-label" for="include_timestamp">Include Timestamp</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="include_page_numbers" name="include_page_numbers" {% if template.include_page_numbers %}checked{% endif %}>
+                                <label class="form-check-label" for="include_page_numbers">Include Page Numbers</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="is_default" name="is_default" {% if template.is_default %}checked{% endif %}>
+                                <label class="form-check-label" for="is_default">Set as Default Template</label>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="{{ url_for('reports.preview_template', template_id=template.id) }}" class="btn btn-outline-secondary me-2" target="_blank">
+                                <i class="fas fa-eye me-1"></i> Preview
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/lib/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/mode/htmlmixed/htmlmixed.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/mode/css/css.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/mode/xml/xml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.2/mode/javascript/javascript.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize CodeMirror for HTML and CSS editors
+        const headerEditor = CodeMirror.fromTextArea(document.getElementById('header_html'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            lineWrapping: true
+        });
+        
+        const footerEditor = CodeMirror.fromTextArea(document.getElementById('footer_html'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            lineWrapping: true
+        });
+        
+        const cssEditor = CodeMirror.fromTextArea(document.getElementById('css_styles'), {
+            mode: 'css',
+            lineNumbers: true,
+            lineWrapping: true
+        });
+        
+        // Live preview for header and footer
+        function updatePreviews() {
+            document.getElementById('headerPreview').innerHTML = headerEditor.getValue();
+            document.getElementById('footerPreview').innerHTML = footerEditor.getValue();
+        }
+        
+        headerEditor.on('change', updatePreviews);
+        footerEditor.on('change', updatePreviews);
+        
+        // Form submission
+        document.getElementById('templateForm').addEventListener('submit', function(e) {
+            // Make sure to update textareas with CodeMirror content
+            document.getElementById('header_html').value = headerEditor.getValue();
+            document.getElementById('footer_html').value = footerEditor.getValue();
+            document.getElementById('css_styles').value = cssEditor.getValue();
+        });
+    });
+</script>
+{% endblock %}

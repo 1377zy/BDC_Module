@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Vehicle Interest Analytics</h1>
+        <p class="lead">Understand what vehicles your leads are most interested in</p>
+        
+        <!-- Action Buttons -->
+        <div class="mb-4">
+            <a href="{{ url_for('leads.export_vehicle_interests') }}" class="btn btn-success">
+                <i class="fas fa-file-export"></i> Export All Vehicle Interests
+            </a>
+            <a href="{{ url_for('leads.vehicle_interest_trends') }}" class="btn btn-info">
+                <i class="fas fa-chart-line"></i> View Trends Over Time
+            </a>
+            <a href="{{ url_for('leads.vehicle_interest_comparison') }}" class="btn btn-primary">
+                <i class="fas fa-balance-scale"></i> Compare Time Periods
+            </a>
+        </div>
+        
+        <!-- Filter Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <a class="text-dark" data-bs-toggle="collapse" href="#filterCollapse" role="button" aria-expanded="false" aria-controls="filterCollapse">
+                        <i class="fas fa-filter"></i> Filter Vehicle Interests
+                    </a>
+                </h5>
+            </div>
+            <div class="collapse" id="filterCollapse">
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('leads.vehicle_interest_analytics') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.make.label(class="form-label") }}
+                                    {{ form.make(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.model.label(class="form-label") }}
+                                    {{ form.model(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.year_min.label(class="form-label") }}
+                                    {{ form.year_min(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.year_max.label(class="form-label") }}
+                                    {{ form.year_max(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.new_or_used.label(class="form-label") }}
+                                    {{ form.new_or_used(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.body_style.label(class="form-label") }}
+                                    {{ form.body_style(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.date_from.label(class="form-label") }}
+                                    {{ form.date_from(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    {{ form.date_to.label(class="form-label") }}
+                                    {{ form.date_to(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            {{ form.reset(class="btn btn-secondary me-2") }}
+                            {{ form.submit(class="btn btn-primary me-2") }}
+                            <button type="submit" formaction="{{ url_for('leads.export_vehicle_interests') }}" class="btn btn-success">
+                                <i class="fas fa-file-export"></i> Export Filtered Results
+                            </button>
+                            <button type="submit" formaction="{{ url_for('leads.bulk_delete_vehicle_interests') }}" class="btn btn-danger">
+                                <i class="fas fa-trash-alt"></i> Bulk Delete
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Vehicle Interests</h5>
+                        <h2 class="display-4">{{ stats.total_interests }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">New Vehicle Interests</h5>
+                        <h2 class="display-4">{{ stats.new_count }}</h2>
+                        <p class="card-text">{{ stats.new_percentage }}% of total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Used Vehicle Interests</h5>
+                        <h2 class="display-4">{{ stats.used_count }}</h2>
+                        <p class="card-text">{{ stats.used_percentage }}% of total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Avg. Price Range</h5>
+                        <h2 class="display-4">${{ stats.avg_price_range }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Popular Makes and Models -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top 5 Makes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="makesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top 5 Models</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="modelsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Body Style and Color Preferences -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Body Style Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="bodyStyleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top 5 Exterior Colors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="position: relative; height:300px;">
+                            <canvas id="colorsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Vehicle Interests -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Vehicle Interests</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Lead</th>
+                            <th>Make</th>
+                            <th>Model</th>
+                            <th>Year</th>
+                            <th>New/Used</th>
+                            <th>Priority</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for interest in recent_interests %}
+                        <tr>
+                            <td>{{ interest.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <a href="{{ url_for('leads.view_lead', lead_id=interest.lead.id) }}">
+                                    {{ interest.lead.first_name }} {{ interest.lead.last_name }}
+                                </a>
+                            </td>
+                            <td>{{ interest.make }}</td>
+                            <td>{{ interest.model }}</td>
+                            <td>{{ interest.year }}</td>
+                            <td>{{ interest.new_or_used }}</td>
+                            <td>
+                                {% if interest.priority == 1 %}
+                                <span class="badge bg-primary">Primary</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Secondary</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('leads.view_lead', lead_id=interest.lead.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart.js configuration
+    document.addEventListener('DOMContentLoaded', function() {
+        // Top Makes Chart
+        var makesCtx = document.getElementById('makesChart').getContext('2d');
+        var makesChart = new Chart(makesCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ top_makes|tojson }},
+                datasets: [{
+                    label: 'Number of Interests',
+                    data: {{ top_makes_counts|tojson }},
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Top Models Chart
+        var modelsCtx = document.getElementById('modelsChart').getContext('2d');
+        var modelsChart = new Chart(modelsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ top_models|tojson }},
+                datasets: [{
+                    label: 'Number of Interests',
+                    data: {{ top_models_counts|tojson }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Body Style Chart
+        var bodyStyleCtx = document.getElementById('bodyStyleChart').getContext('2d');
+        var bodyStyleChart = new Chart(bodyStyleCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ body_styles|tojson }},
+                datasets: [{
+                    data: {{ body_style_counts|tojson }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Colors Chart
+        var colorsCtx = document.getElementById('colorsChart').getContext('2d');
+        var colorsChart = new Chart(colorsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ top_colors|tojson }},
+                datasets: [{
+                    data: {{ top_colors_counts|tojson }},
+                    backgroundColor: [
+                        'rgba(0, 0, 0, 0.7)',      // Black
+                        'rgba(255, 255, 255, 0.7)', // White
+                        'rgba(192, 192, 192, 0.7)', // Silver
+                        'rgba(128, 128, 128, 0.7)', // Gray
+                        'rgba(255, 0, 0, 0.7)'      // Red
+                    ],
+                    borderColor: [
+                        'rgba(0, 0, 0, 1)',
+                        'rgba(220, 220, 220, 1)',
+                        'rgba(192, 192, 192, 1)',
+                        'rgba(128, 128, 128, 1)',
+                        'rgba(255, 0, 0, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

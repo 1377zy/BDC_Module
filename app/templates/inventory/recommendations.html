@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Vehicle Recommendations for {{ lead.first_name }} {{ lead.last_name }}</h1>
+        
+        <!-- Lead Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Lead Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Name:</strong> {{ lead.first_name }} {{ lead.last_name }}</p>
+                        <p><strong>Email:</strong> {{ lead.email }}</p>
+                        <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Source:</strong> {{ lead.source }}</p>
+                        <p><strong>Status:</strong> {{ lead.status }}</p>
+                        <p><strong>Created:</strong> {{ lead.created_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                    <div class="col-md-4 text-right">
+                        <a href="{{ url_for('leads.view_lead', lead_id=lead.id) }}" class="btn btn-info">
+                            <i class="fas fa-user"></i> View Lead Profile
+                        </a>
+                        <a href="{{ url_for('inventory.lead_matches', lead_id=lead.id) }}" class="btn btn-primary">
+                            <i class="fas fa-link"></i> View Current Matches
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Vehicle Interests -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Vehicle Interests</h5>
+            </div>
+            <div class="card-body">
+                {% if vehicle_interests %}
+                <div class="row">
+                    {% for interest in vehicle_interests %}
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Interest #{{ loop.index }}</h5>
+                                <p><strong>Make:</strong> {{ interest.make }}</p>
+                                <p><strong>Model:</strong> {{ interest.model }}</p>
+                                <p><strong>Year:</strong> {{ interest.year }}</p>
+                                <p><strong>New/Used:</strong> {{ interest.new_or_used }}</p>
+                                {% if interest.trim %}
+                                <p><strong>Trim:</strong> {{ interest.trim }}</p>
+                                {% endif %}
+                                {% if interest.color_exterior %}
+                                <p><strong>Color:</strong> {{ interest.color_exterior }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <p>No vehicle interests recorded for this lead.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recommended Vehicles -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recommended Vehicles</h5>
+                <span class="badge bg-primary">{{ recommendations|length }} vehicles</span>
+            </div>
+            <div class="card-body">
+                {% if recommendations %}
+                <div class="row">
+                    {% for item in recommendations %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">{{ item.year }} {{ item.make }} {{ item.model }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Stock #:</strong> {{ item.stock_number }}</p>
+                                <p><strong>Trim:</strong> {{ item.trim }}</p>
+                                <p><strong>Color:</strong> {{ item.color_exterior }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if item.status == 'Available' %}
+                                    <span class="badge bg-success">Available</span>
+                                    {% elif item.status == 'On Hold' %}
+                                    <span class="badge bg-warning">On Hold</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ item.status }}</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Price:</strong> ${{ item.sale_price|int }}</p>
+                                <p><strong>Match Score:</strong> {{ item.match_score }}%</p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="btn-group w-100">
+                                    <a href="{{ url_for('inventory.view_inventory', inventory_id=item.id) }}" class="btn btn-info">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{{ url_for('inventory.create_match_for_lead', lead_id=lead.id, inventory_id=item.id) }}" class="btn btn-success">
+                                        <i class="fas fa-link"></i> Match
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <p>No recommended vehicles found based on this lead's preferences.</p>
+                    <p>Try broadening the search criteria or adding more vehicle interests to the lead's profile.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

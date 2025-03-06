@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Application Settings</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Email Configuration</h5>
+                </div>
+                <div class="card-body">
+                    {% if settings.google_auth_status == 'authorized' %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Connected to Google! You can now send emails using your Google account.
+                            <a href="{{ url_for('revoke_google') }}" class="btn btn-sm btn-outline-danger float-end">Disconnect</a>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> You can now connect directly with Google to send emails without needing to enter your password.
+                            <a href="{{ url_for('authorize_google') }}" class="btn btn-primary float-end">
+                                <i class="fab fa-google"></i> Login with Google
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <form action="/settings/update-email" method="post">
+                        <div class="mb-3">
+                            <label for="mail_username" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="mail_username" name="mail_username" value="{{ settings.mail_username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mail_password" class="form-label">Email Password (App Password for Gmail)</label>
+                            <input type="password" class="form-control" id="mail_password" name="mail_password" placeholder="Enter new password" autocomplete="new-password">
+                            <div class="form-text">Leave blank to keep current password. For Gmail, use an App Password.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mail_default_sender" class="form-label">Default Sender Email</label>
+                            <input type="email" class="form-control" id="mail_default_sender" name="mail_default_sender" value="{{ settings.mail_default_sender }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mail_server" class="form-label">Mail Server</label>
+                            <input type="text" class="form-control" id="mail_server" name="mail_server" value="{{ settings.mail_server }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mail_port" class="form-label">Mail Port</label>
+                            <input type="number" class="form-control" id="mail_port" name="mail_port" value="{{ settings.mail_port }}" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="mail_use_tls" name="mail_use_tls" {% if settings.mail_use_tls %}checked{% endif %}>
+                            <label class="form-check-label" for="mail_use_tls">Use TLS</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Email Settings</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">SMS Configuration (Twilio)</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/settings/update-sms" method="post">
+                        <div class="mb-3">
+                            <label for="twilio_account_sid" class="form-label">Twilio Account SID</label>
+                            <input type="text" class="form-control" id="twilio_account_sid" name="twilio_account_sid" value="{{ settings.twilio_account_sid }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="twilio_auth_token" class="form-label">Twilio Auth Token</label>
+                            <input type="password" class="form-control" id="twilio_auth_token" name="twilio_auth_token" placeholder="Enter new token" autocomplete="new-password">
+                            <div class="form-text">Leave blank to keep current token.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="twilio_phone_number" class="form-label">Twilio Phone Number</label>
+                            <input type="text" class="form-control" id="twilio_phone_number" name="twilio_phone_number" value="{{ settings.twilio_phone_number }}" placeholder="+1XXXXXXXXXX" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update SMS Settings</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Dealership Information</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/settings/update-dealership" method="post">
+                        <div class="mb-3">
+                            <label for="dealership_name" class="form-label">Dealership Name</label>
+                            <input type="text" class="form-control" id="dealership_name" name="dealership_name" value="{{ settings.dealership_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealership_address" class="form-label">Dealership Address</label>
+                            <input type="text" class="form-control" id="dealership_address" name="dealership_address" value="{{ settings.dealership_address }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealership_phone" class="form-label">Dealership Phone</label>
+                            <input type="text" class="form-control" id="dealership_phone" name="dealership_phone" value="{{ settings.dealership_phone }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dealership_website" class="form-label">Dealership Website</label>
+                            <input type="text" class="form-control" id="dealership_website" name="dealership_website" value="{{ settings.dealership_website }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Dealership Information</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Salesperson Information</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/settings/update-salesperson" method="post">
+                        <div class="mb-3">
+                            <label for="salesperson_name" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="salesperson_name" name="salesperson_name" value="{{ settings.salesperson_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="salesperson_email" class="form-label">Your Email</label>
+                            <input type="email" class="form-control" id="salesperson_email" name="salesperson_email" value="{{ settings.salesperson_email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="salesperson_phone" class="form-label">Your Phone</label>
+                            <input type="text" class="form-control" id="salesperson_phone" name="salesperson_phone" value="{{ settings.salesperson_phone }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Salesperson Information</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mb-4">
+                <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Schedule New Appointment - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 fw-bold">
+            <i class="fas fa-calendar-plus"></i> Schedule New Appointment
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card form-container">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select name="lead_id" id="lead_id" class="form-select" required>
+                            <option value="">-- Select a Lead --</option>
+                            {% for lead in leads %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Can't find the lead? <a href="{{ url_for('add_lead') }}">Create a new one</a>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Appointment Date</label>
+                            <input type="date" name="date" id="date" class="form-control" required min="{{ current_date }}" value="{{ current_date }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="time" class="form-label">Appointment Time</label>
+                            <input type="time" name="time" id="time" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="purpose" class="form-label">Purpose</label>
+                        <select name="purpose" id="purpose" class="form-select" required>
+                            <option value="">-- Select Purpose --</option>
+                            <option value="Test Drive">Test Drive</option>
+                            <option value="Vehicle Viewing">Vehicle Viewing</option>
+                            <option value="Pricing Discussion">Pricing Discussion</option>
+                            <option value="Financing Options">Financing Options</option>
+                            <option value="Trade-in Evaluation">Trade-in Evaluation</option>
+                            <option value="Final Purchase">Final Purchase</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="3" placeholder="Any notes about this appointment"></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Schedule Appointment
+                        </button>
+                        <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-info-circle me-1"></i> Appointment Information
+            </div>
+            <div class="card-body">
+                <h5>Best Practices for Appointments</h5>
+                <ul>
+                    <li>Schedule appointments at least 24 hours in advance</li>
+                    <li>Allow 1-2 hours for each appointment</li>
+                    <li>Send a confirmation email and SMS after scheduling</li>
+                    <li>Call to confirm the appointment a day before</li>
+                    <li>Follow up after the appointment with a thank you message</li>
+                </ul>
+                
+                <h5>Available Times</h5>
+                <p>Dealership hours:</p>
+                <ul>
+                    <li><strong>Monday - Friday:</strong> 9:00 AM - 8:00 PM</li>
+                    <li><strong>Saturday:</strong> 9:00 AM - 6:00 PM</li>
+                    <li><strong>Sunday:</strong> 11:00 AM - 5:00 PM</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Set default time to business hours start (9:00 AM)
+        document.getElementById('time').value = '09:00';
+    });
+</script>
+{% endblock %}

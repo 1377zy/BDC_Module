@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Leads - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-file-import"></i> Import Leads</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ url_for('leads') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Lead List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-upload me-1"></i> Upload Lead Data
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" action="{{ url_for('import_leads') }}">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                        <div class="form-text">Upload a CSV file with your lead data</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-file-import me-1"></i> Import Leads
+                        </button>
+                        <a href="{{ url_for('leads') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-1"></i> Import Instructions
+            </div>
+            <div class="card-body">
+                <h5>How to Import Leads</h5>
+                <ol>
+                    <li>Prepare your CSV file with lead data</li>
+                    <li>Select the file using the upload button</li>
+                    <li>Click "Import Leads" to begin the import process</li>
+                </ol>
+                
+                <h5>CSV Format Requirements</h5>
+                <p>Your CSV file should contain the following columns:</p>
+                <ul>
+                    <li><strong>first_name</strong> (required)</li>
+                    <li><strong>last_name</strong> (required)</li>
+                    <li><strong>email</strong> (required)</li>
+                    <li><strong>phone</strong> (required)</li>
+                    <li><strong>source</strong> (optional, defaults to "Import")</li>
+                    <li><strong>status</strong> (optional, defaults to "New")</li>
+                    <li><strong>notes</strong> (optional)</li>
+                    <li><strong>make</strong> (optional - vehicle interest)</li>
+                    <li><strong>model</strong> (optional - vehicle interest)</li>
+                    <li><strong>year</strong> (optional - vehicle interest)</li>
+                    <li><strong>new_or_used</strong> (optional - vehicle interest)</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i> <strong>Important:</strong> The first row of your CSV must contain the column headers exactly as shown above.
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{{ url_for('download_lead_template') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-1"></i> Download Template
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <i class="fas fa-lightbulb me-1"></i> Tips
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Make sure your CSV is properly formatted with commas separating each field</li>
+                    <li>Use the template for the correct column headers</li>
+                    <li>First name and last name are required for each lead</li>
+                    <li>For best results, include at least an email or phone number</li>
+                </ul>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-1"></i> <strong>Sample CSV content:</strong><br>
+                    <code>first_name,last_name,email,phone,source,status,notes,make,model,year,new_or_used<br>
+                    John,Doe,john@example.com,555-123-4567,Website,New,Interested in financing,Toyota,Camry,2023,New</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

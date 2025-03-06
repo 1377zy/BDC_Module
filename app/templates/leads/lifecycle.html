@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Lead Lifecycle Management{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .lifecycle-stage {
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .lifecycle-stage h5 {
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    .stage-new {
+        border-left: 5px solid #00c0ef;
+    }
+    .stage-engaged {
+        border-left: 5px solid #3498db;
+    }
+    .stage-qualified {
+        border-left: 5px solid #9b59b6;
+    }
+    .stage-opportunity {
+        border-left: 5px solid #f39c12;
+    }
+    .stage-customer {
+        border-left: 5px solid #2ecc71;
+    }
+    .stage-closed {
+        border-left: 5px solid #95a5a6;
+    }
+    .lead-card {
+        margin-bottom: 10px;
+        border-radius: 4px;
+        transition: transform 0.2s;
+    }
+    .lead-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .lead-score {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    .score-high {
+        background-color: #27ae60;
+    }
+    .score-medium {
+        background-color: #f39c12;
+    }
+    .score-low {
+        background-color: #e74c3c;
+    }
+    .stage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .stage-count {
+        font-size: 14px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background-color: #f8f9fa;
+    }
+    .lifecycle-description {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+    .lifecycle-criteria {
+        font-size: 13px;
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+    .lifecycle-criteria ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+    .lifecycle-actions {
+        margin-top: 10px;
+    }
+    .lead-details {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    .lead-last-activity {
+        font-size: 12px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('leads.advanced_dashboard') }}">Advanced Lead Management</a></li>
+                    <li class="breadcrumb-item active">Lifecycle Management</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Lead Lifecycle Management</h5>
+                </div>
+                <div class="card-body">
+                    <p>The lead lifecycle represents the journey of a lead from initial contact to becoming a customer. Each stage has specific criteria and recommended actions.</p>
+                    
+                    <div class="row mt-4">
+                        <!-- New Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-new">
+                                <div class="stage-header">
+                                    <h5>New</h5>
+                                    <span class="stage-count">{{ new_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have just entered the system and need initial contact.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>Recently created leads</li>
+                                        <li>No communication yet</li>
+                                        <li>Basic information collected</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in new_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-success update-stage" data-lead-id="{{ lead.id }}" data-stage="engaged">Move to Engaged</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Engaged Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-engaged">
+                                <div class="stage-header">
+                                    <h5>Engaged</h5>
+                                    <span class="stage-count">{{ engaged_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have had initial contact and are showing some interest.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>At least one communication</li>
+                                        <li>Responded to initial contact</li>
+                                        <li>Showing some interest in vehicles</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in engaged_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-success update-stage" data-lead-id="{{ lead.id }}" data-stage="qualified">Move to Qualified</button>
+                                                <button class="btn btn-sm btn-outline-secondary update-stage" data-lead-id="{{ lead.id }}" data-stage="new">Move to New</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Qualified Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-qualified">
+                                <div class="stage-header">
+                                    <h5>Qualified</h5>
+                                    <span class="stage-count">{{ qualified_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have been qualified and have specific vehicle interests.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>Multiple communications</li>
+                                        <li>Specific vehicle interests identified</li>
+                                        <li>Budget and timeline discussed</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in qualified_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-success update-stage" data-lead-id="{{ lead.id }}" data-stage="opportunity">Move to Opportunity</button>
+                                                <button class="btn btn-sm btn-outline-secondary update-stage" data-lead-id="{{ lead.id }}" data-stage="engaged">Move to Engaged</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <!-- Opportunity Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-opportunity">
+                                <div class="stage-header">
+                                    <h5>Opportunity</h5>
+                                    <span class="stage-count">{{ opportunity_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have scheduled a test drive or showroom visit.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>Test drive scheduled</li>
+                                        <li>Showroom visit arranged</li>
+                                        <li>High engagement level</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in opportunity_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-success update-stage" data-lead-id="{{ lead.id }}" data-stage="customer">Move to Customer</button>
+                                                <button class="btn btn-sm btn-outline-secondary update-stage" data-lead-id="{{ lead.id }}" data-stage="qualified">Move to Qualified</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Customer Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-customer">
+                                <div class="stage-header">
+                                    <h5>Customer</h5>
+                                    <span class="stage-count">{{ customer_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have made a purchase and become customers.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>Vehicle purchased</li>
+                                        <li>Paperwork completed</li>
+                                        <li>Delivery scheduled or completed</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in customer_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-secondary update-stage" data-lead-id="{{ lead.id }}" data-stage="opportunity">Move to Opportunity</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Closed Stage -->
+                        <div class="col-md-4">
+                            <div class="lifecycle-stage stage-closed">
+                                <div class="stage-header">
+                                    <h5>Closed</h5>
+                                    <span class="stage-count">{{ closed_leads|length }}</span>
+                                </div>
+                                <div class="lifecycle-description">
+                                    Leads that have been closed without converting to customers.
+                                </div>
+                                <div class="lifecycle-criteria">
+                                    <strong>Criteria:</strong>
+                                    <ul>
+                                        <li>No longer interested</li>
+                                        <li>Purchased elsewhere</li>
+                                        <li>Unresponsive after multiple attempts</li>
+                                    </ul>
+                                </div>
+                                
+                                {% for lead in closed_leads %}
+                                    <div class="card lead-card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="lead-score {% if lead.score >= 70 %}score-high{% elif lead.score >= 40 %}score-medium{% else %}score-low{% endif %}">
+                                                    {{ lead.score }}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ lead.first_name }} {{ lead.last_name }}</h6>
+                                                    <div class="lead-details">{{ lead.source }} | {{ lead.created_at.strftime('%Y-%m-%d') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="lead-last-activity mt-2">
+                                                {% if lead.last_activity_date %}
+                                                    Last activity: {{ lead.last_activity_date.strftime('%Y-%m-%d %H:%M') }}
+                                                {% else %}
+                                                    No activity yet
+                                                {% endif %}
+                                            </div>
+                                            <div class="lifecycle-actions">
+                                                <a href="{{ url_for('leads.view', lead_id=lead.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                <button class="btn btn-sm btn-outline-warning update-stage" data-lead-id="{{ lead.id }}" data-stage="new">Reactivate</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No leads in this stage.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function() {
+        // Update lead lifecycle stage
+        $('.update-stage').click(function() {
+            var leadId = $(this).data('lead-id');
+            var newStage = $(this).data('stage');
+            
+            if (confirm('Are you sure you want to move this lead to the ' + newStage + ' stage?')) {
+                $.post("{{ url_for('leads.update_lifecycle_stage') }}", {
+                    lead_id: leadId,
+                    stage: newStage
+                }).done(function(data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }).fail(function() {
+                    alert('An error occurred while updating the lead stage.');
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

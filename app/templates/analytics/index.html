@@ -1,0 +1,15 @@
+
+    {% extends 'base.html' %}
+    
+    {% block content %}
+    <div class="container mt-4">
+        <div class="jumbotron">
+            <h1 class="display-4">Vehicle Interest Analytics</h1>
+            <p class="lead">Track and analyze vehicle interests to make data-driven decisions.</p>
+            <hr class="my-4">
+            <p>View comprehensive analytics about vehicle interests, trends, and patterns.</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('analytics') }}" role="button">View Analytics</a>
+        </div>
+    </div>
+    {% endblock %}
+    

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Vehicle Inventory - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold"><i class="fas fa-car"></i> Vehicle Inventory</h1>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ url_for('inventory.create_car') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Vehicle
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-search me-2"></i> Search Vehicles
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('inventory.list_cars') }}" method="get" class="mb-0">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <label for="make" class="form-label">Make</label>
+                            {{ form.make(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="model" class="form-label">Model</label>
+                            {{ form.model(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="min_year" class="form-label">Min Year</label>
+                            {{ form.min_year(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="max_year" class="form-label">Max Year</label>
+                            {{ form.max_year(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <label for="min_price" class="form-label">Min Price</label>
+                            {{ form.min_price(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="max_price" class="form-label">Max Price</label>
+                            {{ form.max_price(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="max_mileage" class="form-label">Max Mileage</label>
+                            {{ form.max_mileage(class="form-control") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="status" class="form-label">Status</label>
+                            {{ form.status(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <label for="new_or_used" class="form-label">New or Used</label>
+                            {{ form.new_or_used(class="form-select") }}
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label for="body_style" class="form-label">Body Style</label>
+                            {{ form.body_style(class="form-select") }}
+                        </div>
+                        <div class="col-md-6 mb-2 d-flex align-items-end">
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                <a href="{{ url_for('inventory.list_cars') }}" class="btn btn-secondary">
+                                    <i class="fas fa-redo"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if cars.items %}
+        {% for car in cars.items %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="position-relative">
+                    {% set primary_image = car.images.filter_by(is_primary=True).first() %}
+                    {% if primary_image %}
+                    <img src="{{ primary_image.url }}" class="card-img-top" alt="{{ car.year }} {{ car.make }} {{ car.model }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light text-center py-5" style="height: 200px;">
+                        <i class="fas fa-car fa-4x text-muted mt-3"></i>
+                        <p class="mt-2 text-muted">No image available</p>
+                    </div>
+                    {% endif %}
+                    <span class="badge bg-{{ 'success' if car.status == 'Available' else 'warning' if car.status == 'On Hold' else 'danger' if car.status == 'Sold' else 'info' }} position-absolute top-0 end-0 m-2">
+                        {{ car.status }}
+                    </span>
+                    <span class="badge bg-{{ 'primary' if car.new_or_used == 'New' else 'secondary' }} position-absolute top-0 start-0 m-2">
+                        {{ car.new_or_used }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">{{ car.year }} {{ car.make }} {{ car.model }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ car.trim }}</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fs-5 fw-bold text-primary">${{ "{:,.2f}".format(car.price) }}</span>
+                        <span class="text-muted">{{ "{:,}".format(car.mileage) }} miles</span>
+                    </div>
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark me-1">{{ car.body_style }}</span>
+                        <span class="badge bg-light text-dark me-1">{{ car.transmission }}</span>
+                        <span class="badge bg-light text-dark">{{ car.fuel_type }}</span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('inventory.view_car', car_id=car.id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <small class="text-muted">Added {{ car.created_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No vehicles found. Try adjusting your search criteria or <a href="{{ url_for('inventory.create_car') }}">add a new vehicle</a>.
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if cars.pages > 1 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Vehicle pagination">
+            <ul class="pagination justify-content-center">
+                {% if cars.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('inventory.list_cars', page=cars.prev_num, **request.args) }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&laquo;</span>
+                </li>
+                {% endif %}
+                
+                {% for page in cars.iter_pages() %}
+                    {% if page %}
+                        {% if page != cars.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('inventory.list_cars', page=page, **request.args) }}">{{ page }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if cars.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('inventory.list_cars', page=cars.next_num, **request.args) }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-hidden="true">&raquo;</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

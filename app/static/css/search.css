@@ -1,0 +1,224 @@
+/* Advanced Search Styles */
+
+/* Search section styling */
+.search-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.search-section:last-child {
+    border-bottom: none;
+}
+
+.search-section-title {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+/* Form actions styling */
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Criteria list styling */
+.criteria-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.criteria-list li {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dotted #e9ecef;
+}
+
+.criteria-list li:last-child {
+    border-bottom: none;
+}
+
+/* Search criteria summary */
+.search-criteria-summary {
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+/* Results table styling */
+#resultsTable th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+}
+
+/* Badge styling for statuses */
+.badge-new {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-contacted {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-qualified {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-unqualified {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-nurturing {
+    background-color: #fd7e14;
+    color: white;
+}
+
+.badge-converted {
+    background-color: #6f42c1;
+    color: white;
+}
+
+/* Saved search card styling */
+.saved-search-card {
+    transition: all 0.3s ease;
+}
+
+.saved-search-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Search history item styling */
+.search-history-item {
+    transition: all 0.3s ease;
+}
+
+.search-history-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .search-section .row .col-md-3,
+    .search-section .row .col-md-4,
+    .search-section .row .col-md-6 {
+        margin-bottom: 1rem;
+    }
+    
+    .form-actions .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+    
+    .search-criteria-summary {
+        max-height: 150px;
+    }
+}
+
+/* Custom checkbox styling */
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Filter input styling */
+#resultFilter {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Select2 custom styling (if used) */
+.select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+    background-color: #007bff;
+    border: 1px solid #0069d9;
+    color: #fff;
+}
+
+.select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #fff;
+}
+
+/* Date range inputs */
+input[type="date"] {
+    min-height: 38px;
+}
+
+/* Bulk action buttons */
+.bulk-action-btn {
+    margin-right: 0.25rem;
+}
+
+/* Saved search badges */
+.saved-search-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Search history timestamp */
+.search-timestamp {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Results count badge */
+.results-count {
+    font-size: 1.1rem;
+    padding: 0.3rem 0.6rem;
+}
+
+/* Tooltip styling */
+.search-tooltip {
+    cursor: help;
+}
+
+/* Quick filter buttons */
+.quick-filter-btn {
+    margin-bottom: 0.5rem;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Search form card */
+.search-form-card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Search form card header */
+.search-form-card .card-header {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+/* Search form card footer */
+.search-form-card .card-footer {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Custom scrollbar for criteria lists */
+.criteria-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.criteria-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.criteria-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.criteria-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

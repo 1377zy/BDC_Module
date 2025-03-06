@@ -1,0 +1,75 @@
+{% if segment_type == 'interest' %}
+    <option value="" disabled {% if not criterion %}selected{% endif %}>Select Interest Field</option>
+    <option value="interest_type" {% if criterion and criterion.field == 'interest_type' %}selected{% endif %}>Interest Type</option>
+    <option value="interest_value" {% if criterion and criterion.field == 'interest_value' %}selected{% endif %}>Interest Value</option>
+    <option value="interest_level" {% if criterion and criterion.field == 'interest_level' %}selected{% endif %}>Interest Level</option>
+    <option value="vehicle_make" {% if criterion and criterion.field == 'vehicle_make' %}selected{% endif %}>Vehicle Make</option>
+    <option value="vehicle_model" {% if criterion and criterion.field == 'vehicle_model' %}selected{% endif %}>Vehicle Model</option>
+    <option value="vehicle_year" {% if criterion and criterion.field == 'vehicle_year' %}selected{% endif %}>Vehicle Year</option>
+    <option value="vehicle_type" {% if criterion and criterion.field == 'vehicle_type' %}selected{% endif %}>Vehicle Type</option>
+{% elif segment_type == 'budget' %}
+    <option value="" disabled {% if not criterion %}selected{% endif %}>Select Budget Field</option>
+    <option value="min_amount" {% if criterion and criterion.field == 'min_amount' %}selected{% endif %}>Minimum Budget</option>
+    <option value="max_amount" {% if criterion and criterion.field == 'max_amount' %}selected{% endif %}>Maximum Budget</option>
+    <option value="preferred_payment_type" {% if criterion and criterion.field == 'preferred_payment_type' %}selected{% endif %}>Payment Type</option>
+    <option value="down_payment" {% if criterion and criterion.field == 'down_payment' %}selected{% endif %}>Down Payment</option>
+    <option value="monthly_payment" {% if criterion and criterion.field == 'monthly_payment' %}selected{% endif %}>Monthly Payment</option>
+{% elif segment_type == 'timeline' %}
+    <option value="" disabled {% if not criterion %}selected{% endif %}>Select Timeline Field</option>
+    <option value="timeline_type" {% if criterion and criterion.field == 'timeline_type' %}selected{% endif %}>Purchase Timeline</option>
+    <option value="specific_date" {% if criterion and criterion.field == 'specific_date' %}selected{% endif %}>Specific Purchase Date</option>
+    <option value="urgency_level" {% if criterion and criterion.field == 'urgency_level' %}selected{% endif %}>Urgency Level</option>
+    <option value="reason" {% if criterion and criterion.field == 'reason' %}selected{% endif %}>Timeline Reason</option>
+{% else %}
+    <option value="" disabled {% if not criterion %}selected{% endif %}>Select Field</option>
+    <optgroup label="Basic Information">
+        <option value="first_name" {% if criterion and criterion.field == 'first_name' %}selected{% endif %}>First Name</option>
+        <option value="last_name" {% if criterion and criterion.field == 'last_name' %}selected{% endif %}>Last Name</option>
+        <option value="email" {% if criterion and criterion.field == 'email' %}selected{% endif %}>Email</option>
+        <option value="phone" {% if criterion and criterion.field == 'phone' %}selected{% endif %}>Phone</option>
+        <option value="source" {% if criterion and criterion.field == 'source' %}selected{% endif %}>Lead Source</option>
+        <option value="status" {% if criterion and criterion.field == 'status' %}selected{% endif %}>Lead Status</option>
+        <option value="created_at" {% if criterion and criterion.field == 'created_at' %}selected{% endif %}>Created Date</option>
+        <option value="updated_at" {% if criterion and criterion.field == 'updated_at' %}selected{% endif %}>Last Updated</option>
+    </optgroup>
+    <optgroup label="Interests">
+        <option value="interest_type" {% if criterion and criterion.field == 'interest_type' %}selected{% endif %}>Interest Type</option>
+        <option value="interest_value" {% if criterion and criterion.field == 'interest_value' %}selected{% endif %}>Interest Value</option>
+        <option value="interest_level" {% if criterion and criterion.field == 'interest_level' %}selected{% endif %}>Interest Level</option>
+        <option value="vehicle_make" {% if criterion and criterion.field == 'vehicle_make' %}selected{% endif %}>Vehicle Make</option>
+        <option value="vehicle_model" {% if criterion and criterion.field == 'vehicle_model' %}selected{% endif %}>Vehicle Model</option>
+        <option value="vehicle_year" {% if criterion and criterion.field == 'vehicle_year' %}selected{% endif %}>Vehicle Year</option>
+        <option value="vehicle_type" {% if criterion and criterion.field == 'vehicle_type' %}selected{% endif %}>Vehicle Type</option>
+    </optgroup>
+    <optgroup label="Budget">
+        <option value="min_amount" {% if criterion and criterion.field == 'min_amount' %}selected{% endif %}>Minimum Budget</option>
+        <option value="max_amount" {% if criterion and criterion.field == 'max_amount' %}selected{% endif %}>Maximum Budget</option>
+        <option value="preferred_payment_type" {% if criterion and criterion.field == 'preferred_payment_type' %}selected{% endif %}>Payment Type</option>
+        <option value="down_payment" {% if criterion and criterion.field == 'down_payment' %}selected{% endif %}>Down Payment</option>
+        <option value="monthly_payment" {% if criterion and criterion.field == 'monthly_payment' %}selected{% endif %}>Monthly Payment</option>
+    </optgroup>
+    <optgroup label="Timeline">
+        <option value="timeline_type" {% if criterion and criterion.field == 'timeline_type' %}selected{% endif %}>Purchase Timeline</option>
+        <option value="specific_date" {% if criterion and criterion.field == 'specific_date' %}selected{% endif %}>Specific Purchase Date</option>
+        <option value="urgency_level" {% if criterion and criterion.field == 'urgency_level' %}selected{% endif %}>Urgency Level</option>
+        <option value="reason" {% if criterion and criterion.field == 'reason' %}selected{% endif %}>Timeline Reason</option>
+    </optgroup>
+    <optgroup label="Communication">
+        <option value="last_contact_date" {% if criterion and criterion.field == 'last_contact_date' %}selected{% endif %}>Last Contact Date</option>
+        <option value="communication_count" {% if criterion and criterion.field == 'communication_count' %}selected{% endif %}>Communication Count</option>
+        <option value="appointment_count" {% if criterion and criterion.field == 'appointment_count' %}selected{% endif %}>Appointment Count</option>
+        <option value="next_appointment_date" {% if criterion and criterion.field == 'next_appointment_date' %}selected{% endif %}>Next Appointment</option>
+    </optgroup>
+    <optgroup label="Workflow">
+        <option value="workflow_status" {% if criterion and criterion.field == 'workflow_status' %}selected{% endif %}>Workflow Status</option>
+        <option value="workflow_name" {% if criterion and criterion.field == 'workflow_name' %}selected{% endif %}>Workflow Name</option>
+        <option value="workflow_step" {% if criterion and criterion.field == 'workflow_step' %}selected{% endif %}>Current Workflow Step</option>
+    </optgroup>
+    {% if custom_fields %}
+    <optgroup label="Custom Fields">
+        {% for field in custom_fields %}
+        <option value="custom_{{ field.name }}" {% if criterion and criterion.field == 'custom_' + field.name %}selected{% endif %}>{{ field.display_name }}</option>
+        {% endfor %}
+    </optgroup>
+    {% endif %}
+{% endif %}
