@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_required, current_user
 from app import db
 from app.inventory import bp
-from app.models_main import Inventory, Lead, Match
+from app.models_main import Inventory, Lead, LeadVehicleMatch
 from app.leads.forms import InventoryForm, SearchInventoryForm, MatchForm
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -50,9 +50,9 @@ def dashboard():
     # This would be more sophisticated in a real implementation
     popular_matches = []
     match_counts = db.session.query(
-        Match.inventory_id, 
-        func.count(Match.id).label('lead_count')
-    ).group_by(Match.inventory_id).order_by(func.count(Match.id).desc()).limit(3).all()
+        LeadVehicleMatch.inventory_id, 
+        func.count(LeadVehicleMatch.id).label('lead_count')
+    ).group_by(LeadVehicleMatch.inventory_id).order_by(func.count(LeadVehicleMatch.id).desc()).limit(3).all()
     
     for match_count in match_counts:
         inventory = Inventory.query.get(match_count.inventory_id)
@@ -198,7 +198,7 @@ def delete_inventory(inventory_id):
 @bp.route('/matches')
 @login_required
 def list_matches():
-    matches = Match.query.order_by(Match.created_at.desc()).all()
+    matches = LeadVehicleMatch.query.order_by(LeadVehicleMatch.created_at.desc()).all()
     return render_template('inventory/matches.html', title='Lead-Vehicle Matches', matches=matches)
 
 @bp.route('/create_match', methods=['GET', 'POST'])
@@ -210,7 +210,7 @@ def create_match():
     form.inventory_id.choices = [(i.id, f'{i.year} {i.make} {i.model} ({i.stock_number})') for i in Inventory.query.all()]
     
     if form.validate_on_submit():
-        match = Match(
+        match = LeadVehicleMatch(
             lead_id=form.lead_id.data,
             inventory_id=form.inventory_id.data,
             user_id=current_user.id,
@@ -227,7 +227,7 @@ def create_match():
 @bp.route('/match/<int:match_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_match(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = LeadVehicleMatch.query.get_or_404(match_id)
     form = MatchForm(obj=match)
     # Populate select fields with dynamic choices
     form.lead_id.choices = [(l.id, f'{l.first_name} {l.last_name}') for l in Lead.query.all()]
@@ -247,7 +247,7 @@ def edit_match(match_id):
 @bp.route('/match/<int:match_id>/delete', methods=['POST'])
 @login_required
 def delete_match(match_id):
-    match = Match.query.get_or_404(match_id)
+    match = LeadVehicleMatch.query.get_or_404(match_id)
     db.session.delete(match)
     db.session.commit()
     flash('Match deleted successfully', 'success')
@@ -257,7 +257,7 @@ def delete_match(match_id):
 @login_required
 def lead_matches(lead_id):
     lead = Lead.query.get_or_404(lead_id)
-    matches = Match.query.filter_by(lead_id=lead_id).all()
+    matches = LeadVehicleMatch.query.filter_by(lead_id=lead_id).all()
     return render_template('inventory/lead_matches.html', title=f'Matches for {lead.first_name} {lead.last_name}', lead=lead, matches=matches)
 
 class ImportInventoryForm(FlaskForm):
@@ -552,13 +552,13 @@ def create_match_for_lead(lead_id, inventory_id):
     inventory = Inventory.query.get_or_404(inventory_id)
     
     # Check if match already exists
-    existing_match = Match.query.filter_by(lead_id=lead_id, inventory_id=inventory_id).first()
+    existing_match = LeadVehicleMatch.query.filter_by(lead_id=lead_id, inventory_id=inventory_id).first()
     if existing_match:
         flash(f'This lead is already matched with {inventory.year} {inventory.make} {inventory.model}', 'warning')
         return redirect(url_for('inventory.lead_matches', lead_id=lead_id))
     
     # Create the match
-    match = Match(
+    match = LeadVehicleMatch(
         lead_id=lead_id,
         inventory_id=inventory_id,
         notes=f'Auto-matched from recommendations on {datetime.now().strftime("%Y-%m-%d")}',

@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify, current_app
 from flask_login import current_user, login_required
 from app.main import bp
-from app.models import Lead, Appointment, Communication, User
+from app.models_main import Lead, Appointment, Communication, User
 from datetime import datetime, timedelta
 import json
 

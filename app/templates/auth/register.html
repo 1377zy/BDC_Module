@@ -22,6 +22,34 @@
             {% endfor %}
         </div>
         <div class="mb-3">
+            <label for="first_name" class="form-label">{{ form.first_name.label }}</label>
+            {{ form.first_name(class="form-control", id="first_name", placeholder="Enter your first name") }}
+            {% for error in form.first_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="last_name" class="form-label">{{ form.last_name.label }}</label>
+            {{ form.last_name(class="form-control", id="last_name", placeholder="Enter your last name") }}
+            {% for error in form.last_name.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">{{ form.phone.label }}</label>
+            {{ form.phone(class="form-control", id="phone", placeholder="Enter your phone number") }}
+            {% for error in form.phone.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            <label for="role" class="form-label">{{ form.role.label }}</label>
+            {{ form.role(class="form-select", id="role") }}
+            {% for error in form.role.errors %}
+            <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
             <label for="password" class="form-label">{{ form.password.label }}</label>
             {{ form.password(class="form-control", id="password", placeholder="Choose a password") }}
             {% for error in form.password.errors %}

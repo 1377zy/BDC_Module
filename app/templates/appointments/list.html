@@ -8,10 +8,10 @@
         <h1 class="display-5 fw-bold"><i class="fas fa-calendar-alt"></i> {{ title }}</h1>
     </div>
     <div class="col-md-6 text-md-end">
-        <a href="{{ url_for('add_appointment') }}" class="btn btn-primary">
+        <a href="{{ url_for('appointments.select_lead') }}" class="btn btn-primary">
             <i class="fas fa-calendar-plus"></i> Schedule New Appointment
         </a>
-        <a href="{{ url_for('appointment_calendar') }}" class="btn btn-info">
+        <a href="{{ url_for('appointments.list_appointments') }}" class="btn btn-info">
             <i class="fas fa-calendar"></i> Calendar View
         </a>
     </div>
@@ -93,7 +93,7 @@
                                     <div>{{ appointment.appointment.time.strftime('%H:%M') }}</div>
                                 </td>
                                 <td>
-                                    <a href="#" class="fw-bold text-decoration-none">
+                                    <a href="{{ url_for('view_lead', lead_id=appointment.lead.id) }}" class="fw-bold text-decoration-none">
                                         {{ appointment.lead.first_name }} {{ appointment.lead.last_name }}
                                     </a>
                                     <div class="small text-muted">

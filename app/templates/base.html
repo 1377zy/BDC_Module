@@ -15,7 +15,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Auto Dealership BDC</a>
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Auto Dealership BDC</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -23,14 +23,38 @@
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('main.index') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="leadsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-users"></i> Leads
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="leadsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('leads') }}">All Leads</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('leads.list_leads') }}">All Leads</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search.advanced_search') }}">Advanced Search</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search.saved_searches') }}">Saved Searches</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search.search_history') }}">Search History</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('segmentation.lead_segmentation') }}">Segmentation</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="workflowsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sitemap"></i> Workflows
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="workflowsDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.list_workflows') }}">All Workflows</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.create_workflow') }}">Create Workflow</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.upcoming_workflow_steps') }}">
+                                Upcoming Tasks
+                                {% if pending_workflow_steps_count > 0 %}
+                                <span class="badge bg-danger">{{ pending_workflow_steps_count }}</span>
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.workflow_notifications') }}">Notifications</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.apply_workflow') }}">Apply to Leads</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.process_due_steps') }}">Process Due Steps</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('workflows.workflow_analytics') }}">Analytics</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -38,7 +62,9 @@
                             <i class="fas fa-calendar-alt"></i> Appointments
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="appointmentsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('appointments') }}">All Appointments</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.list_appointments') }}">All Appointments</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.list_appointments') }}">Calendar View</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('appointments.select_lead') }}">Schedule New</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -46,7 +72,7 @@
                             <i class="fas fa-comments"></i> Communications
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="communicationsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('communications') }}">Communication History</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('communications.communication_history') }}">Communication History</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -54,10 +80,23 @@
                             <i class="fas fa-chart-line"></i> Analytics
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="analyticsDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">Analytics Dashboard</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('lead_analytics') }}">Lead Analytics</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('appointment_analytics') }}">Appointment Analytics</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('communication_analytics') }}">Communication Analytics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.dashboard') }}">Dashboard</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.lead_analytics') }}">Lead Analytics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.appointment_analytics') }}">Appointment Analytics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.communication_analytics') }}">Communication Analytics</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.performance_metrics') }}">Performance Metrics</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('analytics.campaign_analytics') }}">Campaign Analytics</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-search"></i> Search
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="searchDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('search.advanced_search') }}">Advanced Search</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search.saved_searches') }}">Saved Searches</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('search.search_history') }}">Search History</a></li>
                         </ul>
                     </li>
                     {% endif %}
@@ -82,7 +121,7 @@
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="/templates">Templates</a>
+                        <a class="nav-link" href="{{ url_for('appointments.list_appointments') }}"><i class="fas fa-calendar"></i> Calendar</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/followups">Follow-ups</a>
@@ -120,9 +159,10 @@
                 <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
                     <h5 class="text-uppercase">Quick Links</h5>
                     <ul class="list-unstyled mb-0">
-                        <li><a href="{{ url_for('index') }}" class="text-dark">Dashboard</a></li>
-                        <li><a href="{{ url_for('leads') }}" class="text-dark">Leads</a></li>
-                        <li><a href="{{ url_for('appointments') }}" class="text-dark">Appointments</a></li>
+                        <li><a href="{{ url_for('main.index') }}" class="text-dark">Dashboard</a></li>
+                        <li><a href="{{ url_for('leads.list_leads') }}" class="text-dark">Leads</a></li>
+                        <li><a href="{{ url_for('appointments.list_appointments') }}" class="text-dark">Appointments</a></li>
+                        <li><a href="{{ url_for('search.advanced_search') }}" class="text-dark">Advanced Search</a></li>
                     </ul>
                 </div>
             </div>

@@ -1,0 +1,63 @@
+{% if leads %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover" id="segmentLeadsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Source</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lead in leads %}
+            <tr>
+                <td>{{ lead.first_name }} {{ lead.last_name }}</td>
+                <td>{{ lead.email }}</td>
+                <td>{{ lead.phone }}</td>
+                <td>{{ lead.status }}</td>
+                <td>{{ lead.source }}</td>
+                <td>{{ lead.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('view_lead', lead_id=lead.id) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('edit_lead', lead_id=lead.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if not is_preview and not segment.is_dynamic %}
+                        <button type="button" class="btn btn-sm btn-danger remove-lead" data-lead-id="{{ lead.id }}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if is_preview %}
+<div class="alert alert-info mt-3">
+    <i class="fas fa-info-circle"></i> This is a preview of leads that would match your criteria. <strong>{{ leads|length }}</strong> leads found.
+</div>
+{% endif %}
+{% else %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i> No leads found in this segment.
+</div>
+{% endif %}
+
+{% if not is_preview %}
+<script>
+    $(document).ready(function() {
+        $('#segmentLeadsTable').DataTable({
+            order: [[5, 'desc']] // Sort by created date by default
+        });
+    });
+</script>
+{% endif %}

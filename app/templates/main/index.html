@@ -58,7 +58,7 @@
                 {% if today_appointments %}
                 <div class="list-group">
                     {% for apt in today_appointments %}
-                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('view_appointment', appointment_id=apt.appointment.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1">{{ apt.lead.first_name }} {{ apt.lead.last_name }}</h5>
                             <p class="mb-1"><i class="far fa-clock me-1"></i> {{ apt.appointment.time.strftime('%H:%M') }}</p>
@@ -90,7 +90,7 @@
                 {% if recent_leads %}
                 <div class="list-group">
                     {% for lead in recent_leads %}
-                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('view_lead', lead_id=lead.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-1">{{ lead.first_name }} {{ lead.last_name }}</h5>
                             <p class="mb-1">

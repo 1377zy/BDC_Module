@@ -9,13 +9,13 @@
     </div>
     <div class="col-md-6 text-md-end">
         <div class="btn-group">
-            <a href="#" class="btn btn-outline-info">
+            <a href="/communications/email" class="btn btn-outline-info">
                 <i class="fas fa-envelope"></i> Send Email
             </a>
-            <a href="#" class="btn btn-outline-warning">
+            <a href="/communications/sms" class="btn btn-outline-warning">
                 <i class="fas fa-sms"></i> Send SMS
             </a>
-            <a href="#" class="btn btn-outline-secondary">
+            <a href="/communications" class="btn btn-outline-secondary">
                 <i class="fas fa-plus"></i> Log Communication
             </a>
         </div>
@@ -26,15 +26,15 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="#" method="get" class="mb-0">
+                <form action="/communications" method="get" class="mb-0">
                     <div class="row">
                         <div class="col-md-3 mb-2">
-                            <select class="form-select">
+                            <select class="form-select" name="type">
                                 <option value="">All Types</option>
-                                <option value="Email">Email</option>
-                                <option value="SMS">SMS</option>
-                                <option value="Call">Call</option>
-                                <option value="Note">Note</option>
+                                <option value="Email" {% if request.args.get('type') == 'Email' %}selected{% endif %}>Email</option>
+                                <option value="SMS" {% if request.args.get('type') == 'SMS' %}selected{% endif %}>SMS</option>
+                                <option value="Call" {% if request.args.get('type') == 'Call' %}selected{% endif %}>Call</option>
+                                <option value="Note" {% if request.args.get('type') == 'Note' %}selected{% endif %}>Note</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
@@ -70,7 +70,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-search"></i> Search
                             </button>
-                            <a href="#" class="btn btn-secondary">
+                            <a href="/communications" class="btn btn-secondary">
                                 <i class="fas fa-redo"></i> Reset
                             </a>
                         </div>
@@ -87,19 +87,19 @@
             <div class="card-body">
                 <ul class="nav nav-tabs mb-4">
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'all' %}active{% endif %}" href="#">All</a>
+                        <a class="nav-link {% if type == 'all' %}active{% endif %}" href="/communications">All</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'email' %}active{% endif %}" href="#">Emails</a>
+                        <a class="nav-link {% if type == 'email' %}active{% endif %}" href="/communications?type=email">Emails</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'sms' %}active{% endif %}" href="#">SMS</a>
+                        <a class="nav-link {% if type == 'sms' %}active{% endif %}" href="/communications?type=sms">SMS</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'call' %}active{% endif %}" href="#">Calls</a>
+                        <a class="nav-link {% if type == 'call' %}active{% endif %}" href="/communications?type=call">Calls</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if type == 'note' %}active{% endif %}" href="#">Notes</a>
+                        <a class="nav-link {% if type == 'note' %}active{% endif %}" href="/communications?type=note">Notes</a>
                     </li>
                 </ul>
                 
@@ -120,7 +120,7 @@
                             <tr>
                                 <td>{{ comm.communication.sent_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>
-                                    <a href="#">
+                                    <a href="{{ url_for('view_lead', lead_id=comm.lead.id) }}">
                                         {{ comm.lead.first_name }} {{ comm.lead.last_name }}
                                     </a>
                                 </td>
@@ -140,15 +140,15 @@
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
+                                        <a href="/communications?id={{ comm.communication.id }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if comm.communication.type == 'Email' %}
-                                        <a href="#" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Reply">
+                                        <a href="/communications/email?reply_to={{ comm.communication.id }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Reply">
                                             <i class="fas fa-reply"></i>
                                         </a>
                                         {% elif comm.communication.type == 'SMS' %}
-                                        <a href="#" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Reply">
+                                        <a href="/communications/sms?reply_to={{ comm.communication.id }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Reply">
                                             <i class="fas fa-reply"></i>
                                         </a>
                                         {% endif %}
@@ -166,7 +166,7 @@
                     <ul class="pagination justify-content-center">
                         {% if pagination.has_prev %}
                         <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Previous">
+                            <a class="page-link" href="/communications?page={{ pagination.prev_num }}" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -180,7 +180,7 @@
                             {% if page %}
                                 {% if page != pagination.page %}
                                 <li class="page-item">
-                                    <a class="page-link" href="#">{{ page }}</a>
+                                    <a class="page-link" href="/communications?page={{ page }}">{{ page }}</a>
                                 </li>
                                 {% else %}
                                 <li class="page-item active">
@@ -196,7 +196,7 @@
                         
                         {% if pagination.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Next">
+                            <a class="page-link" href="/communications?page={{ pagination.next_num }}" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>

@@ -1,124 +1,61 @@
-2025-03-03 11:42:05,361 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:262]
-2025-03-03 11:42:28,406 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:262]
-2025-03-03 11:42:50,331 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:262]
-2025-03-03 11:43:09,916 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:260]
-2025-03-03 11:43:30,492 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 11:43:47,247 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 11:43:47,526 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:07:16,185 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:07:16,893 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:09:01,800 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:09:02,095 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:09:29,509 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:09:29,838 INFO: BDC Module startup [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:268]
-2025-03-03 12:11:18,617 INFO: Email settings updated [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:967]
-2025-03-03 12:12:36,128 INFO: Twilio reinitialized successfully [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:997]
-2025-03-03 12:12:36,129 INFO: SMS settings updated [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:1011]
-2025-03-03 12:13:41,772 INFO: Salesperson settings updated [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:1071]
-2025-03-03 12:15:32,292 ERROR: Failed to send email to lead 4: (535, b'5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials 586e51a60fabf-2c15c125288sm1923742fac.15 - gsmtp') [in C:\Users\lleitzman\CascadeProjects\BDC_Module\working_app.py:495]
-[2025-03-03 12:56:29,793] ERROR in working_app: Error fetching token: (insecure_transport) OAuth 2 MUST utilize https.
-[2025-03-03 12:57:22,844] ERROR in working_app: Error fetching token: (insecure_transport) OAuth 2 MUST utilize https.
-[2025-03-03 13:13:10,692] INFO in working_app: Saved 2 leads to file
-[2025-03-03 13:13:13,071] INFO in working_app: Saved 1 leads to file
-[2025-03-03 13:13:15,343] INFO in working_app: Saved 0 leads to file
-[2025-03-03 13:14:10,802] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:14:10,871] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:14:11,014] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:14:11,064] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:14:11,278] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:14:11,412] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:19,571] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:20,061] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:40,867] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,044] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,369] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,415] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,418] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,544] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:41,963] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:45,045] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:15:45,544] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:19,812] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,043] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,238] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,426] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,526] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,545] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,556] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:20,568] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:25,489] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:18:25,999] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:53,032] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:53,361] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:53,456] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:53,479] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:54,092] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:54,376] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:54,423] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:54,438] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:27:54,471] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:33,505] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:33,695] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:33,841] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:33,856] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:34,008] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:34,265] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:34,357] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:34,631] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:30:34,670] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:15,619] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:15,649] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:15,755] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,257] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,268] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,303] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,687] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,742] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:31:16,896] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:47,867] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:47,872] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:47,893] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,463] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,668] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,721] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,736] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,740] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:36:48,889] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,084] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,227] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,248] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,334] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,640] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,869] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,927] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:19,956] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:37:20,029] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,092] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,187] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,194] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,661] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,787] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,947] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:25,988] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:26,014] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:38:26,116] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:04,563] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:04,579] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:05,531] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:05,545] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:05,545] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:05,585] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:43:05,684] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:44:07,211] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 13:44:07,676] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:16:05,546] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:16:06,394] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:16:06,397] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:16:39,855] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:16:40,332] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:17:53,077] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:17:53,763] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:17:54,252] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:17:54,252] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:18:16,346] INFO in working_app: Loaded 0 leads from file
-[2025-03-03 14:18:16,724] INFO in working_app: Loaded 0 leads from file
+[2025-03-04 16:02:04,495] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:02:05,214] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:08:58,482] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:08:59,259] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:21:36,211] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:22:13,303] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:22:13,770] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:30:00,891] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:30:01,173] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:30:34,000] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:30:34,052] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:31:24,375] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:31:24,976] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:35:32,362] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:37:31,495] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 16:37:32,249] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:11:05,468] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:11:25,146] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:11:25,923] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:12:26,447] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:13:40,451] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:14:21,804] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:14:22,539] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:28:15,209] INFO in working_app: Saved 0 leads to file
+[2025-03-04 17:28:15,209] INFO in working_app: Lead 1 deleted successfully. File save status: True
+[2025-03-04 17:28:40,548] INFO in working_app: Saved 1 leads to file
+[2025-03-04 17:30:25,215] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:30:25,971] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:39:09,059] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:48:22,531] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:48:23,009] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:52:22,746] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:52:23,494] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:53:01,491] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:53:02,344] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:58:32,198] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 17:58:32,951] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 19:05:00,807] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 19:05:20,160] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 19:16:34,231] INFO in working_app: Loaded 1 leads from file
+[2025-03-04 19:34:18,490] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:21:22,948] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:22:00,842] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:23:40,538] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:24:24,547] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:26:18,561] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:26:57,481] INFO in working_app: Loaded 1 leads from file
+[2025-03-05 09:28:26,139] INFO in working_app: Saved 0 leads to file
+[2025-03-05 09:28:26,139] INFO in working_app: Lead 1 deleted successfully. File save status: True
+[2025-03-05 09:46:51,500] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 09:48:03,236] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 09:49:12,937] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 09:53:30,672] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 09:55:27,654] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 09:56:30,183] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 10:00:38,570] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 11:53:33,233] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 12:16:15,461] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 12:54:58,723] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 13:39:13,898] INFO in working_app: Loaded 0 leads from file
+[2025-03-05 13:39:14,934] INFO in working_app: Loaded 0 leads from file

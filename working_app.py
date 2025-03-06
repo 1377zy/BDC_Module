@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, send_from_directory, session, jsonify
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import os
 import random
 from werkzeug.utils import secure_filename
@@ -43,6 +44,9 @@ import phonenumbers
 import json
 import requests
 
+# Import segmentation blueprint
+from app.routes.segmentation_routes import segmentation_bp
+
 # For development only - allows OAuth to work with HTTP instead of HTTPS
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -59,6 +63,9 @@ app = Flask(__name__, template_folder='app/templates', static_folder='app/static
 app.secret_key = os.environ.get('SECRET_KEY', 'development-secret-key-123')
 app.config['UPLOAD_FOLDER'] = os.environ.get('CSV_IMPORT_DIRECTORY', 'temp')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+
+# Register the segmentation blueprint
+app.register_blueprint(segmentation_bp, url_prefix='/leads')
 
 # Ensure the upload directory exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -672,23 +679,448 @@ def leads():
                            search_form={},
                            pagination={'has_prev': False, 'has_next': False, 'page': 1, 'pages': 1})
 
-@app.route('/leads/<int:lead_id>')
-def view_lead(lead_id):
-    lead = get_lead(lead_id)
-    if not lead:
-        flash('Lead not found', 'danger')
-        return redirect('/leads')
+@app.route('/advanced_lead_search', methods=['GET'])
+def advanced_lead_search():
+    # Get saved search ID if provided
+    saved_search_id = request.args.get('saved_search_id')
+    search_params = {}
+    search_results = []
     
-    appointments = get_lead_appointments(lead_id)
+    # If a saved search ID is provided, load those search parameters
+    if saved_search_id:
+        # In a real app, we would query the database
+        # saved_search = SavedSearch.query.get(saved_search_id)
+        # if saved_search:
+        #     search_params = json.loads(saved_search.search_params)
+        pass
+    
+    # Otherwise, get search parameters from the request
+    else:
+        # Basic information
+        if request.args.get('name'):
+            search_params['name'] = request.args.get('name')
+        if request.args.get('email'):
+            search_params['email'] = request.args.get('email')
+        if request.args.get('phone'):
+            search_params['phone'] = request.args.get('phone')
+        
+        # Status and source
+        if request.args.getlist('status'):
+            search_params['status'] = request.args.getlist('status')
+        if request.args.getlist('source'):
+            search_params['source'] = request.args.getlist('source')
+        
+        # Date range
+        if request.args.get('created_from'):
+            search_params['created_from'] = request.args.get('created_from')
+        if request.args.get('created_to'):
+            search_params['created_to'] = request.args.get('created_to')
+        
+        # Vehicle interest
+        if request.args.get('vehicle_make'):
+            search_params['vehicle_make'] = request.args.get('vehicle_make')
+        if request.args.get('vehicle_model'):
+            search_params['vehicle_model'] = request.args.get('vehicle_model')
+        if request.args.get('vehicle_year'):
+            search_params['vehicle_year'] = request.args.get('vehicle_year')
+        if request.args.get('new_or_used'):
+            search_params['new_or_used'] = request.args.get('new_or_used')
+        
+        # Communication history
+        if request.args.get('last_contact'):
+            search_params['last_contact'] = request.args.get('last_contact')
+        if request.args.getlist('communication_type'):
+            search_params['communication_type'] = request.args.getlist('communication_type')
+        if request.args.get('has_appointment'):
+            search_params['has_appointment'] = request.args.get('has_appointment')
+        
+        # Notes search
+        if request.args.get('notes_search'):
+            search_params['notes_search'] = request.args.get('notes_search')
+            
+        # Workflow status
+        if request.args.getlist('workflow_status'):
+            search_params['workflow_status'] = request.args.getlist('workflow_status')
+            
+        # Budget range
+        if request.args.get('budget_min'):
+            search_params['budget_min'] = request.args.get('budget_min')
+        if request.args.get('budget_max'):
+            search_params['budget_max'] = request.args.get('budget_max')
+            
+        # Timeline to purchase
+        if request.args.get('purchase_timeline'):
+            search_params['purchase_timeline'] = request.args.get('purchase_timeline')
+            
+        # Assigned to
+        if request.args.getlist('assigned_to'):
+            search_params['assigned_to'] = request.args.getlist('assigned_to')
+    
+    # If search parameters exist, perform the search
+    if search_params:
+        # In a real app, we would query the database with these parameters
+        # For now, we'll filter our mock data
+        filtered_leads = leads_data.copy()
+        
+        # Filter by name
+        if 'name' in search_params:
+            name_query = search_params['name'].lower()
+            filtered_leads = [lead for lead in filtered_leads if 
+                             name_query in (lead.get('first_name', '') + ' ' + lead.get('last_name', '')).lower()]
+        
+        # Filter by email
+        if 'email' in search_params:
+            email_query = search_params['email'].lower()
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('email') and email_query in lead['email'].lower()]
+        
+        # Filter by phone
+        if 'phone' in search_params:
+            phone_query = search_params['phone'].replace('-', '').replace(' ', '')
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('phone') and phone_query in lead['phone'].replace('-', '').replace(' ', '')]
+        
+        # Filter by status
+        if 'status' in search_params:
+            statuses = search_params['status']
+            filtered_leads = [lead for lead in filtered_leads if lead.get('status') in statuses]
+        
+        # Filter by source
+        if 'source' in search_params:
+            sources = search_params['source']
+            filtered_leads = [lead for lead in filtered_leads if lead.get('source') in sources]
+        
+        # Filter by date range
+        if 'created_from' in search_params:
+            try:
+                created_from = datetime.strptime(search_params['created_from'], '%Y-%m-%d')
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 lead.get('created_at') and lead['created_at'].date() >= created_from.date()]
+            except (ValueError, TypeError):
+                pass
+        
+        if 'created_to' in search_params:
+            try:
+                created_to = datetime.strptime(search_params['created_to'], '%Y-%m-%d')
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 lead.get('created_at') and lead['created_at'].date() <= created_to.date()]
+            except (ValueError, TypeError):
+                pass
+        
+        # Filter by vehicle interest
+        # In a real app, we would join with the VehicleInterest table
+        # For now, we'll use the mock data's vehicle_interest field
+        if 'vehicle_make' in search_params:
+            make_query = search_params['vehicle_make'].lower()
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('vehicle_interest') and make_query in lead['vehicle_interest'].lower()]
+        
+        if 'vehicle_model' in search_params:
+            model_query = search_params['vehicle_model'].lower()
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('vehicle_interest') and model_query in lead['vehicle_interest'].lower()]
+        
+        if 'vehicle_year' in search_params:
+            year_query = search_params['vehicle_year']
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('vehicle_interest') and year_query in lead['vehicle_interest']]
+        
+        if 'new_or_used' in search_params:
+            new_or_used = search_params['new_or_used']
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('vehicle_interest') and new_or_used in lead['vehicle_interest']]
+        
+        # Filter by last contact
+        if 'last_contact' in search_params:
+            last_contact = search_params['last_contact']
+            now = datetime.now()
+            
+            if last_contact == '1':  # Today
+                day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(comm.get('sent_at') >= day_start for comm in communications_data 
+                                    if comm.get('lead_id') == lead.get('id'))]
+            
+            elif last_contact == '7':  # Last 7 days
+                week_ago = now - timedelta(days=7)
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(comm.get('sent_at') >= week_ago for comm in communications_data 
+                                    if comm.get('lead_id') == lead.get('id'))]
+            
+            elif last_contact == '30':  # Last 30 days
+                month_ago = now - timedelta(days=30)
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(comm.get('sent_at') >= month_ago for comm in communications_data 
+                                    if comm.get('lead_id') == lead.get('id'))]
+            
+            elif last_contact == '90':  # Last 90 days
+                three_months_ago = now - timedelta(days=90)
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(comm.get('sent_at') >= three_months_ago for comm in communications_data 
+                                    if comm.get('lead_id') == lead.get('id'))]
+            
+            elif last_contact == 'never':  # Never contacted
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 not any(comm.get('lead_id') == lead.get('id') for comm in communications_data)]
+        
+        # Filter by communication type
+        if 'communication_type' in search_params:
+            comm_types = search_params['communication_type']
+            filtered_leads = [lead for lead in filtered_leads if 
+                             any(comm.get('type') in comm_types and comm.get('lead_id') == lead.get('id') 
+                                for comm in communications_data)]
+        
+        # Filter by appointment status
+        if 'has_appointment' in search_params:
+            appt_status = search_params['has_appointment']
+            
+            if appt_status == 'scheduled':
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(appt.get('lead_id') == lead.get('id') and appt.get('status') in ['Scheduled', 'Confirmed'] 
+                                    for appt in appointments_data)]
+            
+            elif appt_status == 'completed':
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 any(appt.get('lead_id') == lead.get('id') and appt.get('status') == 'Completed' 
+                                    for appt in appointments_data)]
+            
+            elif appt_status == 'none':
+                filtered_leads = [lead for lead in filtered_leads if 
+                                 not any(appt.get('lead_id') == lead.get('id') for appt in appointments_data)]
+        
+        # Filter by notes
+        if 'notes_search' in search_params:
+            notes_query = search_params['notes_search'].lower()
+            filtered_leads = [lead for lead in filtered_leads if 
+                             lead.get('notes') and notes_query in lead['notes'].lower()]
+                             
+        # Filter by workflow status
+        if 'workflow_status' in search_params:
+            workflow_statuses = search_params['workflow_status']
+            # In a real app, we would join with the LeadWorkflow table
+            # For now, we'll just simulate this filter
+            if 'active' in workflow_statuses:
+                # Simulate having some leads with active workflows
+                active_workflow_lead_ids = [1, 3, 5]
+                filtered_leads = [lead for lead in filtered_leads if lead.get('id') in active_workflow_lead_ids]
+            elif 'completed' in workflow_statuses:
+                # Simulate having some leads with completed workflows
+                completed_workflow_lead_ids = [2, 4]
+                filtered_leads = [lead for lead in filtered_leads if lead.get('id') in completed_workflow_lead_ids]
+            elif 'none' in workflow_statuses:
+                # Simulate having some leads with no workflows
+                no_workflow_lead_ids = [6, 7, 8]
+                filtered_leads = [lead for lead in filtered_leads if lead.get('id') in no_workflow_lead_ids]
+        
+        # Filter by budget range
+        if 'budget_min' in search_params or 'budget_max' in search_params:
+            # In a real app, we would have a budget field in the lead model
+            # For now, we'll just simulate this filter
+            # Assign random budgets to leads for demonstration
+            for lead in filtered_leads:
+                if not lead.get('budget'):
+                    lead['budget'] = random.randint(10000, 100000)
+            
+            if 'budget_min' in search_params:
+                budget_min = int(search_params['budget_min'])
+                filtered_leads = [lead for lead in filtered_leads if lead.get('budget', 0) >= budget_min]
+            
+            if 'budget_max' in search_params:
+                budget_max = int(search_params['budget_max'])
+                filtered_leads = [lead for lead in filtered_leads if lead.get('budget', 0) <= budget_max]
+        
+        # Filter by timeline to purchase
+        if 'purchase_timeline' in search_params:
+            timeline = search_params['purchase_timeline']
+            # In a real app, we would have a purchase_timeline field in the lead model
+            # For now, we'll just simulate this filter
+            # Assign random timelines to leads for demonstration
+            timelines = ['immediate', '1-3_months', '3-6_months', '6-12_months', 'over_12_months']
+            for lead in filtered_leads:
+                if not lead.get('purchase_timeline'):
+                    lead['purchase_timeline'] = random.choice(timelines)
+            
+            filtered_leads = [lead for lead in filtered_leads if lead.get('purchase_timeline') == timeline]
+        
+        # Filter by assigned to
+        if 'assigned_to' in search_params:
+            assigned_to_ids = [int(id) for id in search_params['assigned_to']]
+            filtered_leads = [lead for lead in filtered_leads if lead.get('assigned_to') in assigned_to_ids]
+        
+        search_results = filtered_leads
+        
+        # Save search to history
+        if search_results and 'current_user' in globals() and current_user.is_authenticated:
+            try:
+                search_history = SearchHistory(
+                    user_id=current_user.id,
+                    search_params=json.dumps(search_params),
+                    results_count=len(search_results)
+                )
+                db.session.add(search_history)
+                db.session.commit()
+            except Exception as e:
+                print(f"Error saving search history: {e}")
+                db.session.rollback()
+    
+    # Get saved searches for the current user
+    saved_searches = []
+    if 'current_user' in globals() and current_user.is_authenticated:
+        saved_searches = SavedSearch.query.filter_by(user_id=current_user.id).order_by(SavedSearch.created_at.desc()).all()
+    else:
+        # Mock saved searches data for demonstration
+        saved_searches = [
+            {
+                'id': 1,
+                'name': 'Hot Leads - This Week',
+                'created_at': datetime.now() - timedelta(days=5)
+            },
+            {
+                'id': 2,
+                'name': 'Ford F-150 Interests',
+                'created_at': datetime.now() - timedelta(days=10)
+            },
+            {
+                'id': 3,
+                'name': 'Uncontacted Leads',
+                'created_at': datetime.now() - timedelta(days=2)
+            }
+        ]
+    
+    # Get recent search history for the current user
+    search_history_list = []
+    if 'current_user' in globals() and current_user.is_authenticated:
+        search_history_list = SearchHistory.query.filter_by(user_id=current_user.id).order_by(SearchHistory.executed_at.desc()).limit(5).all()
+    
+    # Get all users for the assigned_to filter
+    users = []
+    if 'current_user' in globals() and current_user.is_authenticated:
+        users = User.query.all()
+    else:
+        # Mock users data for demonstration
+        users = [
+            {'id': 1, 'first_name': 'John', 'last_name': 'Doe'},
+            {'id': 2, 'first_name': 'Jane', 'last_name': 'Smith'},
+            {'id': 3, 'first_name': 'Bob', 'last_name': 'Johnson'}
+        ]
+    
+    return render_template('leads/advanced_search.html',
+                          search_params=search_params,
+                          search_results=search_results,
+                          saved_searches=saved_searches,
+                          search_history=search_history_list,
+                          users=users,
+                          current_user={'is_authenticated': True})
+
+@app.route('/save_search', methods=['POST'])
+def save_search():
+    search_name = request.form.get('search_name')
+    search_params = request.form.get('search_params')
+    
+    if not search_name or not search_params:
+        flash('Search name and parameters are required.', 'danger')
+        return redirect(url_for('advanced_lead_search'))
+    
+    # Save to the database
+    if 'current_user' in globals() and current_user.is_authenticated:
+        try:
+            saved_search = SavedSearch(
+                name=search_name,
+                user_id=current_user.id,
+                search_params=search_params
+            )
+            db.session.add(saved_search)
+            db.session.commit()
+            flash(f'Search "{search_name}" has been saved.', 'success')
+        except Exception as e:
+            print(f"Error saving search: {e}")
+            db.session.rollback()
+            flash('An error occurred while saving your search.', 'danger')
+    else:
+        # Mock save for demonstration
+        flash(f'Search "{search_name}" has been saved.', 'success')
+    
+    return redirect(url_for('advanced_lead_search'))
+
+@app.route('/delete_saved_search')
+def delete_saved_search():
+    search_id = request.args.get('id')
+    
+    if not search_id:
+        flash('No search specified.', 'danger')
+        return redirect(url_for('advanced_lead_search'))
+    
+    # In a real app, we would delete from the database
+    # saved_search = SavedSearch.query.get(search_id)
+    # if saved_search and saved_search.user_id == current_user.id:
+    #     db.session.delete(saved_search)
+    #     db.session.commit()
+    #     flash('Saved search has been deleted.', 'success')
+    # else:
+    #     flash('Search not found or you do not have permission to delete it.', 'danger')
+    
+    flash('Saved search has been deleted.', 'success')
+    return redirect(url_for('advanced_lead_search'))
+
+@app.route('/export_search_results')
+def export_search_results():
+    # In a real app, we would retrieve the search results from the session or re-run the search
+    # For now, we'll just return a sample CSV file
+    
+    # Create a CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header row
+    writer.writerow(['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Source', 'Vehicle Interest', 'Created Date'])
+    
+    # Write data rows (using mock data for now)
+    for lead in leads_data:
+        writer.writerow([
+            lead.get('first_name', ''),
+            lead.get('last_name', ''),
+            lead.get('email', ''),
+            lead.get('phone', ''),
+            lead.get('status', ''),
+            lead.get('source', ''),
+            lead.get('vehicle_interest', ''),
+            lead.get('created_at', datetime.now()).strftime('%Y-%m-%d')
+        ])
+    
+    # Prepare the response
+    output.seek(0)
+    return send_from_directory(
+        directory=os.path.join(app.root_path, 'static'),
+        path='search_results.csv',
+        as_attachment=True,
+        download_name=f'lead_search_results_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    )
+
+@app.route('/view_lead/<int:lead_id>')
+def view_lead(lead_id):
+    # Get the lead
+    lead = get_lead(lead_id)
+    
+    if not lead:
+        flash('Lead not found.', 'danger')
+        return redirect(url_for('leads'))
+    
+    # Get appointments for this lead
+    lead_appointments = get_lead_appointments(lead_id)
+    
+    # Get communications for this lead
     communications = get_lead_communications(lead_id)
+    
+    # Get follow-ups for this lead
     followups = get_lead_followups(lead_id)
     
-    return render_template('leads/view.html', 
-                           lead=lead, 
-                           appointments=appointments, 
-                           communications=communications,
-                           followups=followups,
-                           current_user={'is_authenticated': True})
+    return render_template('leads/view.html',
+                          lead=lead,
+                          appointments=lead_appointments,
+                          communications=communications,
+                          followups=followups,
+                          current_user={'is_authenticated': True},
+                          title='Lead Details')
 
 @app.route('/appointments')
 def appointments():
@@ -705,70 +1137,113 @@ def appointments():
                            appointments=appointments_with_leads, 
                            current_user={'is_authenticated': True},
                            search_form={},
-                           pagination={'has_prev': False, 'has_next': False, 'page': 1, 'pages': 1},
-                           title='All Appointments')
+                           pagination={'has_prev': False, 'has_next': False, 'page': 1, 'pages': 1})
 
 @app.route('/appointments/calendar')
 def appointments_calendar():
     # Get all appointments
-    appointments_with_leads = []
-    for apt in appointments_data:
-        lead = get_lead(apt['lead_id'])
-        if lead:
-            appointments_with_leads.append({
-                'id': apt['id'],
-                'title': f"{lead['first_name']} {lead['last_name']} - {apt['purpose']}",
-                'start': f"{apt['date'].strftime('%Y-%m-%d')}T{apt['time'].strftime('%H:%M:%S')}",
-                'end': f"{apt['date'].strftime('%Y-%m-%d')}T{(datetime.combine(apt['date'], apt['time']) + timedelta(hours=1)).time().strftime('%H:%M:%S')}",
-                'status': apt['status'],
-                'allDay': False
-            })
+    all_appointments = appointments_data
     
-    # Get today's appointments
-    today_appointments = [apt for apt in appointments_data if apt['date'] == datetime.now().date()]
-    today_appointments_with_leads = []
-    for apt in today_appointments:
-        lead = get_lead(apt['lead_id'])
+    # Format appointments for FullCalendar
+    appointments_json = []
+    for appointment in all_appointments:
+        lead = next((lead for lead in leads_data if lead['id'] == appointment['lead_id']), None)
         if lead:
-            today_appointments_with_leads.append({
-                'id': apt['id'],
-                'time': apt['time'],
-                'status': apt['status'],
+            lead_name = f"{lead['first_name']} {lead['last_name']}"
+            
+            # Check if date is already a string or a datetime object
+            appointment_date = appointment['date']
+            if not hasattr(appointment_date, 'strftime'):  # If it's a string, not a date object
+                appointment_date = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+                
+            appointments_json.append({
+                'id': appointment['id'],
+                'title': f"{lead_name} - {appointment['purpose']}",
+                'start': f"{appointment_date.strftime('%Y-%m-%d')}T{appointment['time']}",
+                'status': appointment['status'],
                 'lead': {
-                    'first_name': lead['first_name'],
-                    'last_name': lead['last_name']
-                },
-                'vehicle_interest': apt.get('vehicle_interest', '')
+                    'id': lead['id'],
+                    'name': lead_name
+                }
             })
     
-    # Calculate appointment stats
-    total_month = sum(1 for apt in appointments_data if apt['date'].month == datetime.now().month and apt['date'].year == datetime.now().year)
-    total_week = sum(1 for apt in appointments_data if apt['date'] >= (datetime.now().date() - timedelta(days=datetime.now().weekday())) and apt['date'] <= (datetime.now().date() + timedelta(days=6-datetime.now().weekday())))
-    no_show_count = sum(1 for apt in appointments_data if apt['status'] == 'No-Show')
-    no_show_rate = round((no_show_count / len(appointments_data)) * 100) if appointments_data else 0
-    conversion_rate = 65  # Mock data, would be calculated from actual sales
+    # Calculate stats
+    today = datetime.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_month = today.replace(day=1)
     
-    # Generate available slots
+    # Count appointments for this month and week
+    total_month = 0
+    total_week = 0
+    today_appointments = []
+    
+    for a in all_appointments:
+        # Check if date is a string or datetime.date
+        appointment_date = a['date']
+        if not hasattr(appointment_date, 'strftime'):  # If it's a string, not a date object
+            appointment_date = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+        
+        # Now we can safely compare dates
+        if appointment_date >= start_of_month:
+            total_month += 1
+        if appointment_date >= start_of_week:
+            total_week += 1
+        
+        # Check if appointment is today
+        if appointment_date == today:
+            lead = next((lead for lead in leads_data if lead['id'] == a['lead_id']), None)
+            if lead:
+                today_appointments.append({
+                    'id': a['id'],
+                    'time': a['time'],
+                    'status': a['status'],
+                    'lead': {
+                        'first_name': lead['first_name'],
+                        'last_name': lead['last_name']
+                    },
+                    'vehicle_interest': a.get('vehicle_interest', '')
+                })
+    
+    # Calculate no-show and conversion rates
+    completed_appointments = [a for a in all_appointments if a['status'] in ['Completed', 'No Show']]
+    no_shows = sum(1 for a in completed_appointments if a['status'] == 'No Show')
+    conversions = sum(1 for a in completed_appointments if a['status'] == 'Completed' and a.get('converted', False))
+    
+    no_show_rate = round((no_shows / len(completed_appointments)) * 100) if completed_appointments else 0
+    conversion_rate = round((conversions / len(completed_appointments)) * 100) if completed_appointments else 0
+    
+    # Generate available slots for the sidebar
     available_slots = []
-    for i in range(1, 6):  # Next 5 days
-        slot_date = datetime.now().date() + timedelta(days=i)
-        day_of_week = slot_date.strftime('%A')
-        for hour in [10, 14, 16]:  # 10 AM, 2 PM, 4 PM
-            slot_time = datetime.strptime(f"{hour}:00", "%H:%M").time()
-            # Check if this slot is already booked
-            is_booked = any(apt['date'] == slot_date and apt['time'].hour == slot_time.hour for apt in appointments_data)
-            if not is_booked:
+    for i in range(7):
+        slot_date = today + timedelta(days=i)
+        if slot_date.weekday() < 5:  # Weekdays only
+            for hour in [9, 11, 14, 16]:
                 available_slots.append({
                     'date': slot_date.strftime('%Y-%m-%d'),
-                    'time': slot_time.strftime('%I:%M %p'),
-                    'day_of_week': day_of_week
+                    'time': f"{hour:02d}:00",
+                    'day_of_week': slot_date.strftime('%A')
                 })
-                if len(available_slots) >= 5:  # Limit to 5 available slots
+                if len(available_slots) >= 5:
                     break
         if len(available_slots) >= 5:
             break
     
-    # Stats for the sidebar
+    # Get recent activity for the sidebar
+    recent_activity = []
+    for appointment in sorted(all_appointments, key=lambda x: x['id'], reverse=True)[:5]:
+        lead = next((lead for lead in leads_data if lead['id'] == appointment['lead_id']), None)
+        if lead:
+            recent_activity.append({
+                'type': 'appointment',
+                'date': appointment['date'],
+                'time': appointment['time'],
+                'lead_name': f"{lead['first_name']} {lead['last_name']}",
+                'lead_id': lead['id'],
+                'status': appointment['status'],
+                'purpose': appointment['purpose'],
+                'id': appointment['id']
+            })
+    
     stats = {
         'total_month': total_month,
         'total_week': total_week,
@@ -776,13 +1251,15 @@ def appointments_calendar():
         'conversion_rate': conversion_rate
     }
     
-    return render_template('appointments/calendar.html',
-                          appointments_json=json.dumps(appointments_with_leads),
-                          today_appointments=today_appointments_with_leads,
-                          today=datetime.now(),
-                          stats=stats,
-                          available_slots=available_slots,
-                          current_user={'is_authenticated': True})
+    return render_template('appointments/calendar.html', 
+                           appointments_json=json.dumps(appointments_json),
+                           stats=stats,
+                           available_slots=available_slots,
+                           leads_data=leads_data,
+                           recent_activity=recent_activity,
+                           today=datetime.now().date(),
+                           today_appointments=today_appointments,
+                           current_user={'is_authenticated': True})
 
 @app.route('/appointments/api/get/<int:appointment_id>')
 def get_appointment_api(appointment_id):
@@ -943,7 +1420,7 @@ def lead_analytics():
 def appointment_analytics():
     # Mock appointment analytics data
     total_appointments = len(appointments_data)
-    appointments_today = sum(1 for appt in appointments_data if datetime.strptime(appt['date'], '%Y-%m-%d').date() == datetime.now().date())
+    appointments_today = sum(1 for appt in appointments_data if appt['date'] == datetime.now().date())
     
     # Appointment status distribution
     appointment_statuses = ['Scheduled', 'Confirmed', 'Completed', 'No-show', 'Cancelled']
@@ -1077,10 +1554,10 @@ def export_report(report_type, format):
         writer.writerow(headers)
         writer.writerows(data)
         
-        # Prepare response
+        # Prepare the response
         output.seek(0)
         return send_from_directory(
-            directory=os.path.dirname(os.path.abspath(__file__)),
+            directory=os.path.join(app.root_path, 'static'),
             path=f"{filename}.csv",
             as_attachment=True,
             download_name=f"{filename}.csv",
@@ -1108,7 +1585,7 @@ def export_report(report_type, format):
             # Prepare response
             output.seek(0)
             return send_from_directory(
-                directory=os.path.dirname(os.path.abspath(__file__)),
+                directory=os.path.join(app.root_path, 'static'),
                 path=f"{filename}.xlsx",
                 as_attachment=True,
                 download_name=f"{filename}.xlsx",
@@ -1226,6 +1703,7 @@ def send_email():
         subject = request.form.get('subject')
         content = request.form.get('content')
         template_id = request.form.get('template_id')
+        appointment_id = request.form.get('appointment_id')
         
         # Get lead data for placeholder replacement
         lead = get_lead(int(lead_id)) if lead_id else None
@@ -1282,18 +1760,41 @@ def send_email():
                 flash(f'Email not sent: {error_message}', 'danger')
                 app.logger.error(f"Failed to send email to lead {lead_id}: {error_message}")
         
-        return redirect(f'/leads/{lead_id}')
+        # Redirect based on context
+        if appointment_id:
+            return redirect(url_for('view_appointment', appointment_id=int(appointment_id)))
+        else:
+            return redirect(f'/leads/{lead_id}')
     
+    # Handle GET request
     lead_id = request.args.get('lead_id')
+    appointment_id = request.args.get('appointment_id')
+    
+    # If coming from an appointment view
+    if appointment_id:
+        # Find the appointment
+        appointment = None
+        for apt in appointments_data:
+            if apt['id'] == int(appointment_id):
+                appointment = apt
+                break
+        
+        if not appointment:
+            flash('Appointment not found.', 'danger')
+            return redirect(url_for('appointments'))
+        
+        # Get the lead
+        lead_id = appointment['lead_id']
+    
     lead = get_lead(int(lead_id)) if lead_id else None
     email_templates = get_templates_by_type('Email')
     
     return render_template('communications/email.html', 
                            lead=lead,
                            templates=email_templates,
-                           leads_data=leads_data,
-                           communications_data=communications_data,
-                           current_user={'is_authenticated': True})
+                           appointment_id=appointment_id,
+                           current_user={'is_authenticated': True},
+                           title='Send Email')
 
 @app.route('/communications/sms', methods=['GET', 'POST'])
 def send_sms():
@@ -1301,6 +1802,7 @@ def send_sms():
         lead_id = request.form.get('lead_id')
         content = request.form.get('content')
         template_id = request.form.get('template_id')
+        appointment_id = request.form.get('appointment_id')
         
         # Get lead data for placeholder replacement
         lead = get_lead(int(lead_id)) if lead_id else None
@@ -1335,26 +1837,21 @@ def send_sms():
         sms_sent = False
         if not lead.get('phone'):
             flash('SMS not sent: Lead has no phone number', 'warning')
-            app.logger.warning(f"SMS not sent to lead {lead_id}: No phone number")
-        elif not twilio_available:
+        elif app.config['TWILIO_ACCOUNT_SID'] == 'your-account-sid' or app.config['TWILIO_AUTH_TOKEN'] == 'your-auth-token':
             flash('SMS not sent: Twilio configuration incomplete. Please update your .env file with proper credentials.', 'warning')
             app.logger.warning(f"SMS not sent to lead {lead_id}: Twilio configuration incomplete")
         else:
             try:
-                # Format the phone number (remove non-numeric characters)
-                to_number = ''.join(filter(str.isdigit, lead['phone']))
-                if not to_number.startswith('1') and len(to_number) == 10:
-                    to_number = '1' + to_number
+                # In a real app, we would use Twilio to send the SMS
+                # client = Client(app.config['TWILIO_ACCOUNT_SID'], app.config['TWILIO_AUTH_TOKEN'])
+                # message = client.messages.create(
+                #     body=content,
+                #     from_=app.config['TWILIO_PHONE_NUMBER'],
+                #     to=lead['phone']
+                # )
+                # sms_sent = True
                 
-                # Add + if not present
-                if not to_number.startswith('+'):
-                    to_number = '+' + to_number
-                
-                message = twilio_client.messages.create(
-                    body=content,
-                    from_=TWILIO_PHONE_NUMBER,
-                    to=to_number
-                )
+                # For demo purposes, we'll just pretend it was sent
                 sms_sent = True
                 flash(f'SMS sent successfully to {lead["phone"]}', 'success')
                 app.logger.info(f"SMS sent to lead {lead_id} at {lead['phone']}")
@@ -1363,69 +1860,41 @@ def send_sms():
                 flash(f'SMS not sent: {error_message}', 'danger')
                 app.logger.error(f"Failed to send SMS to lead {lead_id}: {error_message}")
         
-        return redirect(f'/leads/{lead_id}')
+        # Redirect based on context
+        if appointment_id:
+            return redirect(url_for('view_appointment', appointment_id=int(appointment_id)))
+        else:
+            return redirect(f'/leads/{lead_id}')
     
+    # Handle GET request
     lead_id = request.args.get('lead_id')
+    appointment_id = request.args.get('appointment_id')
+    
+    # If coming from an appointment view
+    if appointment_id:
+        # Find the appointment
+        appointment = None
+        for apt in appointments_data:
+            if apt['id'] == int(appointment_id):
+                appointment = apt
+                break
+        
+        if not appointment:
+            flash('Appointment not found.', 'danger')
+            return redirect(url_for('appointments'))
+        
+        # Get the lead
+        lead_id = appointment['lead_id']
+    
     lead = get_lead(int(lead_id)) if lead_id else None
     sms_templates = get_templates_by_type('SMS')
     
     return render_template('communications/sms.html', 
                            lead=lead,
                            templates=sms_templates,
-                           leads_data=leads_data,
-                           communications_data=communications_data,
-                           current_user={'is_authenticated': True})
-
-@app.route('/communications/call', methods=['GET', 'POST'])
-def log_call():
-    if request.method == 'POST':
-        lead_id = request.form.get('lead_id')
-        content = request.form.get('content')
-        duration = request.form.get('duration')
-        call_outcome = request.form.get('call_outcome')
-        followup_id = request.form.get('followup_id')
-        
-        # Add the call log to our mock data
-        new_communication = {
-            'id': len(communications_data) + 1,
-            'lead_id': int(lead_id),
-            'type': 'Call',
-            'content': content,
-            'duration': int(duration),
-            'call_outcome': call_outcome,
-            'sent_at': datetime.now()
-        }
-        communications_data.append(new_communication)
-        
-        # If this call is for a follow-up, mark the follow-up as completed
-        if followup_id:
-            followup = get_followup(int(followup_id))
-            if followup:
-                followup['status'] = 'Completed'
-        
-        flash('Call logged successfully', 'success')
-        return redirect(f'/leads/{lead_id}')
-    
-    lead_id = request.args.get('lead_id')
-    followup_id = request.args.get('followup_id')
-    
-    lead = None
-    followup = None
-    
-    if followup_id:
-        followup = get_followup(int(followup_id))
-        if followup:
-            lead_id = followup['lead_id']
-            
-    if lead_id:
-        lead = get_lead(int(lead_id))
-    
-    return render_template('communications/call.html', 
-                           lead=lead,
-                           followup=followup,
-                           leads_data=leads_data,
-                           communications_data=communications_data,
-                           current_user={'is_authenticated': True})
+                           appointment_id=appointment_id,
+                           current_user={'is_authenticated': True},
+                           title='Send SMS')
 
 # Template management routes
 @app.route('/templates')
@@ -1814,7 +2283,12 @@ def user_profile():
         'phone': '(555) 123-4567',
         'created_at': datetime(2023, 1, 15),
         'last_login': datetime.now() - timedelta(days=1),
-        'profile_image': '/static/img/default-profile.png'
+        'profile_image': '/static/img/default-profile.png',
+        'preferences': {
+            'email_notifications': True,
+            'sms_notifications': False,
+            'dark_mode': False
+        }
     }
     
     # Activity stats
@@ -1860,6 +2334,1387 @@ def user_profile():
                           activity=activity,
                           recent_activity=recent_activity,
                           current_user={'is_authenticated': True, 'username': 'demo_user'})
+
+@app.route('/add_appointment', methods=['GET', 'POST'])
+def add_appointment():
+    # Get all leads for the dropdown
+    all_leads = leads_data
+    
+    if request.method == 'POST':
+        # Get form data
+        lead_id = int(request.form.get('lead_id'))
+        date_str = request.form.get('date')
+        time_str = request.form.get('time')
+        purpose = request.form.get('purpose')
+        notes = request.form.get('notes')
+        
+        # Parse date and time
+        appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        appointment_time = datetime.strptime(time_str, '%H:%M').time()
+        
+        # Create new appointment
+        new_appointment = {
+            'id': len(appointments_data) + 1,
+            'lead_id': lead_id,
+            'date': appointment_date,
+            'time': appointment_time,
+            'purpose': purpose,
+            'notes': notes,
+            'status': 'Scheduled',
+            'created_at': datetime.now()
+        }
+        
+        # Add to appointments data
+        appointments_data.append(new_appointment)
+        
+        flash('Appointment scheduled successfully!', 'success')
+        return redirect(url_for('appointments'))
+    
+    # Get current date for the form or use the date from the query parameter
+    selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+    
+    return render_template('appointments/add.html', 
+                          leads=all_leads,
+                          current_user={'is_authenticated': True},
+                          title='Schedule New Appointment',
+                          current_date=selected_date)
+
+@app.route('/view_appointment/<int:appointment_id>')
+def view_appointment(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Get the lead associated with this appointment
+    lead = get_lead(appointment['lead_id'])
+    
+    if not lead:
+        flash('Lead associated with this appointment not found.', 'warning')
+        return redirect(url_for('appointments'))
+    
+    # Add lead to appointment for template
+    appointment['lead'] = lead
+    
+    # Get communications related to this lead
+    communications = get_lead_communications(lead['id'])
+    
+    return render_template('appointments/view.html',
+                          appointment=appointment,
+                          lead=lead,
+                          communications=communications,
+                          current_user={'is_authenticated': True},
+                          title='Appointment Details')
+
+@app.route('/edit_appointment/<int:appointment_id>', methods=['GET', 'POST'])
+def edit_appointment(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Get the lead associated with this appointment
+    lead = get_lead(appointment['lead_id'])
+    
+    if not lead:
+        flash('Lead associated with this appointment not found.', 'warning')
+        return redirect(url_for('appointments'))
+    
+    if request.method == 'POST':
+        # Get form data
+        date_str = request.form.get('date')
+        time_str = request.form.get('time')
+        purpose = request.form.get('purpose')
+        notes = request.form.get('notes')
+        status = request.form.get('status')
+        
+        # Parse date and time
+        appointment_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        appointment_time = datetime.strptime(time_str, '%H:%M').time()
+        
+        # Update appointment
+        appointment['date'] = appointment_date
+        appointment['time'] = appointment_time
+        appointment['purpose'] = purpose
+        appointment['notes'] = notes
+        appointment['status'] = status
+        appointment['updated_at'] = datetime.now()
+        
+        flash('Appointment updated successfully!', 'success')
+        return redirect(url_for('view_appointment', appointment_id=appointment_id))
+    
+    # Format date and time for the form
+    date_str = appointment['date'].strftime('%Y-%m-%d')
+    time_str = appointment['time'].strftime('%H:%M')
+    
+    # Get all leads for the dropdown
+    all_leads = leads_data
+    
+    # Get current date for the form
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template('appointments/create_edit.html', 
+                          appointment=appointment,
+                          lead=lead,
+                          leads=all_leads,
+                          date_str=date_str,
+                          time_str=time_str,
+                          current_date=current_date,
+                          current_user={'is_authenticated': True},
+                          title='Edit Appointment')
+
+@app.route('/mark_confirmed/<int:appointment_id>')
+def mark_confirmed(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Update appointment status
+    appointment['status'] = 'Confirmed'
+    appointment['updated_at'] = datetime.now()
+    
+    flash('Appointment marked as confirmed!', 'success')
+    return redirect(url_for('view_appointment', appointment_id=appointment_id))
+
+@app.route('/mark_completed/<int:appointment_id>')
+def mark_completed(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Update appointment status
+    appointment['status'] = 'Completed'
+    appointment['updated_at'] = datetime.now()
+    
+    flash('Appointment marked as completed!', 'success')
+    return redirect(url_for('view_appointment', appointment_id=appointment_id))
+
+@app.route('/mark_cancelled/<int:appointment_id>')
+def mark_cancelled(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Update appointment status
+    appointment['status'] = 'Cancelled'
+    appointment['updated_at'] = datetime.now()
+    
+    flash('Appointment marked as cancelled.', 'success')
+    return redirect(url_for('view_appointment', appointment_id=appointment_id))
+
+@app.route('/mark_no_show/<int:appointment_id>')
+def mark_no_show(appointment_id):
+    # Find the appointment by ID
+    appointment = None
+    for apt in appointments_data:
+        if apt['id'] == appointment_id:
+            appointment = apt
+            break
+    
+    if not appointment:
+        flash('Appointment not found.', 'danger')
+        return redirect(url_for('appointments'))
+    
+    # Update appointment status
+    appointment['status'] = 'No-Show'
+    appointment['updated_at'] = datetime.now()
+    
+    flash('Appointment marked as no-show.', 'success')
+    return redirect(url_for('view_appointment', appointment_id=appointment_id))
+
+@app.route('/appointment_calendar')
+def appointment_calendar():
+    # Redirect to the appointments calendar view
+    return redirect(url_for('appointments_calendar'))
+
+@app.route('/user/save_preferences', methods=['POST'])
+def save_preferences():
+    """Save user preferences"""
+    # In a real app, this would save to the database
+    # For demo purposes, we'll just return success
+    preferences = {
+        'email_notifications': request.form.get('email_notifications') == 'true',
+        'sms_notifications': request.form.get('sms_notifications') == 'true',
+        'dark_mode': request.form.get('dark_mode') == 'true'
+    }
+    
+    # Here you would save to the database
+    # user.preferences = preferences
+    # db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Preferences saved successfully'})
+
+@app.route('/workflows')
+def workflows():
+    """Display all workflow templates."""
+    workflows = WorkflowTemplate.query.all()
+    
+    # Calculate active leads count for each workflow
+    for workflow in workflows:
+        workflow.active_leads_count = LeadWorkflow.query.filter_by(
+            workflow_template_id=workflow.id, 
+            status='active'
+        ).count()
+    
+    return render_template('workflows/list.html', workflows=workflows)
+
+@app.route('/workflow/create', methods=['GET', 'POST'])
+def create_workflow():
+    """Create a new workflow template."""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        trigger_status = request.form.get('trigger_status')
+        auto_apply = 'auto_apply' in request.form
+        
+        # Create new workflow
+        workflow = WorkflowTemplate(
+            name=name,
+            description=description,
+            trigger_status=trigger_status,
+            auto_apply=auto_apply
+        )
+        db.session.add(workflow)
+        db.session.flush()  # Get the workflow ID
+        
+        # Process steps
+        step_types = request.form.getlist('step_type[]')
+        delay_days = request.form.getlist('delay_days[]')
+        template_ids = request.form.getlist('template_id[]')
+        subjects = request.form.getlist('subject[]')
+        contents = request.form.getlist('content[]')
+        step_orders = request.form.getlist('step_order[]')
+        
+        for i in range(len(step_types)):
+            step = WorkflowStep(
+                workflow_id=workflow.id,
+                step_type=step_types[i],
+                delay_days=int(delay_days[i]),
+                template_id=int(template_ids[i]) if template_ids[i] else None,
+                subject=subjects[i],
+                content=contents[i],
+                step_order=int(step_orders[i])
+            )
+            db.session.add(step)
+        
+        db.session.commit()
+        flash('Workflow created successfully!', 'success')
+        return redirect(url_for('workflows'))
+    
+    # Mock data for templates until we implement them
+    email_templates = [
+        {'id': 1, 'name': 'Welcome Email'},
+        {'id': 2, 'name': 'Follow-up Email'},
+        {'id': 3, 'name': 'Appointment Reminder'}
+    ]
+    
+    sms_templates = [
+        {'id': 1, 'name': 'Welcome SMS'},
+        {'id': 2, 'name': 'Follow-up SMS'},
+        {'id': 3, 'name': 'Appointment Reminder SMS'}
+    ]
+    
+    return render_template('workflows/create_edit.html', 
+                           workflow=None, 
+                           email_templates=email_templates,
+                           sms_templates=sms_templates)
+
+@app.route('/workflow/<int:workflow_id>')
+def view_workflow(workflow_id):
+    """View a workflow template and its active leads."""
+    workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    # Get active leads for this workflow
+    active_leads = LeadWorkflow.query.filter_by(
+        workflow_template_id=workflow_id,
+        status='active'
+    ).all()
+    
+    # Calculate active leads count
+    active_leads_count = len(active_leads)
+    
+    # Add current step and next step date to each lead workflow
+    for lead_workflow in active_leads:
+        # Get the current step (last completed or first pending)
+        current_step = LeadWorkflowStep.query.filter_by(
+            lead_workflow_id=lead_workflow.id
+        ).order_by(LeadWorkflowStep.scheduled_date).first()
+        
+        lead_workflow.current_step = current_step
+        
+        # Get the next step date
+        next_step = LeadWorkflowStep.query.filter_by(
+            lead_workflow_id=lead_workflow.id,
+            status='pending'
+        ).order_by(LeadWorkflowStep.scheduled_date).first()
+        
+        lead_workflow.next_step_date = next_step.scheduled_date if next_step else None
+    
+    # Mock data for templates until we implement them
+    email_templates = [
+        {'id': 1, 'name': 'Welcome Email'},
+        {'id': 2, 'name': 'Follow-up Email'},
+        {'id': 3, 'name': 'Appointment Reminder'}
+    ]
+    
+    sms_templates = [
+        {'id': 1, 'name': 'Welcome SMS'},
+        {'id': 2, 'name': 'Follow-up SMS'},
+        {'id': 3, 'name': 'Appointment Reminder SMS'}
+    ]
+    
+    return render_template('workflows/view.html', 
+                           workflow=workflow, 
+                           active_leads=active_leads,
+                           active_leads_count=active_leads_count,
+                           email_templates=email_templates,
+                           sms_templates=sms_templates)
+
+@app.route('/workflow/edit/<int:workflow_id>', methods=['GET', 'POST'])
+def edit_workflow(workflow_id):
+    """Edit an existing workflow template."""
+    workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    if request.method == 'POST':
+        workflow.name = request.form.get('name')
+        workflow.description = request.form.get('description')
+        workflow.trigger_status = request.form.get('trigger_status')
+        workflow.auto_apply = 'auto_apply' in request.form
+        
+        # Clear existing steps
+        WorkflowStep.query.filter_by(workflow_template_id=workflow_id).delete()
+        
+        # Process steps
+        step_types = request.form.getlist('step_type[]')
+        delay_days = request.form.getlist('delay_days[]')
+        template_ids = request.form.getlist('template_id[]')
+        subjects = request.form.getlist('subject[]')
+        contents = request.form.getlist('content[]')
+        step_orders = request.form.getlist('step_order[]')
+        
+        for i in range(len(step_types)):
+            step = WorkflowStep(
+                workflow_template_id=workflow_id,
+                step_type=step_types[i],
+                delay_days=int(delay_days[i]),
+                template_id=int(template_ids[i]) if template_ids[i] else None,
+                subject=subjects[i],
+                content=contents[i],
+                step_order=int(step_orders[i])
+            )
+            db.session.add(step)
+        
+        db.session.commit()
+        flash('Workflow updated successfully!', 'success')
+        return redirect(url_for('workflows'))
+    
+    # Mock data for templates until we implement them
+    email_templates = [
+        {'id': 1, 'name': 'Welcome Email'},
+        {'id': 2, 'name': 'Follow-up Email'},
+        {'id': 3, 'name': 'Appointment Reminder'}
+    ]
+    
+    sms_templates = [
+        {'id': 1, 'name': 'Welcome SMS'},
+        {'id': 2, 'name': 'Follow-up SMS'},
+        {'id': 3, 'name': 'Appointment Reminder SMS'}
+    ]
+    
+    return render_template('workflows/create_edit.html', 
+                           workflow=workflow, 
+                           email_templates=email_templates,
+                           sms_templates=sms_templates)
+
+@app.route('/workflow/duplicate/<int:workflow_id>')
+def duplicate_workflow(workflow_id):
+    """Duplicate an existing workflow template."""
+    original_workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    # Create new workflow with copy of data
+    new_workflow = WorkflowTemplate(
+        name=f"{original_workflow.name} (Copy)",
+        description=original_workflow.description,
+        trigger_status=original_workflow.trigger_status,
+        auto_apply=original_workflow.auto_apply
+    )
+    db.session.add(new_workflow)
+    db.session.flush()  # Get the new workflow ID
+    
+    # Copy all steps
+    for step in original_workflow.steps:
+        new_step = WorkflowStep(
+            workflow_id=new_workflow.id,
+            step_type=step.step_type,
+            delay_days=step.delay_days,
+            template_id=step.template_id,
+            subject=step.subject,
+            content=step.content,
+            step_order=step.step_order
+        )
+        db.session.add(new_step)
+    
+    db.session.commit()
+    flash('Workflow duplicated successfully!', 'success')
+    return redirect(url_for('edit_workflow', workflow_id=new_workflow.id))
+
+@app.route('/workflow/delete')
+def delete_workflow():
+    """Delete a workflow template."""
+    workflow_id = request.args.get('id', type=int)
+    workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    # Delete all active lead workflows
+    lead_workflows = LeadWorkflow.query.filter_by(workflow_template_id=workflow_id).all()
+    for lead_workflow in lead_workflows:
+        # Delete all steps for this lead workflow
+        LeadWorkflowStep.query.filter_by(lead_workflow_id=lead_workflow.id).delete()
+        db.session.delete(lead_workflow)
+    
+    # Delete the workflow and its steps
+    db.session.delete(workflow)
+    db.session.commit()
+    
+    flash('Workflow deleted successfully!', 'success')
+    return redirect(url_for('workflows'))
+
+@app.route('/workflow/apply', methods=['GET', 'POST'])
+def apply_workflow():
+    """Apply a workflow to leads."""
+    if request.method == 'POST':
+        # Just return the filtered leads, actual application happens in apply_workflow_to_leads
+        return redirect(url_for('workflows'))
+    
+    workflow_id = request.args.get('workflow_id', type=int)
+    workflow = None
+    if workflow_id:
+        workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    workflows = WorkflowTemplate.query.all()
+    
+    # Get all users for assignment filter
+    users = User.query.all()
+    
+    return render_template('workflows/apply.html', 
+                           workflow=workflow, 
+                           workflows=workflows,
+                           users=users)
+
+@app.route('/workflow/filter_leads', methods=['POST'])
+def filter_leads_for_workflow():
+    """AJAX endpoint to filter leads based on criteria."""
+    # Get filter parameters
+    status = request.form.get('status')
+    source = request.form.get('source')
+    assigned_to = request.form.get('assigned_to')
+    created_after = request.form.get('created_after')
+    created_before = request.form.get('created_before')
+    
+    # Build query
+    query = Lead.query
+    
+    if status:
+        query = query.filter(Lead.status == status)
+    
+    if source:
+        query = query.filter(Lead.source == source)
+    
+    if assigned_to:
+        query = query.filter(Lead.assigned_to == int(assigned_to))
+    
+    if created_after:
+        query = query.filter(Lead.created_at >= datetime.strptime(created_after, '%Y-%m-%d'))
+    
+    if created_before:
+        query = query.filter(Lead.created_at <= datetime.strptime(created_before, '%Y-%m-%d') + timedelta(days=1))
+    
+    # Execute query
+    leads = query.all()
+    
+    # Convert leads to JSON
+    leads_json = []
+    for lead in leads:
+        leads_json.append({
+            'id': lead.id,
+            'first_name': lead.first_name,
+            'last_name': lead.last_name,
+            'email': lead.email,
+            'phone': lead.phone,
+            'status': lead.status,
+            'source': lead.source,
+            'created_at': lead.created_at.isoformat()
+        })
+    
+    return jsonify({'leads': leads_json})
+
+@app.route('/workflow/apply_to_leads', methods=['POST'])
+def apply_workflow_to_leads():
+    """Apply a workflow to selected leads."""
+    workflow_id = request.form.get('workflow_id', type=int)
+    lead_ids = request.form.getlist('lead_ids[]')
+    
+    if not workflow_id or not lead_ids:
+        flash('Please select a workflow and at least one lead.', 'danger')
+        return redirect(url_for('apply_workflow'))
+    
+    workflow = WorkflowTemplate.query.get_or_404(workflow_id)
+    
+    # Get all steps for this workflow
+    steps = WorkflowStep.query.filter_by(workflow_template_id=workflow_id).order_by(WorkflowStep.step_order).all()
+    
+    # Process each lead
+    for lead_id in lead_ids:
+        # Check if lead already has this workflow active
+        existing_workflow = LeadWorkflow.query.filter_by(
+            lead_id=lead_id,
+            workflow_template_id=workflow_id,
+            status='active'
+        ).first()
+        
+        if existing_workflow:
+            continue  # Skip if already active
+        
+        # Create new lead workflow
+        lead_workflow = LeadWorkflow(
+            lead_id=lead_id,
+            workflow_template_id=workflow_id,
+            start_date=datetime.utcnow(),
+            status='active'
+        )
+        db.session.add(lead_workflow)
+        db.session.flush()  # Get the lead workflow ID
+        
+        # Create steps for this lead
+        current_date = datetime.utcnow()
+        for step in steps:
+            scheduled_date = current_date + timedelta(days=step.delay_days)
+            
+            lead_workflow_step = LeadWorkflowStep(
+                lead_workflow_id=lead_workflow.id,
+                workflow_step_id=step.id,
+                scheduled_date=scheduled_date,
+                status='pending'
+            )
+            db.session.add(lead_workflow_step)
+    
+    db.session.commit()
+    
+    flash(f'Workflow applied to {len(lead_ids)} leads successfully!', 'success')
+    return redirect(url_for('view_workflow', workflow_id=workflow_id))
+
+@app.route('/workflow/execute_step', methods=['POST'])
+def execute_workflow_step():
+    """Execute a workflow step manually."""
+    step_id = request.form.get('step_id', type=int)
+    result = request.form.get('result', '')
+    
+    step = LeadWorkflowStep.query.get_or_404(step_id)
+    lead_workflow = LeadWorkflow.query.get_or_404(step.lead_workflow_id)
+    
+    # Only allow executing pending steps in active workflows
+    if step.status != 'pending' or lead_workflow.status != 'active':
+        flash('This step cannot be executed.', 'danger')
+        return redirect(url_for('view_lead_workflow', lead_workflow_id=lead_workflow.id))
+    
+    # Mark the step as completed
+    step.status = 'completed'
+    step.executed_date = datetime.utcnow()
+    step.result = result
+    
+    # Create a communication record if applicable
+    if step.workflow_step.step_type in ['Email', 'SMS', 'Call']:
+        communication_type = {
+            'Email': 'email',
+            'SMS': 'sms',
+            'Call': 'call'
+        }.get(step.workflow_step.step_type)
+        
+        communication = Communication(
+            lead_id=lead_workflow.lead_id,
+            type=communication_type,
+            direction='outbound',
+            content=step.workflow_step.content,
+            subject=step.workflow_step.subject if step.workflow_step.step_type == 'Email' else None,
+            date=datetime.utcnow(),
+            user_id=current_user.id if current_user.is_authenticated else None,
+            notes=f"Automated from workflow: {lead_workflow.workflow_template.name}"
+        )
+        db.session.add(communication)
+    
+    # Check if this is the last step
+    pending_steps = LeadWorkflowStep.query.filter_by(
+        lead_workflow_id=lead_workflow.id,
+        status='pending'
+    ).count()
+    
+    if pending_steps == 0:
+        lead_workflow.status = 'completed'
+    
+    db.session.commit()
+    
+    flash('Step executed successfully!', 'success')
+    return redirect(url_for('view_lead_workflow', lead_workflow_id=lead_workflow.id))
+
+@app.route('/workflow/skip_step', methods=['POST'])
+def skip_workflow_step():
+    """Skip a workflow step."""
+    step_id = request.form.get('step_id', type=int)
+    reason = request.form.get('reason', '')
+    
+    step = LeadWorkflowStep.query.get_or_404(step_id)
+    lead_workflow = LeadWorkflow.query.get_or_404(step.lead_workflow_id)
+    
+    # Only allow skipping pending steps in active workflows
+    if step.status != 'pending' or lead_workflow.status != 'active':
+        flash('This step cannot be skipped.', 'danger')
+        return redirect(url_for('view_lead_workflow', lead_workflow_id=lead_workflow.id))
+    
+    # Mark the step as skipped
+    step.status = 'skipped'
+    step.executed_date = datetime.utcnow()
+    step.result = f"Skipped: {reason}"
+    
+    # Check if this is the last step
+    pending_steps = LeadWorkflowStep.query.filter_by(
+        lead_workflow_id=lead_workflow.id,
+        status='pending'
+    ).count()
+    
+    if pending_steps == 0:
+        lead_workflow.status = 'completed'
+    
+    db.session.commit()
+    
+    flash('Step skipped successfully!', 'success')
+    return redirect(url_for('view_lead_workflow', lead_workflow_id=lead_workflow.id))
+
+@app.route('/workflow/process_due_steps')
+def process_due_workflow_steps():
+    """Process all due workflow steps (would be called by a scheduler in production)."""
+    now = datetime.utcnow()
+    
+    # Find all pending steps that are due
+    due_steps = LeadWorkflowStep.query.join(
+        LeadWorkflow, LeadWorkflowStep.lead_workflow_id == LeadWorkflow.id
+    ).filter(
+        LeadWorkflowStep.status == 'pending',
+        LeadWorkflow.status == 'active',
+        LeadWorkflowStep.scheduled_date <= now
+    ).all()
+    
+    processed_count = 0
+    email_count = 0
+    sms_count = 0
+    
+    for step in due_steps:
+        # Get the workflow step details
+        workflow_step = WorkflowStep.query.get(step.workflow_step_id)
+        
+        # Get the lead workflow
+        lead_workflow = LeadWorkflow.query.get(step.lead_workflow_id)
+        
+        # Get the lead
+        lead = Lead.query.get(lead_workflow.lead_id)
+        
+        # Get the workflow template
+        workflow = WorkflowTemplate.query.get(lead_workflow.workflow_template_id)
+        
+        # Process based on step type
+        if workflow_step.step_type == 'Email':
+            # In a real app, this would send an actual email
+            print(f"Would send email to {lead.email} with subject: {workflow_step.subject}")
+            
+            # For demo purposes, just log it
+            email_count += 1
+            
+            # Mark step as completed
+            step.status = 'completed'
+            step.completed_date = now
+            
+        elif workflow_step.step_type == 'SMS':
+            # In a real app, this would send an actual SMS
+            print(f"Would send SMS to {lead.phone} with message: {workflow_step.content}")
+            
+            # For demo purposes, just log it
+            sms_count += 1
+            
+            # Mark step as completed
+            step.status = 'completed'
+            step.completed_date = now
+            
+        elif workflow_step.step_type in ['Call', 'Task']:
+            # These require manual action, so we'll create notifications
+            # but not mark them as completed
+            
+            # Create a notification for this due step
+            try:
+                from app.routes.workflow_notifications import create_notification
+                
+                notification_title = f"{workflow_step.step_type} Due: {workflow.name}"
+                notification_message = f"A {workflow_step.step_type.lower()} is due for lead {lead.first_name} {lead.last_name} as part of the '{workflow.name}' workflow."
+                
+                if workflow_step.step_type == 'Call':
+                    notification_message += f" Phone: {lead.phone}"
+                
+                notification_link = url_for('upcoming_workflow_steps')
+                
+                create_notification(
+                    title=notification_title,
+                    message=notification_message,
+                    notification_type='step_due',
+                    link=notification_link,
+                    lead_id=lead.id,
+                    workflow_template_id=workflow.id,
+                    lead_workflow_id=lead_workflow.id,
+                    lead_workflow_step_id=step.id
+                )
+            except Exception as e:
+                print(f"Error creating notification: {e}")
+        
+        processed_count += 1
+    
+    db.session.commit()
+    
+    # Find steps coming up in the next day and create notifications
+    tomorrow = now + timedelta(days=1)
+    
+    upcoming_steps = LeadWorkflowStep.query.join(
+        LeadWorkflow, LeadWorkflowStep.lead_workflow_id == LeadWorkflow.id
+    ).filter(
+        LeadWorkflowStep.status == 'pending',
+        LeadWorkflow.status == 'active',
+        LeadWorkflowStep.scheduled_date > now,
+        LeadWorkflowStep.scheduled_date <= tomorrow
+    ).all()
+    
+    upcoming_count = 0
+    
+    for step in upcoming_steps:
+        # Get the workflow step details
+        workflow_step = WorkflowStep.query.get(step.workflow_step_id)
+        
+        # Get the lead workflow
+        lead_workflow = LeadWorkflow.query.get(step.lead_workflow_id)
+        
+        # Get the lead
+        lead = Lead.query.get(lead_workflow.lead_id)
+        
+        # Get the workflow template
+        workflow = WorkflowTemplate.query.get(lead_workflow.workflow_template_id)
+        
+        # Create a notification for this upcoming step
+        try:
+            from app.routes.workflow_notifications import create_notification
+            
+            notification_title = f"Upcoming {workflow_step.step_type}: {workflow.name}"
+            notification_message = f"A {workflow_step.step_type.lower()} is scheduled for tomorrow for lead {lead.first_name} {lead.last_name} as part of the '{workflow.name}' workflow."
+            notification_link = url_for('upcoming_workflow_steps')
+            
+            create_notification(
+                title=notification_title,
+                message=notification_message,
+                notification_type='upcoming_step',
+                link=notification_link,
+                lead_id=lead.id,
+                workflow_template_id=workflow.id,
+                lead_workflow_id=lead_workflow.id,
+                lead_workflow_step_id=step.id
+            )
+            
+            upcoming_count += 1
+        except Exception as e:
+            print(f"Error creating notification: {e}")
+    
+    db.session.commit()
+    
+    # Check for completed workflows
+    completed_workflows = LeadWorkflow.query.filter_by(status='active').all()
+    completed_count = 0
+    
+    for workflow in completed_workflows:
+        # Check if all steps are completed
+        pending_steps = LeadWorkflowStep.query.filter_by(
+            lead_workflow_id=workflow.id,
+            status='pending'
+        ).count()
+        
+        if pending_steps == 0:
+            # All steps are completed, mark workflow as completed
+            workflow.status = 'completed'
+            workflow.end_date = now
+            
+            # Get the lead and workflow template
+            lead = Lead.query.get(workflow.lead_id)
+            template = WorkflowTemplate.query.get(workflow.workflow_template_id)
+            
+            # Create a notification for completed workflow
+            try:
+                from app.routes.workflow_notifications import create_notification
+                
+                notification_title = f"Workflow Completed: {template.name}"
+                notification_message = f"The workflow '{template.name}' for lead {lead.first_name} {lead.last_name} has been completed successfully."
+                notification_link = url_for('view_lead_workflow', lead_workflow_id=workflow.id)
+                
+                create_notification(
+                    title=notification_title,
+                    message=notification_message,
+                    notification_type='workflow_complete',
+                    link=notification_link,
+                    lead_id=lead.id,
+                    workflow_template_id=template.id,
+                    lead_workflow_id=workflow.id
+                )
+                
+                completed_count += 1
+            except Exception as e:
+                print(f"Error creating notification: {e}")
+    
+    db.session.commit()
+    
+    message = f"Processed {processed_count} due steps ({email_count} emails, {sms_count} SMS). "
+    message += f"Created notifications for {upcoming_count} upcoming steps. "
+    message += f"Completed {completed_count} workflows."
+    
+    flash(message, 'success')
+    
+    return redirect(url_for('workflows'))
+
+@app.route('/workflow/pause')
+def pause_lead_workflow():
+    """Pause a lead workflow."""
+    lead_workflow_id = request.args.get('id', type=int)
+    lead_workflow = LeadWorkflow.query.get_or_404(lead_workflow_id)
+    
+    lead_workflow.status = 'paused'
+    db.session.commit()
+    
+    flash('Workflow paused successfully!', 'success')
+    return redirect(url_for('view_workflow', workflow_id=lead_workflow.workflow_template_id))
+
+@app.route('/workflow/resume')
+def resume_lead_workflow():
+    """Resume a paused lead workflow."""
+    lead_workflow_id = request.args.get('id', type=int)
+    lead_workflow = LeadWorkflow.query.get_or_404(lead_workflow_id)
+    
+    lead_workflow.status = 'active'
+    db.session.commit()
+    
+    flash('Workflow resumed successfully!', 'success')
+    return redirect(url_for('view_workflow', workflow_id=lead_workflow.workflow_template_id))
+
+@app.route('/workflow/cancel')
+def cancel_lead_workflow():
+    """Cancel a lead workflow."""
+    lead_workflow_id = request.args.get('id', type=int)
+    lead_workflow = LeadWorkflow.query.get_or_404(lead_workflow_id)
+    
+    lead_workflow.status = 'cancelled'
+    
+    # Mark all pending steps as cancelled
+    pending_steps = LeadWorkflowStep.query.filter_by(
+        lead_workflow_id=lead_workflow_id,
+        status='pending'
+    ).all()
+    
+    for step in pending_steps:
+        step.status = 'cancelled'
+    
+    db.session.commit()
+    
+    flash('Workflow cancelled successfully!', 'success')
+    return redirect(url_for('view_workflow', workflow_id=lead_workflow.workflow_template_id))
+
+@app.route('/workflow/lead/<int:lead_workflow_id>')
+def view_lead_workflow(lead_workflow_id):
+    """View the progress of a specific lead workflow."""
+    lead_workflow = LeadWorkflow.query.get_or_404(lead_workflow_id)
+    
+    # Get all steps for this lead workflow
+    steps = LeadWorkflowStep.query.filter_by(
+        lead_workflow_id=lead_workflow_id
+    ).order_by(LeadWorkflowStep.scheduled_date).all()
+    
+    return render_template('workflows/lead_workflow.html',
+                           lead_workflow=lead_workflow,
+                           steps=steps)
+
+@app.route('/workflow/analytics')
+def workflow_analytics():
+    """Display analytics and metrics for workflows."""
+    time_range = request.args.get('time_range', 'month')
+    
+    # Calculate date range based on selected time range
+    today = datetime.utcnow()
+    if time_range == 'week':
+        start_date = today - timedelta(days=7)
+        date_format = '%a'  # Day of week abbreviation
+    elif time_range == 'month':
+        start_date = today - timedelta(days=30)
+        date_format = '%d %b'  # Day and month abbreviation
+    elif time_range == 'quarter':
+        start_date = today - timedelta(days=90)
+        date_format = '%b'  # Month abbreviation
+    elif time_range == 'year':
+        start_date = today - timedelta(days=365)
+        date_format = '%b %Y'  # Month and year
+    else:
+        start_date = today - timedelta(days=30)
+        date_format = '%d %b'
+    
+    # Get all lead workflows
+    all_workflows = LeadWorkflow.query.all()
+    total_workflows = len(all_workflows)
+    
+    # Count workflows by status
+    active_count = LeadWorkflow.query.filter_by(status='active').count()
+    completed_count = LeadWorkflow.query.filter_by(status='completed').count()
+    
+    # Calculate completion rate
+    completion_rate = 0
+    if total_workflows > 0:
+        completion_rate = round((completed_count / total_workflows) * 100, 1)
+    
+    # Count steps by status
+    completed_steps = LeadWorkflowStep.query.filter_by(status='completed').count()
+    pending_steps = LeadWorkflowStep.query.filter_by(status='pending').count()
+    skipped_steps = LeadWorkflowStep.query.filter_by(status='skipped').count()
+    
+    # Get step types distribution
+    email_steps = LeadWorkflowStep.query.join(WorkflowStep).filter(WorkflowStep.step_type == 'Email').count()
+    sms_steps = LeadWorkflowStep.query.join(WorkflowStep).filter(WorkflowStep.step_type == 'SMS').count()
+    call_steps = LeadWorkflowStep.query.join(WorkflowStep).filter(WorkflowStep.step_type == 'Call').count()
+    task_steps = LeadWorkflowStep.query.join(WorkflowStep).filter(WorkflowStep.step_type == 'Task').count()
+    step_types_data = [email_steps, sms_steps, call_steps, task_steps]
+    
+    # Generate data for the workflow performance chart
+    date_labels = []
+    completed_data = []
+    started_data = []
+    
+    # Generate date labels and initialize data arrays
+    if time_range == 'week':
+        # For a week, show each day
+        for i in range(7):
+            date = today - timedelta(days=6-i)
+            date_labels.append(date.strftime(date_format))
+            
+            # Count workflows started on this day
+            started = LeadWorkflow.query.filter(
+                func.date(LeadWorkflow.start_date) == func.date(date)
+            ).count()
+            started_data.append(started)
+            
+            # Count workflows completed on this day
+            completed = LeadWorkflow.query.filter(
+                LeadWorkflow.status == 'completed',
+                func.date(LeadWorkflow.end_date) == func.date(date)
+            ).count()
+            completed_data.append(completed)
+    
+    elif time_range == 'month':
+        # For a month, group by every 3 days
+        for i in range(0, 30, 3):
+            date = today - timedelta(days=29-i)
+            end_date = date + timedelta(days=2)
+            date_labels.append(f"{date.strftime('%d')}-{end_date.strftime('%d')} {date.strftime('%b')}")
+            
+            # Count workflows started in this period
+            started = LeadWorkflow.query.filter(
+                LeadWorkflow.start_date >= date,
+                LeadWorkflow.start_date <= end_date
+            ).count()
+            started_data.append(started)
+            
+            # Count workflows completed in this period
+            completed = LeadWorkflow.query.filter(
+                LeadWorkflow.status == 'completed',
+                LeadWorkflow.end_date >= date,
+                LeadWorkflow.end_date <= end_date
+            ).count()
+            completed_data.append(completed)
+    
+    elif time_range == 'quarter':
+        # For a quarter, group by weeks
+        for i in range(0, 90, 7):
+            date = today - timedelta(days=89-i)
+            end_date = date + timedelta(days=6)
+            date_labels.append(f"{date.strftime('%d %b')}-{end_date.strftime('%d %b')}")
+            
+            # Count workflows started in this period
+            started = LeadWorkflow.query.filter(
+                LeadWorkflow.start_date >= date,
+                LeadWorkflow.start_date <= end_date
+            ).count()
+            started_data.append(started)
+            
+            # Count workflows completed in this period
+            completed = LeadWorkflow.query.filter(
+                LeadWorkflow.status == 'completed',
+                LeadWorkflow.end_date >= date,
+                LeadWorkflow.end_date <= end_date
+            ).count()
+            completed_data.append(completed)
+    
+    elif time_range == 'year':
+        # For a year, group by months
+        for i in range(12):
+            date = today.replace(day=1) - relativedelta(months=11-i)
+            end_date = (date + relativedelta(months=1)) - timedelta(days=1)
+            date_labels.append(date.strftime('%b %Y'))
+            
+            # Count workflows started in this period
+            started = LeadWorkflow.query.filter(
+                LeadWorkflow.start_date >= date,
+                LeadWorkflow.start_date <= end_date
+            ).count()
+            started_data.append(started)
+            
+            # Count workflows completed in this period
+            completed = LeadWorkflow.query.filter(
+                LeadWorkflow.status == 'completed',
+                LeadWorkflow.end_date >= date,
+                LeadWorkflow.end_date <= end_date
+            ).count()
+            completed_data.append(completed)
+    
+    # Get top performing workflows
+    top_workflows = []
+    workflow_templates = WorkflowTemplate.query.all()
+    
+    for template in workflow_templates:
+        # Get all lead workflows for this template
+        lead_workflows = LeadWorkflow.query.filter_by(workflow_template_id=template.id).all()
+        total = len(lead_workflows)
+        
+        if total > 0:
+            # Calculate completion rate
+            completed = len([lw for lw in lead_workflows if lw.status == 'completed'])
+            completion_rate = round((completed / total) * 100, 1) if total > 0 else 0
+            
+            # Calculate average completion time for completed workflows
+            completed_workflows = [lw for lw in lead_workflows if lw.status == 'completed' and lw.end_date is not None]
+            total_days = 0
+            for lw in completed_workflows:
+                delta = lw.end_date - lw.start_date
+                total_days += delta.days
+            
+            avg_completion_time = round(total_days / len(completed_workflows), 1) if completed_workflows else 0
+            
+            # Count active leads
+            active_leads = LeadWorkflow.query.filter_by(
+                workflow_template_id=template.id, 
+                status='active'
+            ).count()
+            
+            top_workflows.append({
+                'id': template.id,
+                'name': template.name,
+                'completion_rate': completion_rate,
+                'avg_completion_time': avg_completion_time,
+                'active_leads': active_leads
+            })
+    
+    # Sort workflows by completion rate (descending)
+    top_workflows = sorted(top_workflows, key=lambda x: x['completion_rate'], reverse=True)[:5]
+    
+    # Get recent workflow activity
+    recent_activities = []
+    
+    # Get recently completed steps
+    recent_steps = LeadWorkflowStep.query.filter(
+        LeadWorkflowStep.status.in_(['completed', 'skipped']),
+        LeadWorkflowStep.executed_date is not None
+    ).order_by(LeadWorkflowStep.executed_date.desc()).limit(10).all()
+    
+    for step in recent_steps:
+        lead_workflow = LeadWorkflow.query.get(step.lead_workflow_id)
+        lead = Lead.query.get(lead_workflow.lead_id)
+        workflow = WorkflowTemplate.query.get(lead_workflow.workflow_template_id)
+        workflow_step = WorkflowStep.query.get(step.workflow_step_id)
+        
+        action = f"{step.status.capitalize()} step: {workflow_step.step_type}"
+        
+        recent_activities.append({
+            'date': step.executed_date,
+            'lead_id': lead.id,
+            'lead_name': f"{lead.first_name} {lead.last_name}",
+            'workflow_id': workflow.id,
+            'workflow_name': workflow.name,
+            'action': action
+        })
+    
+    # Get recently started/completed/cancelled workflows
+    recent_workflows = LeadWorkflow.query.filter(
+        LeadWorkflow.status.in_(['completed', 'cancelled']),
+        LeadWorkflow.end_date is not None
+    ).order_by(LeadWorkflow.end_date.desc()).limit(5).all()
+    
+    for lw in recent_workflows:
+        lead = Lead.query.get(lw.lead_id)
+        workflow = WorkflowTemplate.query.get(lw.workflow_template_id)
+        
+        action = f"Workflow {lw.status}"
+        
+        recent_activities.append({
+            'date': lw.end_date,
+            'lead_id': lead.id,
+            'lead_name': f"{lead.first_name} {lead.last_name}",
+            'workflow_id': workflow.id,
+            'workflow_name': workflow.name,
+            'action': action
+        })
+    
+    # Sort recent activities by date (descending)
+    recent_activities = sorted(recent_activities, key=lambda x: x['date'], reverse=True)[:10]
+    
+    return render_template('workflows/analytics.html',
+                          completion_rate=completion_rate,
+                          active_count=active_count,
+                          completed_steps=completed_steps,
+                          pending_steps=pending_steps,
+                          date_labels=date_labels,
+                          completed_data=completed_data,
+                          started_data=started_data,
+                          step_types_data=step_types_data,
+                          top_workflows=top_workflows,
+                          recent_activities=recent_activities,
+                          time_range=time_range)
+
+@app.route('/workflow/lead/update_status', methods=['POST'])
+def update_lead_status_workflow():
+    """Update a lead's status."""
+    lead_id = request.form.get('lead_id', type=int)
+    new_status = request.form.get('status')
+    
+    if not lead_id or not new_status:
+        flash('Invalid request. Lead ID and status are required.', 'danger')
+        return redirect(url_for('leads'))
+    
+    lead = Lead.query.get_or_404(lead_id)
+    old_status = lead.status
+    lead.status = new_status
+    lead.status_updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    # Check for workflows that should be automatically applied
+    applied_workflows = []
+    if old_status != new_status:
+        auto_workflows = WorkflowTemplate.query.filter_by(
+            trigger_status=new_status,
+            auto_apply=True,
+            is_active=True
+        ).all()
+        
+        for workflow in auto_workflows:
+            # Check if this lead already has this workflow active
+            existing_workflow = LeadWorkflow.query.filter_by(
+                lead_id=lead_id,
+                workflow_template_id=workflow.id,
+                status='active'
+            ).first()
+            
+            if not existing_workflow:
+                # Create a new lead workflow
+                lead_workflow = LeadWorkflow(
+                    lead_id=lead_id,
+                    workflow_template_id=workflow.id,
+                    start_date=datetime.utcnow(),
+                    status='active'
+                )
+                db.session.add(lead_workflow)
+                db.session.flush()  # Get the lead workflow ID
+                
+                # Create steps for this lead workflow
+                workflow_steps = WorkflowStep.query.filter_by(
+                    workflow_template_id=workflow.id
+                ).order_by(WorkflowStep.step_order).all()
+                
+                current_date = datetime.utcnow()
+                
+                for step in workflow_steps:
+                    scheduled_date = current_date + timedelta(days=step.delay_days)
+                    
+                    lead_workflow_step = LeadWorkflowStep(
+                        lead_workflow_id=lead_workflow.id,
+                        workflow_step_id=step.id,
+                        status='pending',
+                        scheduled_date=scheduled_date
+                    )
+                    db.session.add(lead_workflow_step)
+                    
+                    current_date = scheduled_date
+                
+                db.session.commit()
+                applied_workflows.append(workflow.name)
+    
+    flash(f'Lead status updated to {new_status}!', 'success')
+    
+    # Notify about auto-applied workflows
+    if applied_workflows:
+        workflow_names = ', '.join(applied_workflows)
+        flash(f'The following workflows were automatically applied: {workflow_names}', 'info')
+    
+    return redirect(url_for('view_lead', lead_id=lead_id))
+
+@app.route('/lead/update_status', methods=['POST'])
+def update_lead_status_simple():
+    """Update a lead's status."""
+    lead_id = request.form.get('lead_id', type=int)
+    new_status = request.form.get('status')
+    
+    if not lead_id or not new_status:
+        flash('Invalid request. Lead ID and status are required.', 'danger')
+        return redirect(url_for('leads'))
+    
+    lead = Lead.query.get_or_404(lead_id)
+    old_status = lead.status
+    lead.status = new_status
+    lead.status_updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    # Check for workflows that should be automatically applied
+    applied_workflows = []
+    if old_status != new_status:
+        auto_workflows = WorkflowTemplate.query.filter_by(
+            trigger_status=new_status,
+            auto_apply=True,
+            is_active=True
+        ).all()
+        
+        for workflow in auto_workflows:
+            # Check if this lead already has this workflow active
+            existing_workflow = LeadWorkflow.query.filter_by(
+                lead_id=lead_id,
+                workflow_template_id=workflow.id,
+                status='active'
+            ).first()
+            
+            if not existing_workflow:
+                # Create a new lead workflow
+                lead_workflow = LeadWorkflow(
+                    lead_id=lead_id,
+                    workflow_template_id=workflow.id,
+                    start_date=datetime.utcnow(),
+                    status='active'
+                )
+                db.session.add(lead_workflow)
+                db.session.flush()  # Get the lead workflow ID
+                
+                # Create steps for this lead workflow
+                workflow_steps = WorkflowStep.query.filter_by(
+                    workflow_template_id=workflow.id
+                ).order_by(WorkflowStep.step_order).all()
+                
+                current_date = datetime.utcnow()
+                
+                for step in workflow_steps:
+                    scheduled_date = current_date + timedelta(days=step.delay_days)
+                    
+                    lead_workflow_step = LeadWorkflowStep(
+                        lead_workflow_id=lead_workflow.id,
+                        workflow_step_id=step.id,
+                        status='pending',
+                        scheduled_date=scheduled_date
+                    )
+                    db.session.add(lead_workflow_step)
+                    
+                    current_date = scheduled_date
+                
+                db.session.commit()
+                applied_workflows.append(workflow.name)
+    
+    flash(f'Lead status updated to {new_status}!', 'success')
+    
+    # Notify about auto-applied workflows
+    if applied_workflows:
+        workflow_names = ', '.join(applied_workflows)
+        flash(f'The following workflows were automatically applied: {workflow_names}', 'info')
+    
+    return redirect(url_for('view_lead', lead_id=lead_id))
+
+@app.route('/workflow/upcoming', methods=['GET'])
+def upcoming_workflow_steps():
+    """Display upcoming workflow steps that need attention."""
+    # Get time range for filtering
+    time_range = request.args.get('time_range', 'today')
+    
+    # Calculate date ranges
+    now = datetime.utcnow()
+    today = now.date()
+    tomorrow = today + timedelta(days=1)
+    next_week = today + timedelta(days=7)
+    
+    if time_range == 'today':
+        start_date = today
+        end_date = tomorrow
+        title = "Today's Tasks"
+    elif time_range == 'tomorrow':
+        start_date = tomorrow
+        end_date = tomorrow + timedelta(days=1)
+        title = "Tomorrow's Tasks"
+    elif time_range == 'week':
+        start_date = today
+        end_date = next_week
+        title = "This Week's Tasks"
+    else:  # 'all' or any other value
+        start_date = today
+        end_date = None
+        title = "All Upcoming Tasks"
+    
+    # Get all upcoming steps
+    upcoming_steps = LeadWorkflowStep.query.join(LeadWorkflow).filter(
+        LeadWorkflow.status == 'active',
+        LeadWorkflowStep.status == 'pending',
+        LeadWorkflowStep.scheduled_date >= start_date
+    ).order_by(LeadWorkflowStep.scheduled_date).all()
+    
+    # Add lead and workflow data to each step
+    for step in upcoming_steps:
+        lead_workflow = LeadWorkflow.query.get(step.lead_workflow_id)
+        lead = Lead.query.get(lead_workflow.lead_id)
+        workflow = WorkflowTemplate.query.get(lead_workflow.workflow_template_id)
+        
+        step.lead = lead
+        step.workflow = workflow
+    
+    return render_template('workflows/upcoming.html', 
+                           upcoming_steps=upcoming_steps,
+                           title=title,
+                           current_user={'is_authenticated': True})
 
 if __name__ == '__main__':
     # Ensure the upload folder exists

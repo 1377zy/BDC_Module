@@ -147,8 +147,14 @@
                     {% for appointment in today_appointments %}
                     <a href="{{ url_for('view_appointment', appointment_id=appointment.id) }}" class="list-group-item list-group-item-action">
                         <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ appointment.time.strftime('%I:%M %p') }}</h6>
-                            <span class="badge bg-{{ appointment.status|lower }}">{{ appointment.status }}</span>
+                            <h6 class="mb-1">
+                                {% if appointment.time is string %}
+                                    {{ appointment.time }}
+                                {% else %}
+                                    {{ appointment.time.strftime('%I:%M %p') }}
+                                {% endif %}
+                            </h6>
+                            <span class="badge bg-{{ appointment.status|lower|replace(' ', '-') }}">{{ appointment.status }}</span>
                         </div>
                         <p class="mb-1">{{ appointment.lead.first_name }} {{ appointment.lead.last_name }}</p>
                         {% if appointment.vehicle_interest %}
@@ -167,8 +173,8 @@
                     <a href="{{ url_for('add_appointment') }}" class="btn btn-outline-primary">
                         <i class="fas fa-plus"></i> Schedule New
                     </a>
-                    <a href="{{ url_for('day_view', date=today.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-calendar-day"></i> Day View
+                    <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> List View
                     </a>
                 </div>
             </div>
@@ -244,6 +250,9 @@
                     <div class="mb-3">
                         <label class="form-label">Lead:</label>
                         <p id="appointment-lead" class="form-control"></p>
+                        <a href="#" id="appointment-lead-link" class="btn btn-sm btn-outline-primary mt-1">
+                            <i class="fas fa-user"></i> View Lead Details
+                        </a>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -288,142 +297,11 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const calendarEl = document.getElementById('calendar');
-        
-        // Initialize FullCalendar
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: false,
-            height: '100%',
-            firstDay: 1, // Monday
-            businessHours: {
-                daysOfWeek: [1, 2, 3, 4, 5, 6, 0], // Monday - Sunday
-                startTime: '09:00',
-                endTime: '20:00',
-            },
-            events: {{ appointments_json|safe }},
-            eventClick: function(info) {
-                showAppointmentDetails(info.event.id);
-            },
-            eventClassNames: function(arg) {
-                const status = arg.event.extendedProps.status.toLowerCase().replace(' ', '-');
-                return ['appointment-' + status];
-            }
-        });
-        
-        calendar.render();
-        
-        // Navigation buttons
-        document.getElementById('prev-button').addEventListener('click', function() {
-            calendar.prev();
-        });
-        
-        document.getElementById('next-button').addEventListener('click', function() {
-            calendar.next();
-        });
-        
-        document.getElementById('today-button').addEventListener('click', function() {
-            calendar.today();
-        });
-        
-        // View buttons
-        document.getElementById('month-view').addEventListener('click', function() {
-            calendar.changeView('dayGridMonth');
-            updateActiveButton(this);
-        });
-        
-        document.getElementById('week-view').addEventListener('click', function() {
-            calendar.changeView('timeGridWeek');
-            updateActiveButton(this);
-        });
-        
-        document.getElementById('day-view').addEventListener('click', function() {
-            calendar.changeView('timeGridDay');
-            updateActiveButton(this);
-        });
-        
-        document.getElementById('list-view').addEventListener('click', function() {
-            calendar.changeView('listWeek');
-            updateActiveButton(this);
-        });
-        
-        // Update active button
-        function updateActiveButton(button) {
-            document.querySelectorAll('#month-view, #week-view, #day-view, #list-view').forEach(function(btn) {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-        }
-        
-        // Filter appointments by status
-        const filterCheckboxes = document.querySelectorAll('.filter-status');
-        filterCheckboxes.forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                filterEvents();
-            });
-        });
-        
-        function filterEvents() {
-            const selectedStatuses = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
-            
-            calendar.getEvents().forEach(function(event) {
-                if (selectedStatuses.includes(event.extendedProps.status)) {
-                    event.setProp('display', 'auto');
-                } else {
-                    event.setProp('display', 'none');
-                }
-            });
-        }
-        
-        // Print calendar
-        document.getElementById('print-calendar').addEventListener('click', function() {
-            window.print();
-        });
-        
-        // Show appointment details in modal
-        function showAppointmentDetails(appointmentId) {
-            const modal = new bootstrap.Modal(document.getElementById('appointmentModal'));
-            
-            // Show loading
-            document.getElementById('appointment-loading').classList.remove('d-none');
-            document.getElementById('appointment-details').classList.add('d-none');
-            
-            // Fetch appointment details
-            fetch(`/appointments/api/get/${appointmentId}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Hide loading
-                    document.getElementById('appointment-loading').classList.add('d-none');
-                    document.getElementById('appointment-details').classList.remove('d-none');
-                    
-                    // Populate modal
-                    document.getElementById('appointment-lead').textContent = `${data.lead.first_name} ${data.lead.last_name}`;
-                    document.getElementById('appointment-date').textContent = data.date;
-                    document.getElementById('appointment-time').textContent = data.time;
-                    document.getElementById('appointment-status').textContent = data.status;
-                    document.getElementById('appointment-status').className = `form-control text-white bg-${data.status.toLowerCase().replace(' ', '-')}`;
-                    document.getElementById('appointment-vehicle').textContent = data.vehicle_interest || 'Not specified';
-                    
-                    if (data.notes) {
-                        document.getElementById('appointment-notes-container').classList.remove('d-none');
-                        document.getElementById('appointment-notes').textContent = data.notes;
-                    } else {
-                        document.getElementById('appointment-notes-container').classList.add('d-none');
-                    }
-                    
-                    // Update links
-                    document.getElementById('appointment-view-link').href = `/appointments/view/${appointmentId}`;
-                    document.getElementById('appointment-edit-link').href = `/appointments/edit/${appointmentId}`;
-                    
-                    // Show modal
-                    modal.show();
-                })
-                .catch(error => {
-                    console.error('Error fetching appointment details:', error);
-                    alert('Error loading appointment details. Please try again.');
-                });
-        }
-    });
+    // Pass appointments data to the calendar.js file
+    const appointmentsData = {{ appointments_json|safe }};
 </script>
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 {% endblock %}
+
+<!-- Include Quick Add Modal -->
+{% include 'appointments/quick_add_modal.html' %}

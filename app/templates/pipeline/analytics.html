@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Pipeline Analytics{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Pipeline Analytics</h1>
+        </div>
+        <div class="col-md-4 text-right">
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#filterModal">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <button type="button" class="btn btn-primary" id="exportReportBtn">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Selector -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="dateRangeForm" method="GET" class="form-inline">
+                        <div class="form-group mr-3">
+                            <label for="dateRange" class="mr-2">Date Range:</label>
+                            <select id="dateRange" name="date_range" class="form-control">
+                                <option value="7" {% if date_range == 7 %}selected{% endif %}>Last 7 Days</option>
+                                <option value="30" {% if date_range == 30 %}selected{% endif %}>Last 30 Days</option>
+                                <option value="90" {% if date_range == 90 %}selected{% endif %}>Last 90 Days</option>
+                                <option value="180" {% if date_range == 180 %}selected{% endif %}>Last 6 Months</option>
+                                <option value="365" {% if date_range == 365 %}selected{% endif %}>Last Year</option>
+                                <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+                            </select>
+                        </div>
+                        <div id="customDateInputs" class="form-inline {% if date_range != 'custom' %}d-none{% endif %}">
+                            <div class="form-group mr-3">
+                                <label for="startDate" class="mr-2">Start Date:</label>
+                                <input type="date" id="startDate" name="start_date" class="form-control" value="{{ start_date }}">
+                            </div>
+                            <div class="form-group mr-3">
+                                <label for="endDate" class="mr-2">End Date:</label>
+                                <input type="date" id="endDate" name="end_date" class="form-control" value="{{ end_date }}">
+                            </div>
+                        </div>
+                        <div class="form-group mr-3">
+                            <label for="pipelineSelect" class="mr-2">Pipeline:</label>
+                            <select id="pipelineSelect" name="pipeline_id" class="form-control">
+                                <option value="all" {% if pipeline_id == 'all' %}selected{% endif %}>All Pipelines</option>
+                                {% for pipeline in pipelines %}
+                                <option value="{{ pipeline.id }}" {% if pipeline_id|int == pipeline.id %}selected{% endif %}>{{ pipeline.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Deals</h5>
+                    <h2 class="card-text">{{ stats.total_deals }}</h2>
+                    <p class="card-text">
+                        {% if stats.deal_change > 0 %}
+                        <span class="text-success"><i class="fas fa-arrow-up"></i> {{ stats.deal_change }}%</span>
+                        {% elif stats.deal_change < 0 %}
+                        <span class="text-danger"><i class="fas fa-arrow-down"></i> {{ stats.deal_change|abs }}%</span>
+                        {% else %}
+                        <span>No change</span>
+                        {% endif %}
+                        from previous period
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Value</h5>
+                    <h2 class="card-text">${{ stats.total_value|format_currency }}</h2>
+                    <p class="card-text">
+                        {% if stats.value_change > 0 %}
+                        <span class="text-light"><i class="fas fa-arrow-up"></i> {{ stats.value_change }}%</span>
+                        {% elif stats.value_change < 0 %}
+                        <span class="text-danger"><i class="fas fa-arrow-down"></i> {{ stats.value_change|abs }}%</span>
+                        {% else %}
+                        <span>No change</span>
+                        {% endif %}
+                        from previous period
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Win Rate</h5>
+                    <h2 class="card-text">{{ stats.win_rate }}%</h2>
+                    <p class="card-text">
+                        {% if stats.win_rate_change > 0 %}
+                        <span class="text-light"><i class="fas fa-arrow-up"></i> {{ stats.win_rate_change }}%</span>
+                        {% elif stats.win_rate_change < 0 %}
+                        <span class="text-danger"><i class="fas fa-arrow-down"></i> {{ stats.win_rate_change|abs }}%</span>
+                        {% else %}
+                        <span>No change</span>
+                        {% endif %}
+                        from previous period
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Deal Size</h5>
+                    <h2 class="card-text">${{ stats.avg_deal_size|format_currency }}</h2>
+                    <p class="card-text">
+                        {% if stats.avg_size_change > 0 %}
+                        <span class="text-light"><i class="fas fa-arrow-up"></i> {{ stats.avg_size_change }}%</span>
+                        {% elif stats.avg_size_change < 0 %}
+                        <span class="text-danger"><i class="fas fa-arrow-down"></i> {{ stats.avg_size_change|abs }}%</span>
+                        {% else %}
+                        <span>No change</span>
+                        {% endif %}
+                        from previous period
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Deals by Stage</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dealsByStageChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Deal Value by Stage</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="valueByStageChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Deals Created Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dealsOverTimeChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Win/Loss Ratio</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="winLossChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage Transition Analysis -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Stage Transition Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Stage</th>
+                                    <th>Avg. Time in Stage (days)</th>
+                                    <th>Conversion Rate to Next Stage</th>
+                                    <th>Deals Currently in Stage</th>
+                                    <th>Total Value in Stage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stage_stat in stage_stats %}
+                                <tr>
+                                    <td>{{ stage_stat.name }}</td>
+                                    <td>{{ stage_stat.avg_time|round(1) }}</td>
+                                    <td>{{ stage_stat.conversion_rate }}%</td>
+                                    <td>{{ stage_stat.deal_count }}</td>
+                                    <td>${{ stage_stat.total_value|format_currency }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Deals -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Top Deals</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Deal</th>
+                                    <th>Lead</th>
+                                    <th>Stage</th>
+                                    <th>Value</th>
+                                    <th>Expected Close Date</th>
+                                    <th>Assigned To</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deal in top_deals %}
+                                <tr>
+                                    <td>{{ deal.title }}</td>
+                                    <td>{{ deal.lead.first_name }} {{ deal.lead.last_name }}</td>
+                                    <td>{{ deal.stage.name }}</td>
+                                    <td>${{ deal.value|format_currency }}</td>
+                                    <td>{{ deal.expected_close_date|format_date if deal.expected_close_date else 'Not set' }}</td>
+                                    <td>{{ deal.assigned_to.username if deal.assigned_to else 'Unassigned' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Analytics</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="filterForm" action="{{ url_for('pipeline_analytics') }}" method="GET">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="assignedTo">Assigned To:</label>
+                            <select id="assignedTo" name="assigned_to" class="form-control">
+                                <option value="">All Users</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.args.get('assigned_to')|int == user.id %}selected{% endif %}>{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="minValue">Minimum Deal Value:</label>
+                            <input type="number" id="minValue" name="min_value" class="form-control" value="{{ request.args.get('min_value', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="leadSource">Lead Source:</label>
+                            <select id="leadSource" name="lead_source" class="form-control">
+                                <option value="">All Sources</option>
+                                {% for source in lead_sources %}
+                                <option value="{{ source }}" {% if request.args.get('lead_source') == source %}selected{% endif %}>{{ source }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input type="hidden" name="date_range" value="{{ date_range }}">
+                        <input type="hidden" name="start_date" value="{{ start_date }}">
+                        <input type="hidden" name="end_date" value="{{ end_date }}">
+                        <input type="hidden" name="pipeline_id" value="{{ pipeline_id }}">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('pipeline_analytics') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script>
+// Chart data from server
+const stageLabels = {{ stage_labels|tojson }};
+const dealsByStage = {{ deals_by_stage|tojson }};
+const valueByStage = {{ value_by_stage|tojson }};
+const timeLabels = {{ time_labels|tojson }};
+const dealsOverTime = {{ deals_over_time|tojson }};
+const winLossData = {{ win_loss_data|tojson }};
+
+// Charts initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Deals by Stage Chart
+    const dealsByStageCtx = document.getElementById('dealsByStageChart').getContext('2d');
+    new Chart(dealsByStageCtx, {
+        type: 'bar',
+        data: {
+            labels: stageLabels,
+            datasets: [{
+                label: 'Number of Deals',
+                data: dealsByStage,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    // Value by Stage Chart
+    const valueByStageCtx = document.getElementById('valueByStageChart').getContext('2d');
+    new Chart(valueByStageCtx, {
+        type: 'bar',
+        data: {
+            labels: stageLabels,
+            datasets: [{
+                label: 'Total Value ($)',
+                data: valueByStage,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }]
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        return data.datasets[tooltipItem.datasetIndex].label + ': $' + 
+                               tooltipItem.yLabel.toLocaleString();
+                    }
+                }
+            }
+        }
+    });
+
+    // Deals Over Time Chart
+    const dealsOverTimeCtx = document.getElementById('dealsOverTimeChart').getContext('2d');
+    new Chart(dealsOverTimeCtx, {
+        type: 'line',
+        data: {
+            labels: timeLabels,
+            datasets: [{
+                label: 'Deals Created',
+                data: dealsOverTime,
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(153, 102, 255, 1)',
+                pointRadius: 4,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                }]
+            }
+        }
+    });
+
+    // Win/Loss Chart
+    const winLossCtx = document.getElementById('winLossChart').getContext('2d');
+    new Chart(winLossCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Won', 'Lost', 'Active'],
+            datasets: [{
+                data: [winLossData.won, winLossData.lost, winLossData.active],
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.8)',
+                    'rgba(231, 76, 60, 0.8)',
+                    'rgba(52, 152, 219, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(231, 76, 60, 1)',
+                    'rgba(52, 152, 219, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            legend: {
+                position: 'right'
+            },
+            tooltips: {
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        const dataset = data.datasets[tooltipItem.datasetIndex];
+                        const total = dataset.data.reduce((acc, curr) => acc + curr, 0);
+                        const currentValue = dataset.data[tooltipItem.index];
+                        const percentage = Math.round((currentValue / total) * 100);
+                        return `${data.labels[tooltipItem.index]}: ${currentValue} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    });
+
+    // Date range selector logic
+    const dateRangeSelect = document.getElementById('dateRange');
+    const customDateInputs = document.getElementById('customDateInputs');
+
+    dateRangeSelect.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customDateInputs.classList.remove('d-none');
+        } else {
+            customDateInputs.classList.add('d-none');
+        }
+    });
+
+    // Export report functionality
+    document.getElementById('exportReportBtn').addEventListener('click', function() {
+        window.location.href = "{{ url_for('export_pipeline_report') }}?" + new URLSearchParams(window.location.search);
+    });
+});
+</script>
+{% endblock %}

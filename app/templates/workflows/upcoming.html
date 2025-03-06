@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Upcoming Workflow Tasks - Auto Dealership BDC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+    </div>
+    <div class="col-md-6 text-right">
+        <div class="btn-group">
+            <a href="{{ url_for('upcoming_workflow_steps', time_range='today') }}" class="btn btn-sm {% if time_range == 'today' %}btn-primary{% else %}btn-outline-primary{% endif %}">Today</a>
+            <a href="{{ url_for('upcoming_workflow_steps', time_range='tomorrow') }}" class="btn btn-sm {% if time_range == 'tomorrow' %}btn-primary{% else %}btn-outline-primary{% endif %}">Tomorrow</a>
+            <a href="{{ url_for('upcoming_workflow_steps', time_range='week') }}" class="btn btn-sm {% if time_range == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">This Week</a>
+            <a href="{{ url_for('upcoming_workflow_steps', time_range='all') }}" class="btn btn-sm {% if time_range == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+        </div>
+    </div>
+</div>
+
+<!-- Task Summary Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.Total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Emails</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.Email }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-envelope fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Calls</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.Call }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-phone fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">SMS</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ counts.SMS }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-sms fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Tasks -->
+{% if steps_by_type.Email %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-envelope mr-1"></i> Email Tasks ({{ counts.Email }})
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Lead</th>
+                        <th>Workflow</th>
+                        <th>Subject</th>
+                        <th>Scheduled For</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in steps_by_type.Email %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_lead', lead_id=step.lead.id) }}">{{ step.lead_name }}</a>
+                        </td>
+                        <td>{{ step.workflow_name }}</td>
+                        <td>{{ step.subject }}</td>
+                        <td>
+                            {{ step.scheduled_date.strftime('%Y-%m-%d') }}
+                            {% if step.days_until == 0 %}
+                                <span class="badge bg-danger">Today</span>
+                            {% elif step.days_until == 1 %}
+                                <span class="badge bg-warning">Tomorrow</span>
+                            {% else %}
+                                <span class="badge bg-info">In {{ step.days_until }} days</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('execute_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Execute
+                                </a>
+                                <a href="{{ url_for('skip_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-forward"></i> Skip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Call Tasks -->
+{% if steps_by_type.Call %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-info">
+            <i class="fas fa-phone mr-1"></i> Call Tasks ({{ counts.Call }})
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Lead</th>
+                        <th>Workflow</th>
+                        <th>Notes</th>
+                        <th>Scheduled For</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in steps_by_type.Call %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_lead', lead_id=step.lead.id) }}">{{ step.lead_name }}</a>
+                            {% if step.lead.phone %}
+                                <div><a href="tel:{{ step.lead.phone }}" class="text-info"><i class="fas fa-phone-alt"></i> {{ step.lead.phone }}</a></div>
+                            {% endif %}
+                        </td>
+                        <td>{{ step.workflow_name }}</td>
+                        <td>{{ step.content }}</td>
+                        <td>
+                            {{ step.scheduled_date.strftime('%Y-%m-%d') }}
+                            {% if step.days_until == 0 %}
+                                <span class="badge bg-danger">Today</span>
+                            {% elif step.days_until == 1 %}
+                                <span class="badge bg-warning">Tomorrow</span>
+                            {% else %}
+                                <span class="badge bg-info">In {{ step.days_until }} days</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('execute_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Execute
+                                </a>
+                                <a href="{{ url_for('skip_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-forward"></i> Skip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- SMS Tasks -->
+{% if steps_by_type.SMS %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-warning">
+            <i class="fas fa-sms mr-1"></i> SMS Tasks ({{ counts.SMS }})
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Lead</th>
+                        <th>Workflow</th>
+                        <th>Message</th>
+                        <th>Scheduled For</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in steps_by_type.SMS %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_lead', lead_id=step.lead.id) }}">{{ step.lead_name }}</a>
+                            {% if step.lead.phone %}
+                                <div><a href="sms:{{ step.lead.phone }}" class="text-warning"><i class="fas fa-sms"></i> {{ step.lead.phone }}</a></div>
+                            {% endif %}
+                        </td>
+                        <td>{{ step.workflow_name }}</td>
+                        <td>{{ step.content }}</td>
+                        <td>
+                            {{ step.scheduled_date.strftime('%Y-%m-%d') }}
+                            {% if step.days_until == 0 %}
+                                <span class="badge bg-danger">Today</span>
+                            {% elif step.days_until == 1 %}
+                                <span class="badge bg-warning">Tomorrow</span>
+                            {% else %}
+                                <span class="badge bg-info">In {{ step.days_until }} days</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('execute_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Execute
+                                </a>
+                                <a href="{{ url_for('skip_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-forward"></i> Skip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Task Tasks -->
+{% if steps_by_type.Task %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-dark">
+            <i class="fas fa-tasks mr-1"></i> General Tasks ({{ counts.Task }})
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Lead</th>
+                        <th>Workflow</th>
+                        <th>Task Description</th>
+                        <th>Scheduled For</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in steps_by_type.Task %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_lead', lead_id=step.lead.id) }}">{{ step.lead_name }}</a>
+                        </td>
+                        <td>{{ step.workflow_name }}</td>
+                        <td>{{ step.content }}</td>
+                        <td>
+                            {{ step.scheduled_date.strftime('%Y-%m-%d') }}
+                            {% if step.days_until == 0 %}
+                                <span class="badge bg-danger">Today</span>
+                            {% elif step.days_until == 1 %}
+                                <span class="badge bg-warning">Tomorrow</span>
+                            {% else %}
+                                <span class="badge bg-info">In {{ step.days_until }} days</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('execute_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Execute
+                                </a>
+                                <a href="{{ url_for('skip_workflow_step', lead_workflow_step_id=step.lead_step_id) }}" class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-forward"></i> Skip
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Empty State -->
+{% if counts.Total == 0 %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-check-circle fa-4x text-success"></i>
+        </div>
+        <h4>All caught up!</h4>
+        <p class="text-muted">There are no pending workflow tasks for the selected time period.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

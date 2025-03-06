@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Pipeline{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pipeline.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Sales Pipeline</h1>
+        </div>
+        <div class="col-md-4 text-right">
+            <div class="btn-group">
+                <a href="{{ url_for('create_pipeline') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Pipeline
+                </a>
+                <a href="{{ url_for('create_deal') }}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> New Deal
+                </a>
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#filterModal">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Deals</h5>
+                    <h2 class="card-text">{{ stats.total_deals }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Value</h5>
+                    <h2 class="card-text">${{ stats.total_value|format_currency }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Deal Size</h5>
+                    <h2 class="card-text">${{ stats.avg_deal_size|format_currency }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Win Rate</h5>
+                    <h2 class="card-text">{{ stats.win_rate }}%</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Selector -->
+    {% if pipelines|length > 1 %}
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="pipelineSelector">Select Pipeline:</label>
+                <select id="pipelineSelector" class="form-control">
+                    {% for p in pipelines %}
+                    <option value="{{ p.id }}" {% if p.id == current_pipeline.id %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pipeline Visualization -->
+    <div class="pipeline-container">
+        <div class="pipeline-stages">
+            {% for stage in current_pipeline.stages %}
+            <div class="pipeline-stage" data-stage-id="{{ stage.id }}" style="background-color: {{ stage.color }}20; border-color: {{ stage.color }};">
+                <div class="stage-header" style="background-color: {{ stage.color }};">
+                    <h5>{{ stage.name }}</h5>
+                    <span class="badge badge-light">{{ stage.deals|length }}</span>
+                </div>
+                <div class="stage-body" id="stage-{{ stage.id }}">
+                    {% for deal in stage.deals %}
+                    <div class="deal-card" id="deal-{{ deal.id }}" data-deal-id="{{ deal.id }}" draggable="true">
+                        <div class="deal-header">
+                            <h6>{{ deal.title }}</h6>
+                            <span class="badge badge-{% if deal.priority == 3 %}danger{% elif deal.priority == 2 %}warning{% else %}info{% endif %}">
+                                {% if deal.priority == 3 %}High{% elif deal.priority == 2 %}Medium{% else %}Low{% endif %}
+                            </span>
+                        </div>
+                        <div class="deal-body">
+                            <p><strong>Lead:</strong> {{ deal.lead.first_name }} {{ deal.lead.last_name }}</p>
+                            <p><strong>Value:</strong> ${{ deal.value|format_currency }}</p>
+                            {% if deal.expected_close_date %}
+                            <p><strong>Expected Close:</strong> {{ deal.expected_close_date|format_date }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="deal-footer">
+                            <a href="{{ url_for('view_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ url_for('edit_deal', deal_id=deal.id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Pipeline</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="filterForm" action="{{ url_for('pipeline') }}" method="GET">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="assignedTo">Assigned To:</label>
+                            <select id="assignedTo" name="assigned_to" class="form-control">
+                                <option value="">All Users</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}" {% if request.args.get('assigned_to')|int == user.id %}selected{% endif %}>{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="minValue">Minimum Value:</label>
+                            <input type="number" id="minValue" name="min_value" class="form-control" value="{{ request.args.get('min_value', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxValue">Maximum Value:</label>
+                            <input type="number" id="maxValue" name="max_value" class="form-control" value="{{ request.args.get('max_value', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Priority:</label>
+                            <select id="priority" name="priority" class="form-control">
+                                <option value="">All Priorities</option>
+                                <option value="1" {% if request.args.get('priority') == '1' %}selected{% endif %}>Low</option>
+                                <option value="2" {% if request.args.get('priority') == '2' %}selected{% endif %}>Medium</option>
+                                <option value="3" {% if request.args.get('priority') == '3' %}selected{% endif %}>High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="expectedCloseStart">Expected Close Date (Start):</label>
+                            <input type="date" id="expectedCloseStart" name="close_date_start" class="form-control" value="{{ request.args.get('close_date_start', '') }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="expectedCloseEnd">Expected Close Date (End):</label>
+                            <input type="date" id="expectedCloseEnd" name="close_date_end" class="form-control" value="{{ request.args.get('close_date_end', '') }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('pipeline') }}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
+{% endblock %}

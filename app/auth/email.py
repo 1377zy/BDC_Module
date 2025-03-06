@@ -1,5 +1,5 @@
 from flask import current_app, render_template
-from app.email import send_email
+from app.email_handler import send_email
 import jwt
 from time import time
 

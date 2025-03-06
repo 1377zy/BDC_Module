@@ -3,7 +3,7 @@ from flask_login import login_required
 from app import db
 from app.leads import bp
 from app.leads.forms import LeadForm, VehicleInterestForm, SearchLeadForm
-from app.models import Lead, VehicleInterest, Appointment, Communication
+from app.models_main import Lead, VehicleInterest, Appointment, Communication
 
 @bp.route('/list')
 @login_required

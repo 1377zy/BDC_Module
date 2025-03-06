@@ -138,6 +138,66 @@ $(document).ready(function() {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     $(`.calendar-day[data-date="${todayString}"]`).addClass('bg-light');
+
+    // Dark mode toggle
+    function toggleDarkMode(enabled) {
+        if (enabled) {
+            $('body').addClass('dark-mode');
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            $('body').removeClass('dark-mode');
+            localStorage.setItem('darkMode', 'disabled');
+        }
+    }
+
+    // Check for saved dark mode preference
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        toggleDarkMode(true);
+        $('#darkMode').prop('checked', true);
+    }
+
+    // Handle dark mode toggle directly from checkbox
+    $('#darkMode').change(function() {
+        toggleDarkMode(this.checked);
+    });
+
+    // Save user preferences
+    $('#savePreferences').click(function() {
+        const preferences = {
+            email_notifications: $('#emailNotifications').is(':checked'),
+            sms_notifications: $('#smsNotifications').is(':checked'),
+            dark_mode: $('#darkMode').is(':checked')
+        };
+
+        // Save to localStorage for demo purposes
+        localStorage.setItem('userPreferences', JSON.stringify(preferences));
+        
+        // In a real app, this would be an AJAX call to save to the server
+        // $.post('/user/save_preferences', preferences, function(response) {
+        //     // Handle response
+        // });
+
+        // Apply dark mode immediately
+        toggleDarkMode(preferences.dark_mode);
+        
+        // Show success message
+        $('<div class="alert alert-success alert-dismissible fade show" role="alert">')
+            .text('Preferences saved successfully!')
+            .append('<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>')
+            .prependTo('.col-md-8');
+    });
+
+    // Load saved preferences from localStorage
+    const savedPreferences = localStorage.getItem('userPreferences');
+    if (savedPreferences) {
+        const preferences = JSON.parse(savedPreferences);
+        $('#emailNotifications').prop('checked', preferences.email_notifications);
+        $('#smsNotifications').prop('checked', preferences.sms_notifications);
+        $('#darkMode').prop('checked', preferences.dark_mode);
+        
+        // Apply dark mode if enabled
+        toggleDarkMode(preferences.dark_mode);
+    }
 });
 
 // Function to process template placeholders

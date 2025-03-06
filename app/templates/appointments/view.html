@@ -141,8 +141,8 @@
                     <a href="{{ url_for('mark_cancelled', appointment_id=appointment.id) }}" class="btn btn-outline-secondary">
                         <i class="fas fa-ban"></i> Mark as Cancelled
                     </a>
-                    <a href="{{ url_for('reschedule', appointment_id=appointment.id) }}" class="btn btn-outline-warning">
-                        <i class="fas fa-calendar-alt"></i> Reschedule
+                    <a href="{{ url_for('edit_appointment', appointment_id=appointment.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-edit"></i> Edit Appointment
                     </a>
                 </div>
             </div>
@@ -166,8 +166,8 @@
                 </div>
                 
                 <div class="d-grid gap-2 mt-3">
-                    <a href="{{ url_for('view_day', date=appointment.date) }}" class="btn btn-outline-info">
-                        <i class="fas fa-calendar-day"></i> View Full Day
+                    <a href="{{ url_for('appointments_calendar') }}" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-day"></i> View Calendar
                     </a>
                 </div>
             </div>

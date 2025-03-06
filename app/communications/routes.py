@@ -4,9 +4,9 @@ from app import db
 from app.communications import bp
 from app.communications.forms import (EmailForm, SMSForm, EmailTemplateForm, 
                                      SMSTemplateForm, CommunicationSearchForm)
-from app.models import Lead, Communication, EmailTemplate, SMSTemplate
-from app.email.email_handler import send_email
-from app.sms.sms_handler import send_sms
+from app.models_main import Lead, Communication, EmailTemplate, SMSTemplate
+from app.email_handler import send_email
+from app.sms_handler import send_sms
 from datetime import datetime
 
 @bp.route('/email/<int:lead_id>', methods=['GET', 'POST'])

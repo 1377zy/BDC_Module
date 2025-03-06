@@ -12,16 +12,16 @@
     </div>
     <div class="col-md-4 text-md-end">
         <div class="btn-group" role="group">
-            <a href="/leads/edit/{{ lead.id }}" class="btn btn-outline-primary">
+            <a href="{{ url_for('edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit"></i> Edit Lead
             </a>
-            <a href="/communications/email?lead_id={{ lead.id }}" class="btn btn-outline-info">
+            <a href="{{ url_for('send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
                 <i class="fas fa-envelope"></i> Send Email
             </a>
-            <a href="/communications/sms?lead_id={{ lead.id }}" class="btn btn-outline-warning">
+            <a href="{{ url_for('send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
                 <i class="fas fa-sms"></i> Send SMS
             </a>
-            <a href="/appointments/add?lead_id={{ lead.id }}" class="btn btn-outline-success">
+            <a href="{{ url_for('add_appointment', lead_id=lead.id) }}" class="btn btn-outline-success">
                 <i class="fas fa-calendar-plus"></i> Schedule Appointment
             </a>
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteLeadModal">
@@ -44,7 +44,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="/leads/delete/{{ lead.id }}" method="post">
+                <form action="{{ url_for('delete_lead', lead_id=lead.id) }}" method="post">
                     <button type="submit" class="btn btn-danger">Delete Lead</button>
                 </form>
             </div>
@@ -56,8 +56,16 @@
     <div class="col-md-8">
         <!-- Lead Information Card -->
         <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-info-circle me-1"></i> Lead Information
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Lead Information</h6>
+                <div>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                        <i class="fas fa-exchange-alt"></i> Update Status
+                    </button>
+                    <a href="{{ url_for('edit_lead', lead_id=lead.id) }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -129,14 +137,14 @@
                 {% endif %}
                 <div class="text-end mt-3">
                     <div class="btn-group" role="group">
-                        <a href="/communications/email?lead_id={{ lead.id }}" class="btn btn-outline-info">
+                        <a href="{{ url_for('send_email', lead_id=lead.id) }}" class="btn btn-outline-info">
                             <i class="fas fa-envelope"></i> Send Email
                         </a>
-                        <a href="/communications/sms?lead_id={{ lead.id }}" class="btn btn-outline-warning">
+                        <a href="{{ url_for('send_sms', lead_id=lead.id) }}" class="btn btn-outline-warning">
                             <i class="fas fa-sms"></i> Send SMS
                         </a>
-                        <a href="/communications/call?lead_id={{ lead.id }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-plus"></i> Log Communication
+                        <a href="{{ url_for('communications') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-comments"></i> All Communications
                         </a>
                     </div>
                 </div>
@@ -171,7 +179,7 @@
                 </div>
                 {% endif %}
                 <div class="d-grid">
-                    <a href="/appointments/add?lead_id={{ lead.id }}" class="btn btn-success">
+                    <a href="{{ url_for('add_appointment', lead_id=lead.id) }}" class="btn btn-success">
                         <i class="fas fa-calendar-plus"></i> Schedule New Appointment
                     </a>
                 </div>
@@ -185,13 +193,13 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="/leads/edit/{{ lead.id }}" class="btn btn-outline-primary">
+                    <a href="{{ url_for('edit_lead', lead_id=lead.id) }}" class="btn btn-outline-primary">
                         <i class="fas fa-edit"></i> Edit Lead Information
                     </a>
-                    <a href="/leads/update-status/{{ lead.id }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('update_lead_status', lead_id=lead.id) }}" class="btn btn-outline-secondary">
                         <i class="fas fa-tag"></i> Update Status
                     </a>
-                    <a href="/leads" class="btn btn-outline-dark">
+                    <a href="{{ url_for('leads') }}" class="btn btn-outline-dark">
                         <i class="fas fa-arrow-left"></i> Back to Leads
                     </a>
                 </div>
@@ -199,4 +207,5 @@
         </div>
     </div>
 </div>
+{% include 'leads/update_status_modal.html' %}
 {% endblock %}

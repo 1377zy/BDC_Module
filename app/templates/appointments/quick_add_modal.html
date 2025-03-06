@@ -1,0 +1,63 @@
+<!-- Quick Add Appointment Modal -->
+<div class="modal fade" id="quickAddModal" tabindex="-1" aria-labelledby="quickAddModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickAddModalLabel">Schedule New Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-day"></i> Creating appointment for <strong id="quick-add-date"></strong>
+                </div>
+                
+                <form id="quickAddForm" action="{{ url_for('add_appointment') }}" method="post">
+                    <input type="hidden" name="date" id="quick-add-date-input">
+                    
+                    <div class="mb-3">
+                        <label for="quick-lead-id" class="form-label">Select Lead</label>
+                        <select name="lead_id" id="quick-lead-id" class="form-select" required>
+                            <option value="">-- Select a Lead --</option>
+                            {% for lead in leads_data %}
+                            <option value="{{ lead.id }}">{{ lead.first_name }} {{ lead.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Can't find the lead? <a href="{{ url_for('add_lead') }}" target="_blank">Create a new lead</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quick-time" class="form-label">Time</label>
+                        <input type="time" name="time" id="quick-time" class="form-control" required value="09:00">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quick-purpose" class="form-label">Purpose</label>
+                        <select name="purpose" id="quick-purpose" class="form-select" required>
+                            <option value="">-- Select Purpose --</option>
+                            <option value="Test Drive">Test Drive</option>
+                            <option value="Vehicle Viewing">Vehicle Viewing</option>
+                            <option value="Pricing Discussion">Pricing Discussion</option>
+                            <option value="Financing Options">Financing Options</option>
+                            <option value="Trade-in Evaluation">Trade-in Evaluation</option>
+                            <option value="Final Purchase">Final Purchase</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quick-notes" class="form-label">Notes</label>
+                        <textarea name="notes" id="quick-notes" class="form-control" rows="3" placeholder="Any notes about this appointment"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="quick-add-submit">
+                    <i class="fas fa-calendar-plus"></i> Schedule Appointment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

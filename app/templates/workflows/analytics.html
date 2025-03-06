@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Workflow Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Workflow Analytics</h1>
+    
+    <div class="row">
+        <!-- Workflow Completion Rate Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Workflow Completion Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completion_rate }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Workflows Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Workflows</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Steps Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Completed Steps</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completed_steps }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Steps Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Steps</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_steps }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Workflow Performance Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Workflow Performance</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Time Range:</div>
+                            <a class="dropdown-item" href="{{ url_for('workflow_analytics', time_range='week') }}">Last Week</a>
+                            <a class="dropdown-item" href="{{ url_for('workflow_analytics', time_range='month') }}">Last Month</a>
+                            <a class="dropdown-item" href="{{ url_for('workflow_analytics', time_range='quarter') }}">Last Quarter</a>
+                            <a class="dropdown-item" href="{{ url_for('workflow_analytics', time_range='year') }}">Last Year</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="workflowPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step Types Distribution -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Step Types Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="stepTypesChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> Email
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> SMS
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-info"></i> Call
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-warning"></i> Task
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Performing Workflows -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Performing Workflows</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="topWorkflowsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Workflow Name</th>
+                                    <th>Completion Rate</th>
+                                    <th>Avg. Time to Complete</th>
+                                    <th>Active Leads</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for workflow in top_workflows %}
+                                <tr>
+                                    <td><a href="{{ url_for('view_workflow', workflow_id=workflow.id) }}">{{ workflow.name }}</a></td>
+                                    <td>{{ workflow.completion_rate }}%</td>
+                                    <td>{{ workflow.avg_completion_time }} days</td>
+                                    <td>{{ workflow.active_leads }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Workflow Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Workflow Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="recentActivityTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Lead</th>
+                                    <th>Workflow</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>{{ activity.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td><a href="{{ url_for('view_lead', lead_id=activity.lead_id) }}">{{ activity.lead_name }}</a></td>
+                                    <td><a href="{{ url_for('view_workflow', workflow_id=activity.workflow_id) }}">{{ activity.workflow_name }}</a></td>
+                                    <td>{{ activity.action }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Workflow Performance Chart
+    var ctx = document.getElementById("workflowPerformanceChart");
+    var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ date_labels|tojson }},
+            datasets: [{
+                label: "Completed Workflows",
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointBorderColor: "rgba(78, 115, 223, 1)",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: {{ completed_data|tojson }},
+            },
+            {
+                label: "Started Workflows",
+                lineTension: 0.3,
+                backgroundColor: "rgba(28, 200, 138, 0.05)",
+                borderColor: "rgba(28, 200, 138, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(28, 200, 138, 1)",
+                pointBorderColor: "rgba(28, 200, 138, 1)",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "rgba(28, 200, 138, 1)",
+                pointHoverBorderColor: "rgba(28, 200, 138, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: {{ started_data|tojson }},
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 0
+                }
+            },
+            scales: {
+                x: {
+                    time: {
+                        unit: 'date'
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxTicksLimit: 7
+                    }
+                },
+                y: {
+                    ticks: {
+                        maxTicksLimit: 5,
+                        padding: 10,
+                    },
+                    grid: {
+                        color: "rgb(234, 236, 244)",
+                        zeroLineColor: "rgb(234, 236, 244)",
+                        drawBorder: false,
+                        borderDash: [2],
+                        zeroLineBorderDash: [2]
+                    }
+                },
+            },
+            plugins: {
+                legend: {
+                    display: true
+                },
+                tooltip: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                    titleFontColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    intersect: false,
+                    mode: 'index',
+                    caretPadding: 10,
+                }
+            }
+        }
+    });
+
+    // Step Types Pie Chart
+    var ctx2 = document.getElementById("stepTypesChart");
+    var myPieChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: ["Email", "SMS", "Call", "Task"],
+            datasets: [{
+                data: {{ step_types_data|tojson }},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+</script>
+{% endblock %}

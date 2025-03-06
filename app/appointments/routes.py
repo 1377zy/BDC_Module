@@ -3,10 +3,11 @@ from flask_login import login_required
 from app import db
 from app.appointments import bp
 from app.appointments.forms import AppointmentForm, AppointmentSearchForm
-from app.models import Appointment, Lead
-from app.email.email_handler import send_appointment_confirmation_email, send_appointment_update_email
-from app.sms.sms_handler import send_appointment_confirmation_sms, send_appointment_update_sms
+from app.models_main import Appointment, Lead
+from app.email_handler import send_appointment_confirmation_email, send_appointment_update_email
+from app.sms_handler import send_appointment_confirmation_sms, send_appointment_update_sms
 from datetime import datetime, timedelta, time
+from sqlalchemy import or_
 
 @bp.route('/list')
 @login_required
@@ -56,6 +57,38 @@ def list_appointments():
     
     return render_template('appointments/list.html', title='All Appointments', 
                            appointments=appointments, form=form)
+
+@bp.route('/select-lead')
+@login_required
+def select_lead():
+    page = request.args.get('page', 1, type=int)
+    name = request.args.get('name', '')
+    email = request.args.get('email', '')
+    phone = request.args.get('phone', '')
+    
+    # Create base query
+    query = Lead.query
+    
+    # Apply filters if provided
+    if name:
+        query = query.filter(or_(
+            Lead.first_name.ilike(f'%{name}%'),
+            Lead.last_name.ilike(f'%{name}%')
+        ))
+    
+    if email:
+        query = query.filter(Lead.email.ilike(f'%{email}%'))
+    
+    if phone:
+        query = query.filter(Lead.phone.ilike(f'%{phone}%'))
+    
+    # Order by most recently created
+    leads = query.order_by(Lead.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False)
+    
+    return render_template('appointments/select_lead.html', 
+                           title='Select Lead for Appointment',
+                           leads=leads)
 
 @bp.route('/create/<int:lead_id>', methods=['GET', 'POST'])
 @login_required

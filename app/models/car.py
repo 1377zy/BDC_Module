@@ -32,7 +32,7 @@ class Car(db.Model):
     def get_next_unseen(user_id):
         """Get the next car that hasn't been seen by the user.
         This would be used for the swiping functionality."""
-        from app.models import Match
+        from app.models.car import Match
         
         # Get IDs of cars the user has already seen
         seen_car_ids = db.session.query(Match.car_id).filter(Match.user_id == user_id).all()

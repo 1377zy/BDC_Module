@@ -1,0 +1,201 @@
+/* Create/Edit Pipeline Styles */
+.pipeline-form-container {
+    padding: 20px 0;
+}
+
+.pipeline-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.pipeline-title {
+    margin-bottom: 5px;
+}
+
+.pipeline-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.form-section {
+    margin-bottom: 30px;
+}
+
+.form-section-title {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stages-container {
+    margin-bottom: 20px;
+}
+
+.stage-card {
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+}
+
+.stage-card-header {
+    padding: 15px;
+    background-color: #3498db;
+    color: #fff;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.stage-card-ghost {
+    opacity: 0.5;
+    background-color: #f8f9fa;
+}
+
+.stage-card-body {
+    padding: 20px;
+}
+
+.stage-number {
+    margin: 0;
+}
+
+.stage-actions {
+    display: flex;
+    align-items: center;
+}
+
+.remove-stage-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+
+.remove-stage-btn:hover {
+    color: #fff;
+}
+
+.stage-type-options {
+    margin-top: 20px;
+}
+
+.stage-type-label {
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.win-lost-options {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.color-picker-container {
+    margin-top: 20px;
+}
+
+.color-picker-label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.stage-probability-container {
+    margin-top: 20px;
+}
+
+.stage-probability-slider {
+    margin-top: 10px;
+}
+
+.add-stage-container {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.add-stage-btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.pipeline-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pipeline-actions .btn {
+    margin-right: 10px;
+}
+
+/* Spectrum color picker customizations */
+.sp-container {
+    border-color: #ced4da;
+    background-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sp-palette-container {
+    border-right-color: #ced4da;
+}
+
+.sp-picker-container {
+    border-left: none;
+}
+
+/* Custom toggle switch for won/lost checkboxes */
+.custom-switch {
+    padding-left: 2.25rem;
+}
+
+.custom-control-label {
+    cursor: pointer;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: #28a745;
+    background-color: #28a745;
+}
+
+.custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.custom-control-input:not(:disabled):active ~ .custom-control-label::before {
+    background-color: #9be7ac;
+    border-color: #9be7ac;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stage-card-header {
+        padding: 10px 15px;
+    }
+    
+    .stage-card-body {
+        padding: 15px;
+    }
+    
+    .stage-type-label {
+        margin-right: 10px;
+        margin-bottom: 10px;
+        display: inline-block;
+    }
+    
+    .pipeline-actions .btn {
+        margin-bottom: 10px;
+    }
+}

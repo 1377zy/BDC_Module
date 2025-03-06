@@ -1,0 +1,197 @@
+/* Pipeline Visualization Styles */
+.pipeline-container {
+    overflow-x: auto;
+    padding: 20px 0;
+}
+
+.pipeline-stages {
+    display: flex;
+    min-width: 100%;
+}
+
+.pipeline-stage {
+    flex: 1;
+    min-width: 250px;
+    margin-right: 15px;
+    border: 2px solid;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    max-height: 700px;
+}
+
+.stage-header {
+    padding: 10px 15px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.stage-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.stage-body {
+    padding: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.deal-card {
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.deal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.deal-card.dragging {
+    opacity: 0.7;
+    transform: scale(0.95);
+}
+
+.deal-header {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.deal-header h6 {
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+}
+
+.deal-body {
+    padding: 10px;
+}
+
+.deal-body p {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.deal-footer {
+    padding: 8px 10px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.deal-footer .btn {
+    margin-left: 5px;
+}
+
+/* Stage Card in Pipeline Form */
+.stage-card {
+    cursor: grab;
+}
+
+.stage-card .card-header {
+    cursor: grab;
+}
+
+.sortable-stages {
+    min-height: 100px;
+}
+
+.color-picker {
+    cursor: pointer;
+}
+
+/* Timeline for Deal Activities */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+}
+
+.timeline-content {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.timeline-title {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+/* Deal Summary */
+.deal-summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.deal-summary-item:last-child {
+    border-bottom: none;
+}
+
+.deal-summary-item .label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+/* Analytics Page */
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pipeline-stage {
+        min-width: 200px;
+    }
+    
+    .deal-header h6 {
+        max-width: 60%;
+    }
+}

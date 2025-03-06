@@ -62,3 +62,83 @@ class SearchLeadForm(FlaskForm):
         ('Other', 'Other')
     ])
     submit = SubmitField('Search')
+
+class MatchForm(FlaskForm):
+    """Form for creating and editing lead-vehicle matches."""
+    lead_id = SelectField('Lead', coerce=int, validators=[DataRequired()])
+    inventory_id = SelectField('Vehicle', coerce=int, validators=[DataRequired()])
+    user_id = SelectField('Created By', coerce=int, validators=[DataRequired()])
+    match_score = StringField('Match Score (0-100)', validators=[DataRequired()])
+    status = SelectField('Status', choices=[
+        ('Suggested', 'Suggested'),
+        ('Presented', 'Presented'),
+        ('Rejected', 'Rejected'),
+        ('Interested', 'Interested')
+    ], validators=[DataRequired()])
+    notes = TextAreaField('Notes', validators=[Optional()])
+    submit = SubmitField('Save Match')
+
+class InventoryForm(FlaskForm):
+    """Form for creating and editing inventory items."""
+    vin = StringField('VIN', validators=[DataRequired(), Length(max=17)])
+    make = StringField('Make', validators=[DataRequired(), Length(max=64)])
+    model = StringField('Model', validators=[DataRequired(), Length(max=64)])
+    year = StringField('Year', validators=[DataRequired()])
+    trim = StringField('Trim', validators=[Optional(), Length(max=64)])
+    color = StringField('Exterior Color', validators=[Optional(), Length(max=64)])
+    interior_color = StringField('Interior Color', validators=[Optional(), Length(max=64)])
+    mileage = StringField('Mileage', validators=[Optional()])
+    price = StringField('Price', validators=[Optional()])
+    condition = SelectField('Condition', choices=[
+        ('New', 'New'),
+        ('Used', 'Used'),
+        ('Certified Pre-Owned', 'Certified Pre-Owned')
+    ])
+    body_style = StringField('Body Style', validators=[Optional(), Length(max=64)])
+    transmission = SelectField('Transmission', choices=[
+        ('Automatic', 'Automatic'),
+        ('Manual', 'Manual'),
+        ('CVT', 'CVT'),
+        ('Other', 'Other')
+    ])
+    fuel_type = SelectField('Fuel Type', choices=[
+        ('Gasoline', 'Gasoline'),
+        ('Diesel', 'Diesel'),
+        ('Hybrid', 'Hybrid'),
+        ('Electric', 'Electric'),
+        ('Other', 'Other')
+    ])
+    drivetrain = SelectField('Drivetrain', choices=[
+        ('FWD', 'FWD'),
+        ('RWD', 'RWD'),
+        ('AWD', 'AWD'),
+        ('4WD', '4WD'),
+        ('Other', 'Other')
+    ])
+    engine = StringField('Engine', validators=[Optional(), Length(max=64)])
+    features = TextAreaField('Features', validators=[Optional()])
+    description = TextAreaField('Description', validators=[Optional()])
+    status = SelectField('Status', choices=[
+        ('Available', 'Available'),
+        ('Sold', 'Sold'),
+        ('On Hold', 'On Hold'),
+        ('In Service', 'In Service')
+    ])
+    submit = SubmitField('Save Vehicle')
+
+class SearchInventoryForm(FlaskForm):
+    """Form for searching inventory."""
+    make = StringField('Make')
+    model = StringField('Model')
+    year_min = StringField('Min Year')
+    year_max = StringField('Max Year')
+    price_min = StringField('Min Price')
+    price_max = StringField('Max Price')
+    status = SelectField('Status', choices=[
+        ('', 'Any Status'),
+        ('Available', 'Available'),
+        ('Sold', 'Sold'),
+        ('On Hold', 'On Hold'),
+        ('In Service', 'In Service')
+    ])
+    submit = SubmitField('Search')

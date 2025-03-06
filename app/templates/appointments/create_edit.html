@@ -23,15 +23,18 @@
         <div class="card form-container">
             <div class="card-body">
                 <form method="post">
-                    {{ form.hidden_tag() }}
                     
                     {% if not lead %}
                     <div class="mb-3">
-                        <label for="lead_id" class="form-label">{{ form.lead_id.label }}</label>
-                        {{ form.lead_id(class="form-select") }}
-                        {% for error in form.lead_id.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
+                        <label for="lead_id" class="form-label">Select Lead</label>
+                        <select name="lead_id" id="lead_id" class="form-select" required>
+                            <option value="">-- Select a Lead --</option>
+                            {% for lead in leads %}
+                            <option value="{{ lead.id }}" {% if appointment and appointment.lead_id == lead.id %}selected{% endif %}>
+                                {{ lead.first_name }} {{ lead.last_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
                         <div class="form-text">
                             Can't find the lead? <a href="{{ url_for('add_lead') }}">Create a new one</a>
                         </div>
@@ -40,70 +43,56 @@
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="date" class="form-label">{{ form.date.label }}</label>
-                            {{ form.date(class="form-control datepicker", placeholder="YYYY-MM-DD") }}
-                            {% for error in form.date.errors %}
-                            <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                            <label for="date" class="form-label">Appointment Date</label>
+                            <input type="date" name="date" id="date" class="form-control datepicker" 
+                                   value="{{ date_str if date_str else current_date }}" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="time" class="form-label">{{ form.time.label }}</label>
-                            {{ form.time(class="form-control", placeholder="HH:MM") }}
-                            {% for error in form.time.errors %}
-                            <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                            <label for="time" class="form-label">Appointment Time</label>
+                            <input type="time" name="time" id="time" class="form-control" 
+                                   value="{{ time_str if time_str else '' }}" required>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="vehicle_interest" class="form-label">{{ form.vehicle_interest.label }}</label>
-                        {{ form.vehicle_interest(class="form-control", placeholder="e.g. 2023 Honda Accord EX-L") }}
-                        {% for error in form.vehicle_interest.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                        {% if lead and lead.vehicle_interests %}
-                        <div class="form-text">
-                            <strong>Lead's Vehicle Interests:</strong>
-                            <ul class="list-inline mb-0">
-                                {% for interest in lead.vehicle_interests %}
-                                <li class="list-inline-item">
-                                    <a href="#" class="vehicle-interest-item">
-                                        {{ interest.year }} {{ interest.make }} {{ interest.model }} {{ interest.trim }}
-                                    </a>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
+                        <label for="purpose" class="form-label">Purpose</label>
+                        <select name="purpose" id="purpose" class="form-select" required>
+                            <option value="">-- Select Purpose --</option>
+                            <option value="Test Drive" {% if appointment and appointment.purpose == 'Test Drive' %}selected{% endif %}>Test Drive</option>
+                            <option value="Vehicle Viewing" {% if appointment and appointment.purpose == 'Vehicle Viewing' %}selected{% endif %}>Vehicle Viewing</option>
+                            <option value="Pricing Discussion" {% if appointment and appointment.purpose == 'Pricing Discussion' %}selected{% endif %}>Pricing Discussion</option>
+                            <option value="Financing Options" {% if appointment and appointment.purpose == 'Financing Options' %}selected{% endif %}>Financing Options</option>
+                            <option value="Trade-In Evaluation" {% if appointment and appointment.purpose == 'Trade-In Evaluation' %}selected{% endif %}>Trade-In Evaluation</option>
+                            <option value="Paperwork Signing" {% if appointment and appointment.purpose == 'Paperwork Signing' %}selected{% endif %}>Paperwork Signing</option>
+                            <option value="Vehicle Delivery" {% if appointment and appointment.purpose == 'Vehicle Delivery' %}selected{% endif %}>Vehicle Delivery</option>
+                            <option value="Service Consultation" {% if appointment and appointment.purpose == 'Service Consultation' %}selected{% endif %}>Service Consultation</option>
+                            <option value="Other" {% if appointment and appointment.purpose == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
                     </div>
+                    
+                    {% if appointment %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select" required>
+                            <option value="Scheduled" {% if appointment.status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="Confirmed" {% if appointment.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="Completed" {% if appointment.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            <option value="Cancelled" {% if appointment.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                            <option value="No-Show" {% if appointment.status == 'No-Show' %}selected{% endif %}>No-Show</option>
+                        </select>
+                    </div>
+                    {% endif %}
                     
                     <div class="mb-3">
-                        <label for="status" class="form-label">{{ form.status.label }}</label>
-                        {{ form.status(class="form-select", id="appointment-status") }}
-                        {% for error in form.status.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="4">{{ appointment.notes if appointment else '' }}</textarea>
                     </div>
                     
-                    <div class="mb-3" id="notes-section" {% if not appointment or appointment.status not in ['Cancelled', 'Rescheduled'] %}class="d-none"{% endif %}>
-                        <label for="notes" class="form-label">{{ form.notes.label }}</label>
-                        {{ form.notes(class="form-control", rows=3, placeholder="Any notes about this appointment") }}
-                        {% for error in form.notes.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        {{ form.send_confirmation(class="form-check-input") }}
-                        <label class="form-check-label" for="send_confirmation">{{ form.send_confirmation.label }}</label>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('appointments') }}" class="btn btn-secondary me-md-2">Cancel</a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> 
                             {% if appointment %}Update Appointment{% else %}Schedule Appointment{% endif %}
                         </button>
-                        <a href="{{ url_for('list_appointments') }}" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
@@ -113,45 +102,33 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
-                <i class="fas fa-info-circle me-1"></i> Appointment Information
+                <h5 class="mb-0">Appointment Tips</h5>
             </div>
             <div class="card-body">
-                <h5>Best Practices for Appointments</h5>
-                <ul>
-                    <li>Schedule appointments at least 24 hours in advance</li>
-                    <li>Allow 1-2 hours for each appointment</li>
-                    <li>Send a confirmation email and SMS after scheduling</li>
-                    <li>Call to confirm the appointment a day before</li>
-                    <li>Follow up after the appointment with a thank you message</li>
-                </ul>
-                
-                <h5>Available Times</h5>
-                <p>Dealership hours:</p>
-                <ul>
-                    <li><strong>Monday - Friday:</strong> 9:00 AM - 8:00 PM</li>
-                    <li><strong>Saturday:</strong> 9:00 AM - 6:00 PM</li>
-                    <li><strong>Sunday:</strong> 11:00 AM - 5:00 PM</li>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Schedule appointments during dealership business hours</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Allow at least 1 hour for test drives</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Include specific vehicle interests in notes</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Mention if financing pre-approval is needed</li>
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Note any trade-in vehicles the customer may bring</li>
                 </ul>
             </div>
         </div>
         
-        {% if appointment %}
         <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <i class="fas fa-exclamation-triangle me-1"></i> Advanced Options
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Follow-Up Reminders</h5>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('delete_appointment', appointment_id=appointment.id) }}" class="btn btn-danger confirm-delete">
-                        <i class="fas fa-trash"></i> Delete Appointment
-                    </a>
-                </div>
-                <div class="alert alert-warning mt-3 mb-0">
-                    <i class="fas fa-exclamation-circle me-1"></i> Deleting an appointment will permanently remove it. Consider updating its status to "Cancelled" instead.
-                </div>
+                <p>Don't forget to:</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Send a confirmation email 24 hours before</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Send an SMS reminder 2 hours before</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Call to confirm on the day of appointment</li>
+                    <li class="mb-2"><i class="fas fa-bell text-warning me-2"></i> Follow up within 24 hours after the appointment</li>
+                </ul>
             </div>
         </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -159,31 +136,25 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        // Initialize date picker
+        // Initialize datepicker
         $('.datepicker').datepicker({
             format: 'yyyy-mm-dd',
             autoclose: true,
             todayHighlight: true,
-            startDate: 'today'
+            startDate: new Date()
         });
         
-        // Handle appointment status changes
-        $('#appointment-status').change(function() {
-            const status = $(this).val();
-            if (status === 'Cancelled' || status === 'Rescheduled') {
-                $('#notes-section').removeClass('d-none');
-                $('#notes').attr('required', true);
-            } else {
-                $('#notes-section').addClass('d-none');
-                $('#notes').attr('required', false);
-            }
-        });
+        // Set min date to today
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1;
+        let dd = today.getDate();
         
-        // Click on vehicle interest to fill the field
-        $('.vehicle-interest-item').click(function(e) {
-            e.preventDefault();
-            $('#vehicle_interest').val($(this).text().trim());
-        });
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+        
+        const formattedToday = yyyy + '-' + mm + '-' + dd;
+        $('#date').attr('min', formattedToday);
     });
 </script>
 {% endblock %}

@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+
+{% block title %}Campaign Analytics{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/analytics.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}">
+<style>
+    .campaign-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+    }
+    .campaign-card:hover {
+        transform: translateY(-5px);
+    }
+    .campaign-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .metric-card {
+        flex: 1;
+        min-width: 200px;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #3498db;
+    }
+    .channel-table th, .channel-table td {
+        text-align: center;
+    }
+    .progress-bar-container {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+    .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">Marketing Campaign Analytics</h1>
+            <p class="text-muted">Track and analyze your marketing campaign performance</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary" id="daterange-btn">
+                    <i class="fas fa-calendar"></i> <span>Date Range</span>
+                    <i class="fas fa-caret-down"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success" id="export-btn">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Active Campaigns</h5>
+                    <h2 class="card-text text-primary">{{ active_campaigns }}</h2>
+                    <p class="text-muted">Currently running campaigns</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Total Leads Generated</h5>
+                    <h2 class="card-text text-success">{{ total_leads }}</h2>
+                    <p class="text-muted">From all campaigns</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Cost Per Lead</h5>
+                    <h2 class="card-text text-info">${{ avg_cost_per_lead }}</h2>
+                    <p class="text-muted">Across all campaigns</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Avg. Conversion Rate</h5>
+                    <h2 class="card-text text-warning">{{ avg_conversion_rate }}%</h2>
+                    <p class="text-muted">Leads to appointments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Performance Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Campaign Performance Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="campaignPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Comparison -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Campaign Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="campaignComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Channel Effectiveness</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="channelEffectivenessChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Details -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">Campaign Details</h3>
+            {% for campaign in campaigns %}
+            <div class="card campaign-card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ campaign.name }}</h5>
+                    <span class="badge {% if campaign.status == 'active' %}bg-success{% elif campaign.status == 'planned' %}bg-info{% elif campaign.status == 'completed' %}bg-secondary{% else %}bg-danger{% endif %}">
+                        {{ campaign.status|capitalize }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <p>{{ campaign.description }}</p>
+                            <p><strong>Type:</strong> {{ campaign.campaign_type }}</p>
+                            <p><strong>Duration:</strong> {{ campaign.start_date.strftime('%b %d, %Y') }} - 
+                                {% if campaign.end_date %}{{ campaign.end_date.strftime('%b %d, %Y') }}{% else %}Ongoing{% endif %}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Budget</h6>
+                                    <h4 class="text-primary">${{ campaign.budget }}</h4>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar bg-primary" style="width: {{ (campaign.budget_spent / campaign.budget) * 100 if campaign.budget > 0 else 0 }}%"></div>
+                                    </div>
+                                    <small class="text-muted">${{ campaign.budget_spent }} spent ({{ ((campaign.budget_spent / campaign.budget) * 100)|round|int if campaign.budget > 0 else 0 }}%)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="campaign-metrics mb-4">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ campaign.total_leads() }}</div>
+                            <div class="metric-label">Leads Generated</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">${{ campaign.cost_per_lead()|round(2) }}</div>
+                            <div class="metric-label">Cost per Lead</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{{ campaign.conversion_rate()|round(1) }}%</div>
+                            <div class="metric-label">Conversion Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">{{ campaign.roi()|round(1) }}%</div>
+                            <div class="metric-label">ROI</div>
+                        </div>
+                    </div>
+
+                    {% if campaign.channels %}
+                    <h6 class="mb-3">Channel Performance</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped channel-table">
+                            <thead>
+                                <tr>
+                                    <th>Channel</th>
+                                    <th>Cost</th>
+                                    <th>Impressions</th>
+                                    <th>Clicks</th>
+                                    <th>CTR</th>
+                                    <th>Conversions</th>
+                                    <th>Conv. Rate</th>
+                                    <th>Cost/Conv.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for channel in campaign.channels %}
+                                <tr>
+                                    <td>{{ channel.channel_name }}</td>
+                                    <td>${{ channel.cost }}</td>
+                                    <td>{{ channel.impressions }}</td>
+                                    <td>{{ channel.clicks }}</td>
+                                    <td>{{ channel.click_through_rate()|round(2) }}%</td>
+                                    <td>{{ channel.conversions }}</td>
+                                    <td>{{ channel.conversion_rate()|round(2) }}%</td>
+                                    <td>${{ channel.cost_per_conversion()|round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No channel data available for this campaign.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{{ url_for('analytics.campaign_detail', campaign_id=campaign.id) }}" class="btn btn-sm btn-primary">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        // Date Range Picker
+        $('#daterange-btn').daterangepicker({
+            ranges: {
+                'Today': [moment(), moment()],
+                'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                'This Month': [moment().startOf('month'), moment().endOf('month')],
+                'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            },
+            startDate: moment().subtract(29, 'days'),
+            endDate: moment()
+        }, function(start, end) {
+            $('#daterange-btn span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+            // Reload data with new date range
+            loadCampaignData(start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD'));
+        });
+
+        // Export button
+        $('#export-btn').click(function() {
+            const dateRange = $('#daterange-btn span').text();
+            const [startDate, endDate] = dateRange.split(' - ');
+            window.location.href = `{{ url_for('analytics.export_report', report_type='campaign') }}?start_date=${startDate}&end_date=${endDate}&format=excel`;
+        });
+
+        // Initialize charts
+        initCampaignPerformanceChart();
+        initCampaignComparisonChart();
+        initChannelEffectivenessChart();
+
+        function loadCampaignData(startDate, endDate) {
+            $.ajax({
+                url: "{{ url_for('analytics.chart_data') }}",
+                type: "GET",
+                data: {
+                    chart_type: 'campaign_performance',
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                success: function(data) {
+                    updateCampaignPerformanceChart(data);
+                    
+                    // Also update the other charts
+                    $.ajax({
+                        url: "{{ url_for('analytics.chart_data') }}",
+                        type: "GET",
+                        data: {
+                            chart_type: 'campaign_comparison',
+                            start_date: startDate,
+                            end_date: endDate
+                        },
+                        success: function(data) {
+                            updateCampaignComparisonChart(data);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: "{{ url_for('analytics.chart_data') }}",
+                        type: "GET",
+                        data: {
+                            chart_type: 'channel_effectiveness',
+                            start_date: startDate,
+                            end_date: endDate
+                        },
+                        success: function(data) {
+                            updateChannelEffectivenessChart(data);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Campaign Performance Chart
+        let campaignPerformanceChart;
+        function initCampaignPerformanceChart() {
+            const ctx = document.getElementById('campaignPerformanceChart').getContext('2d');
+            campaignPerformanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+            
+            // Load initial data
+            loadCampaignData(
+                moment().subtract(29, 'days').format('YYYY-MM-DD'),
+                moment().format('YYYY-MM-DD')
+            );
+        }
+
+        function updateCampaignPerformanceChart(data) {
+            campaignPerformanceChart.data.labels = data.labels;
+            campaignPerformanceChart.data.datasets = data.datasets;
+            campaignPerformanceChart.update();
+        }
+
+        // Campaign Comparison Chart
+        let campaignComparisonChart;
+        function initCampaignComparisonChart() {
+            const ctx = document.getElementById('campaignComparisonChart').getContext('2d');
+            campaignComparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCampaignComparisonChart(data) {
+            campaignComparisonChart.data.labels = data.labels;
+            campaignComparisonChart.data.datasets = data.datasets;
+            campaignComparisonChart.update();
+        }
+
+        // Channel Effectiveness Chart
+        let channelEffectivenessChart;
+        function initChannelEffectivenessChart() {
+            const ctx = document.getElementById('channelEffectivenessChart').getContext('2d');
+            channelEffectivenessChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChannelEffectivenessChart(data) {
+            channelEffectivenessChart.data.labels = data.labels;
+            channelEffectivenessChart.data.datasets = data.datasets;
+            channelEffectivenessChart.update();
+        }
+    });
+</script>
+{% endblock %}
